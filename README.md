@@ -57,6 +57,7 @@ Covered in v0.1:
 - **Fundamental equations**: `FreeEnergyFromZ`, `FreeEnergyLegendre` (F = U − TS), `EntropyResponse`, `GibbsHelmholtz`
 - **Thermodynamic identities**: `SpecificHeatFDT`, `SusceptibilityFDT`,
   `LinearResponseFDT`
+- **Distributions & statistics**: `MicroCanonical` / `Canonical` / `GrandCanonical` / `Squeezed` + `ensemble_weight`; `Fermionic`/`Bosonic` occupation functions; `ThermalAverage` marker (⟨Q⟩_D at the type level)
 - **Wick's theorem**: `wick_contraction`, `wick_density_correlation`
   (number-conserving Gaussian fermions)
 - **Topological invariants**: `winding_number` (1D two-band),
