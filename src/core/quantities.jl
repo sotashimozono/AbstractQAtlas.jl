@@ -276,6 +276,123 @@ struct ZZCorrelation <: AbstractTwoPointCorrelation end
 component(::Type{ZZCorrelation}) = :zz
 export ZZCorrelation
 
+# ─── Dynamical & spectral quantities ────────────────────────────────────
+#
+# The frequency-resolved family.  These tags name the quantities; the
+# identities relating them (`A = −Im G^R/π`, Dyson, DOS = BZ-average of A,
+# detailed balance, the NMR relaxation relations) live in
+# `relations/spectral.jl` and the transform/sum genealogy in
+# `structure/spectral.jl`.  Actually *evaluating* the ω-dependence
+# (Kramers–Kronig, analytic continuation) is out of scope here — see the
+# functional sibling (issue #14).
+
+"""
+    AbstractPropagator <: AbstractQuantity
+
+Single-particle propagators — retarded/advanced/Matsubara Green's
+functions and the self-energy — the `(q, ω)`-resolved objects the Dyson
+equation relates.
+"""
+abstract type AbstractPropagator <: AbstractQuantity end
+export AbstractPropagator
+
+"""
+    RetardedGreensFunction() <: AbstractPropagator
+
+The retarded single-particle Green's function `G^R(q, ω)`.  Its spectral
+representation `A = −Im G^R/π` and the Dyson equation
+`G^{-1} = G₀^{-1} − Σ` are in `relations/spectral.jl`.
+"""
+struct RetardedGreensFunction <: AbstractPropagator end
+export RetardedGreensFunction
+
+"""
+    SelfEnergy() <: AbstractPropagator
+
+The single-particle self-energy `Σ(q, ω)` — the Dyson correction
+`G^{-1} = G₀^{-1} − Σ` between the bare and full propagators.
+"""
+struct SelfEnergy <: AbstractPropagator end
+export SelfEnergy
+
+"""
+    SpectralFunction() <: AbstractQuantity
+
+The single-particle spectral function `A(q, ω) = −(1/π) Im G^R(q, ω)`,
+normalized by `∫ A(q, ω) dω = 1`.
+"""
+struct SpectralFunction <: AbstractQuantity end
+export SpectralFunction
+
+"""
+    DensityOfStates() <: AbstractQuantity
+
+The density of states `ρ(ω) = (1/N) Σ_q A(q, ω)` — the Brillouin-zone
+average of the [`SpectralFunction`](@ref).
+"""
+struct DensityOfStates <: AbstractQuantity end
+export DensityOfStates
+
+"""
+    DynamicalCorrelation() <: AbstractTwoPointCorrelation
+
+The space-and-time-resolved correlation `⟨A(r, t) A(0, 0)⟩` whose
+space-time Fourier transform (any spatial dimension) is the
+[`DynamicalStructureFactor`](@ref).
+"""
+struct DynamicalCorrelation <: AbstractTwoPointCorrelation end
+export DynamicalCorrelation
+
+"""
+    DynamicalStructureFactor() <: AbstractStructureFactor
+
+The dynamical structure factor `S(q, ω)` — the space-time Fourier
+transform of the [`DynamicalCorrelation`](@ref); obeys detailed balance
+`S(q, −ω) = e^{−βω} S(q, ω)` and the fluctuation–dissipation link to the
+[`DynamicalSusceptibility`](@ref).
+"""
+struct DynamicalStructureFactor <: AbstractStructureFactor end
+export DynamicalStructureFactor
+
+"""
+    DynamicalSusceptibility() <: AbstractSusceptibility
+
+The dynamical susceptibility `χ(q, ω)`; its imaginary part `χ''(q, ω)`
+is the dissipative response entering the fluctuation–dissipation theorem
+and the NMR relaxation rate.
+"""
+struct DynamicalSusceptibility <: AbstractSusceptibility end
+export DynamicalSusceptibility
+
+"""
+    NMRSpinRelaxationRate() <: AbstractQuantity
+
+The NMR spin–lattice relaxation rate `1/T₁` — set by the low-frequency
+limit of the dissipative dynamical susceptibility (Moriya),
+`1/T₁ ∝ T · lim_{ω→0} Σ_q |A_hf(q)|² χ''(q, ω)/ω`.
+"""
+struct NMRSpinRelaxationRate <: AbstractQuantity end
+export NMRSpinRelaxationRate
+
+"""
+    NMRRelaxationExponent() <: AbstractQuantity
+
+The low-temperature scaling exponent `θ_NMR` of `1/T₁ ∝ T^{θ_NMR}`,
+fixed by the operator scaling dimension via `θ_NMR = 2Δ_op − 1`.
+"""
+struct NMRRelaxationExponent <: AbstractQuantity end
+export NMRRelaxationExponent
+
+"""
+    ScalingDimension() <: AbstractQuantity
+
+The scaling dimension `Δ_op` of a local operator at a quantum critical
+point — the input to dynamical scaling relations such as the NMR
+exponent `θ_NMR = 2Δ_op − 1`.
+"""
+struct ScalingDimension <: AbstractQuantity end
+export ScalingDimension
+
 # ─── Criticality ────────────────────────────────────────────────────────
 
 """

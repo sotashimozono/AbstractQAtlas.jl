@@ -91,6 +91,10 @@ Covered in v0.1:
   (number-conserving Gaussian fermions)
 - **Topological invariants**: `winding_number` (1D two-band),
   `chern_number` (Fukui–Hatsugai–Suzuki lattice method), `TKNN`
+- **Dynamical / spectral identities**: `Dyson` (`G⁻¹ = G₀⁻¹ − Σ`),
+  `SpectralFromGreens` (`A = −Im Gᴿ/π`), `SpectralSumRule` (`∫A dω = 1`),
+  `DetailedBalance` (`S(q,−ω) = e^{−βω} S(q,ω)`), `NMRExponent`
+  (`θ_NMR = 2Δ_op − 1`)
 
 **Structure — definitional correspondences** (the `structure/` layer):
 

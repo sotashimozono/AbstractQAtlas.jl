@@ -122,6 +122,16 @@ restated:
   [`SusceptibilityResponse`](@ref), [`GibbsHelmholtz`](@ref) — the
   definitional `χ = ∂M/∂h` and the statistical `χ = β·Var(M)`
   ([`SusceptibilityFDT`](@ref)) being the same response two ways.
+- **Dynamical / spectral graph** — [`spectral_origin`](@ref) /
+  [`spectral_chain`](@ref) trace the frequency-resolved quantities back
+  to their sources (`DensityOfStates ⟵ SpectralFunction ⟵
+  RetardedGreensFunction ⟵ SelfEnergy`), and [`origin_relation`](@ref)
+  ties each single-`(q,ω)`-point edge to its exact identity: [`Dyson`](@ref)
+  (`G⁻¹ = G₀⁻¹ − Σ`), [`SpectralFromGreens`](@ref) (`A = −Im Gᴿ/π`),
+  with [`SpectralSumRule`](@ref), [`DetailedBalance`](@ref)
+  (`S(q,−ω) = e^{−βω} S(q,ω)`) and [`NMRExponent`](@ref)
+  (`θ_NMR = 2Δ_op − 1`). Transform / BZ-sum / limit edges have no
+  pointwise form — their *evaluation* is the functional sibling's job.
 
 ## API reference
 

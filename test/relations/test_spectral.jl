@@ -1,0 +1,65 @@
+# Dynamical / spectral pointwise identities vs independent constructions.
+#
+# Each identity is checked against a value built a DIFFERENT way than the
+# identity states: Dyson against a G assembled from G₀ and Σ; the
+# spectral representation against an explicit Lorentzian; detailed
+# balance against an exponential; the NMR exponent against exact
+# rationals.
+
+using AbstractQAtlas
+using AbstractQAtlas: residual, check, solve
+
+@testset "Dyson equation (complex, pointwise)" begin
+    # build the FULL G from bare G₀ and Σ, then the identity must close
+    for (G0, Σ) in [(1 / (0.5 + 0.1im), 0.2 - 0.3im), (1 / (-1.2 + 0.4im), -0.5 + 0.2im)]
+        G = 1 / (1 / G0 - Σ)
+        @test abs(residual(Dyson(); G=G, G0=G0, Σ=Σ)) < 1e-14
+        # solve for the self-energy from G and G₀ (generic affine solve)
+        @test solve(Dyson(), Val(:Σ); G=G, G0=G0) ≈ Σ
+    end
+end
+
+@testset "spectral representation A = −Im G^R/π (Lorentzian)" begin
+    # a single pole at ε with width γ: G^R(ω) = 1/(ω − ε + iγ),
+    # A(ω) = (1/π) γ/((ω−ε)² + γ²) — an independent construction.
+    ε, γ = 0.3, 0.05
+    for ω in (0.0, 0.3, 0.7)
+        GR = 1 / (ω - ε + im * γ)
+        A = (1 / π) * γ / ((ω - ε)^2 + γ^2)
+        @test check(SpectralFromGreens(); A=A, ImGR=imag(GR), atol=1e-13)
+    end
+    # and the sum rule: ∫ A dω = 1 for the Lorentzian (analytic)
+    @test check(SpectralSumRule(); spectral_integral=1.0, atol=0)
+end
+
+@testset "detailed balance S(q,−ω) = e^{−βω} S(q,ω)" begin
+    for T in (0.5, 2.0), ω in (0.4, 1.3)
+        β = 1 / T
+        Splus = 3.7                      # arbitrary S(q, ω)
+        Sminus = exp(-β * ω) * Splus     # the balanced partner
+        @test check(DetailedBalance(); S_plus=Splus, S_minus=Sminus, ω=ω, β=β, atol=1e-13)
+        # T-form normalizes identically
+        @test check(DetailedBalance(); S_plus=Splus, S_minus=Sminus, ω=ω, T=T, atol=1e-13)
+        # solve for the anti-Stokes side
+        @test solve(DetailedBalance(), Val(:S_minus); S_plus=Splus, ω=ω, β=β) ≈ Sminus
+    end
+end
+
+@testset "NMR exponent θ_NMR = 2Δ_op − 1 (exact rationals)" begin
+    # 1D transverse-field Ising QCP: Δ_σ = 1/8 ⟹ θ_NMR = −3/4, exactly
+    @test residual(NMRExponent(); θ_NMR=-3 // 4, Δ_op=1 // 8) == 0 // 1
+    @test solve(NMRExponent(), Val(:θ_NMR); Δ_op=1 // 8) == -3 // 4
+    @test solve(NMRExponent(), Val(:Δ_op); θ_NMR=-3 // 4) == 1 // 8
+    @test solve(NMRExponent(), Val(:θ_NMR); Δ_op=1 // 8) isa Rational   # exactness
+    @test !check(NMRExponent(); θ_NMR=0 // 1, Δ_op=1 // 8)
+end
+
+@testset "one-call sweep picks up the spectral identities by variable name" begin
+    G0 = 1 / (0.5 + 0.1im)
+    Σ = 0.2 - 0.3im
+    G = 1 / (1 / G0 - Σ)
+    rep = relation_report((; G=G, G0=G0, Σ=Σ); atol=1e-12, domain=:spectral)
+    @test length(rep) == 1
+    @test rep[1].relation isa Dyson
+    @test rep[1].pass
+end
