@@ -97,6 +97,9 @@ Covered in v0.1:
   `BulkBoundary` (`n = |ν|`, edge-mode count from the bulk invariant)
 - **Heat-capacity relations**: `SpecificHeatFDT`, `SpecificHeatFromEntropy`
   (`c = T ∂s/∂T`), `HeatCapacityDifference` (Mayer `c_p − c_v = T v α²/κ_T`)
+- **Thermodynamic identities**: the four `Maxwell*` relations (`Helmholtz`
+  / `Gibbs` / `Internal` / `Enthalpy`), `ClausiusClapeyron`
+  (`dp/dT = L/(T ΔV)`), `GibbsDuhem` (`S dT − V dp + N dμ = 0`)
 - **Ensembles & thermal pure quantum states**: `MicrocanonicalTemperature`
   (`β = ∂S/∂E`, the microcanonical–canonical bridge), `CanonicalTPQ`
   (`Z = D·⟨ψ₀|e^{−βH}|ψ₀⟩`, Sugiura–Shimizu) — the identities an ED / MPS /
