@@ -2,7 +2,7 @@ ENV["GKSwstype"] = "100"
 
 using AbstractQAtlas
 using Test, Aqua
-const dirs = []
+const dirs = ["core", "relations"]
 
 const FIG_BASE = joinpath(pkgdir(AbstractQAtlas), "docs", "src", "assets")
 const PATHS = Dict()

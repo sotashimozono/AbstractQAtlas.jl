@@ -17,22 +17,35 @@ around the origin — the 1D two-band invariant (e.g. SSH:
 `v > w`).
 
 Computed by accumulating the exterior-angle increments
-`Δθ = atan(d₁×d₂, d₁⋅d₂)` between successive grid points (each step
-|Δθ| < π for a resolved map) and rounding the total to an integer.
-Throws if the map (numerically) touches the origin — the invariant is
-undefined at a gap closing.
+`Δθ = atan(d₁×d₂, d₁⋅d₂)` between successive grid points and rounding
+the total to an integer (exact for a polygon avoiding the origin).
+
+Throws when the map is not resolved: `|d(k)|` must stay larger than
+twice the local polygon step everywhere, otherwise the curve passes
+within a grid step of the origin — a gap closing (invariant undefined)
+or an under-resolved map (increase `nk`).  A grid-point check alone is
+NOT sufficient: a curve through the origin *between* samples still
+yields an integer polygon winding, silently wrong.
 """
 function winding_number(dvec::Function; nk::Int=1001)
     ks = range(0, 2π; length=nk + 1)  # closed loop: last point == first
+    pts = [dvec(k) for k in ks]
+    for m in 1:nk
+        (x1, y1) = pts[m]
+        (x2, y2) = pts[m + 1]
+        r = hypot(x1, y1)
+        step = hypot(x2 - x1, y2 - y1)
+        r > 1e-12 || error("winding_number: |d(k)| ≈ 0 at k=$(ks[m]) — gapless")
+        r > 2 * step || error(
+            "winding_number: |d(k)| at k=$(ks[m]) is within two grid steps of " *
+            "the origin — gap closing or under-resolved map; increase nk",
+        )
+    end
     total = 0.0
-    d1x, d1y = dvec(ks[1])
-    hypot(d1x, d1y) > 1e-12 || error("winding_number: |d(k)| ≈ 0 at k=$(ks[1]) — gapless")
-    for m in 2:(nk + 1)
-        d2x, d2y = dvec(ks[m])
-        hypot(d2x, d2y) > 1e-12 ||
-            error("winding_number: |d(k)| ≈ 0 at k=$(ks[m]) — gapless")
-        total += atan(d1x * d2y - d1y * d2x, d1x * d2x + d1y * d2y)
-        d1x, d1y = d2x, d2y
+    for m in 1:nk
+        (x1, y1) = pts[m]
+        (x2, y2) = pts[m + 1]
+        total += atan(x1 * y2 - y1 * x2, x1 * x2 + y1 * y2)
     end
     return round(Int, total / (2π))
 end
