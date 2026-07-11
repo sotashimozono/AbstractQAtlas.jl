@@ -41,3 +41,35 @@ end
     # non-symmetric quantities: not equivalent (no permutation freedom)
     @test !permutation_equivalent(Energy(), Energy())
 end
+
+@testset "field_permutation exposes the paired frequency permutation" begin
+    using AbstractQAtlas: field_permutation, indices, frequency_arguments
+
+    # the permutation that sorts the field indices IS the one the symmetry
+    # applies to the frequency arguments (pairs (βᵢ,ωᵢ))
+    @test field_permutation(DynamicalSusceptibility(:x, :y, :z)) == (1, 2)  # already canonical
+    @test field_permutation(DynamicalSusceptibility(:x, :z, :y)) == (2, 1)  # swap the two ω's
+    @test field_permutation(Susceptibility(:x, :z, :y)) == (2, 1)
+
+    # INVARIANT: applying π to a component's field indices yields the
+    # canonical component's field indices — so π is the frequency-argument
+    # permutation needed to compare χ against canonical_component(χ).
+    for χ in (
+        DynamicalSusceptibility(:x, :z, :y),
+        DynamicalSusceptibility(:z, :y, :x, :w),
+        Susceptibility(:x, :z, :y),
+        Conductivity(:z, :y, :x),
+    )
+        π = field_permutation(χ)
+        fields = collect(indices(χ)[2:end])
+        @test Tuple(fields[collect(π)]) == indices(canonical_component(χ))[2:end]
+        # one π per field slot = one per frequency argument (for the dynamical case)
+        @test length(π) == length(fields)
+    end
+    # the dynamical response has as many frequencies as field slots to permute
+    χd = DynamicalSusceptibility(:x, :z, :y)
+    @test length(field_permutation(χd)) == frequency_arguments(χd)
+
+    # no intrinsic symmetry ⇒ no field permutation
+    @test_throws ErrorException field_permutation(Energy())
+end
