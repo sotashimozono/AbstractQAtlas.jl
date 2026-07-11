@@ -58,5 +58,6 @@ include("relations/topology.jl")
 include("relations/spectral.jl")
 include("relations/ensembles.jl")
 include("relations/entanglement.jl")
+include("relations/cft.jl")
 
 end # module AbstractQAtlas

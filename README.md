@@ -111,6 +111,7 @@ Covered in v0.1:
 - **Entanglement entropy**: `RenyiTwoPurity` (`S_2 = −ln Tr ρ²`),
   `CFTEntanglementSlope` (`dS/d ln ℓ = c/3`, reads off the central charge;
   Calabrese–Cardy), `page_average_entropy` (Page's random-state formula)
+- **CFT finite-size**: `CasimirCentralCharge` (`e₀(L)=e_∞−πcv/6L²`, reads off c), `FiniteSizeGap` (`E_x−E₀=2πvx/L`, reads off scaling dimensions) — extract universal data straight from finite-size MPS/ED spectra
 - **Nonlinear-tensor symmetry**: `intrinsic_permutation_symmetric`,
   `canonical_component`, `permutation_equivalent` — `χ⁽ⁿ⁾`'s field
   indices (with their frequencies) are interchangeable, so
