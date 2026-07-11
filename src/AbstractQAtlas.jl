@@ -44,6 +44,7 @@ include("core/fields.jl")
 include("structure/transitions.jl")
 include("structure/criticality.jl")
 include("structure/response.jl")
+include("structure/tensor_symmetry.jl")
 include("structure/spectral.jl")
 
 # relations — model-independent identities and forms

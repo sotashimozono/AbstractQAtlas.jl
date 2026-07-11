@@ -51,3 +51,25 @@ end
     @test solve(TKNN(), Val(:σxy); C=2) == 2
     @test solve(TKNN(), Val(:C); σxy=-1) == -1
 end
+
+@testset "Chern number from Berry-curvature flux" begin
+    # C = (1/2π) ∫ Ω : a flux of 2πC gives Chern number C, exactly
+    @test residual(ChernFromBerryCurvature(); C=1, berry_flux=2π) ≈ 0 atol = 1e-14
+    @test check(ChernFromBerryCurvature(); C=-2, berry_flux=-4π, atol=1e-13)
+    @test !check(ChernFromBerryCurvature(); C=1, berry_flux=0.0)
+    # solve for the flux implied by a Chern number, and back
+    @test solve(ChernFromBerryCurvature(), Val(:berry_flux); C=3) ≈ 6π
+    @test solve(ChernFromBerryCurvature(), Val(:C); berry_flux=2π) ≈ 1
+    # composed with TKNN: Berry flux 2πC ⇒ C ⇒ σ_xy = C (e²/h)
+    C = solve(ChernFromBerryCurvature(), Val(:C); berry_flux=2π)
+    @test check(TKNN(); σxy=C, C=C, atol=1e-13)
+end
+
+@testset "bulk–boundary correspondence" begin
+    # protected boundary modes = |bulk invariant|
+    @test residual(BulkBoundary(); n=3, ν=-3) == 0        # exact for integers
+    @test check(BulkBoundary(); n=2, ν=2)
+    @test check(BulkBoundary(); n=2, ν=-2)                # sign of ν doesn't matter
+    @test !check(BulkBoundary(); n=1, ν=2)
+    @test solve(BulkBoundary(), Val(:n); ν=-4) == 4
+end

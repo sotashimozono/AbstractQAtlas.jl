@@ -135,13 +135,42 @@ export FreeEnergy
 """
     SpecificHeat() <: AbstractThermalPotential
 
-Specific heat per site, `c_v(β) = β² (⟨H²⟩ − ⟨H⟩²) / N`.
+Specific heat (per site) at constant volume, `c_v(β) = β² (⟨H²⟩ − ⟨H⟩²) / N`.
 
-The defining identity is available as a first-class relation:
-[`SpecificHeatFDT`](@ref).
+Defining identities: the fluctuation form [`SpecificHeatFDT`](@ref)
+`c_v = β² Var(E) / N`, the entropy form [`SpecificHeatFromEntropy`](@ref)
+`c_v = T ∂s/∂T`, and the difference from the constant-pressure heat
+capacity [`HeatCapacityDifference`](@ref).
 """
 struct SpecificHeat <: AbstractThermalPotential end
 export SpecificHeat
+
+"""
+    IsobaricSpecificHeat() <: AbstractThermalPotential
+
+Specific heat at constant pressure, `c_p`.  Exceeds the constant-volume
+[`SpecificHeat`](@ref) `c_v` by `c_p − c_v = T v α² / κ_T`
+([`HeatCapacityDifference`](@ref)).
+"""
+struct IsobaricSpecificHeat <: AbstractThermalPotential end
+export IsobaricSpecificHeat
+
+"""
+    ThermalExpansionCoefficient() <: AbstractQuantity
+
+The (isobaric, volumetric) thermal-expansion coefficient
+`α = (1/V)(∂V/∂T)_p`.
+"""
+struct ThermalExpansionCoefficient <: AbstractQuantity end
+export ThermalExpansionCoefficient
+
+"""
+    IsothermalCompressibility() <: AbstractQuantity
+
+The isothermal compressibility `κ_T = −(1/V)(∂V/∂p)_T`.
+"""
+struct IsothermalCompressibility <: AbstractQuantity end
+export IsothermalCompressibility
 
 """
     ThermalEntropy() <: AbstractThermalPotential
@@ -529,3 +558,42 @@ Bloch maps live in this package's relations layer
 """
 struct TopologicalInvariant <: AbstractQuantity end
 export TopologicalInvariant
+
+"""
+    ChernNumber() <: AbstractQuantity
+
+The (first) Chern number `C ∈ ℤ` of a set of bands — the Brillouin-zone
+integral of the Berry curvature, `C = (1/2π) ∫_BZ Ω(k) d²k` (Thouless,
+Kohmoto, Nightingale & den Nijs, Phys. Rev. Lett. 49, 405 (1982)).  It
+sets the quantized Hall conductance ([`TKNN`](@ref)) and, via the
+bulk–boundary correspondence, the number of chiral edge modes.
+"""
+struct ChernNumber <: AbstractQuantity end
+export ChernNumber
+
+"""
+    BerryCurvature() <: AbstractQuantity
+
+The Berry curvature `Ω(k)` of a band — the momentum-space field strength
+`Ω = ∂_{k_x} A_y − ∂_{k_y} A_x` of the Berry connection (Berry, Proc. R.
+Soc. Lond. A 392, 45 (1984)).  Its Brillouin-zone integral is the
+[`ChernNumber`](@ref); it also drives the intrinsic anomalous Hall
+effect (Xiao, Chang & Niu, Rev. Mod. Phys. 82, 1959 (2010)).
+
+Note (scope): the Berry curvature is the *imaginary* part of the quantum
+geometric tensor; the real part (the quantum metric) and the mixed-state
+/ Uhlmann generalizations are deliberately out of this package's scope.
+"""
+struct BerryCurvature <: AbstractQuantity end
+export BerryCurvature
+
+"""
+    BoundaryModeCount() <: AbstractQuantity
+
+The number of protected boundary (edge / surface) modes of a
+topological phase — fixed by the bulk topological invariant through the
+bulk–boundary correspondence, `n = |ν|` (Hasan & Kane, Rev. Mod. Phys.
+82, 3045 (2010)).  See [`BulkBoundary`](@ref).
+"""
+struct BoundaryModeCount <: AbstractQuantity end
+export BoundaryModeCount
