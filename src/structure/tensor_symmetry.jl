@@ -9,7 +9,11 @@
 # interchangeable perturbations (Armstrong, Bloembergen, Ducuing &
 # Pershan, Phys. Rev. 127, 1918 (1962)).  This layer makes that symmetry
 # explicit at the type level, so a consumer knows which components are
-# forced equal without re-deriving it.
+# forced equal without re-deriving it.  Because the symmetry pairs each
+# field index with its frequency, `field_permutation` reports the
+# permutation the symmetry also applies to the frequency arguments — the
+# piece a frequency-resolved (nonlinear/dynamical) verification actually
+# needs, and which an index-only canonicalization silently drops.
 
 """
     intrinsic_permutation_symmetric(quantity) -> Bool
@@ -61,9 +65,20 @@ export canonical_component
 
 Whether response tensors `a` and `b` are forced equal by intrinsic
 permutation symmetry — i.e. differ only by a permutation of their field
-indices.  `χ⁽²⁾_{x;yz} = χ⁽²⁾_{x;zy}` (with the frequencies permuted
-accordingly), so they are equivalent; `χ_{x;yz}` and `χ_{y;xz}` are not
-(different response index).
+indices.  `χ⁽²⁾_{x;yz} = χ⁽²⁾_{x;zy}`, so they are equivalent; `χ_{x;yz}`
+and `χ_{y;xz}` are not (different response index).
+
+!!! warning "the symmetry pairs field indices with frequencies"
+    The intrinsic permutation symmetry acts on **(field-index, frequency)
+    pairs**, so for a frequency-resolved response the equality holds only
+    when the frequency arguments are permuted to match:
+    `χ⁽²⁾_{x;yz}(ω₁, ω₂) == χ⁽²⁾_{x;zy}(ω₂, ω₁)`, **not**
+    `χ⁽²⁾_{x;zy}(ω₁, ω₂)`.  A static [`Susceptibility`](@ref)
+    (`frequency_arguments == 0`) has no frequencies to permute, so
+    permutation-equivalent components are numerically equal outright; for
+    a [`DynamicalSusceptibility`](@ref) / [`Conductivity`](@ref)
+    (`frequency_arguments > 0`) apply [`field_permutation`](@ref) to the
+    frequency arguments before comparing.
 """
 function permutation_equivalent(a::AbstractQuantity, b::AbstractQuantity)
     (intrinsic_permutation_symmetric(a) && typeof(a).name === typeof(b).name) ||
@@ -71,3 +86,35 @@ function permutation_equivalent(a::AbstractQuantity, b::AbstractQuantity)
     return canonical_component(a) === canonical_component(b)
 end
 export permutation_equivalent
+
+"""
+    field_permutation(χ) -> NTuple{n,Int}
+
+The permutation `π` of `χ`'s `n = response_order(χ)` field slots that
+brings its field indices to `canonical_component` (sorted) order —
+`Tuple(sortperm(collect(indices(χ)[2:end])))`.
+
+Because the intrinsic permutation symmetry pairs each field index with
+its frequency, `π` is *also* the permutation the symmetry applies to the
+frequency arguments:
+
+    χ_{α; β₁…βₙ}(ω₁, …, ωₙ) == canonical_component(χ)(ω_{π₁}, …, ω_{πₙ})
+
+so it is exactly what a consumer needs to check one frequency-resolved
+component against another (or against the canonical representative).  For
+a static [`Susceptibility`](@ref) (`frequency_arguments == 0`) there is
+nothing to permute and permutation-equivalent components are equal
+outright; `π` still reports the field-index sort.
+
+```julia
+field_permutation(DynamicalSusceptibility(:x, :z, :y))  # (2, 1) — swap the two frequencies
+field_permutation(DynamicalSusceptibility(:x, :y, :z))  # (1, 2) — already canonical
+```
+"""
+function field_permutation(χ::AbstractQuantity)
+    intrinsic_permutation_symmetric(χ) || return error(
+        "field_permutation: $(typeof(χ)) has no intrinsic permutation symmetry"
+    )
+    return Tuple(sortperm(collect(indices(χ)[2:end])))
+end
+export field_permutation
