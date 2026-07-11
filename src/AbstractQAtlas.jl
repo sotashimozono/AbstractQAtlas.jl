@@ -33,12 +33,14 @@ using LinearAlgebra: det, eigen, Hermitian
 include("core/types.jl")
 include("core/quantities.jl")
 include("core/universality.jl")
+include("core/distributions.jl")
 
 # relations — model-independent identities and forms
 include("relations/interface.jl")
 include("relations/scaling.jl")
 include("relations/thermodynamic.jl")
 include("relations/fundamental.jl")
+include("relations/statistics.jl")
 include("relations/wick.jl")
 include("relations/topology.jl")
 include("relations/universality_forms.jl")

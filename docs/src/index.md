@@ -57,6 +57,11 @@ exponents_consistent((α=0//1, β=1//8, γ=7//4, δ=15//1, ν=1//1, η=1//4); d=
   (``F = -β^{-1}\ln Z``), [`FreeEnergyLegendre`](@ref) (``F = U - TS``),
   [`EntropyResponse`](@ref) (``S = -∂F/∂T``), [`GibbsHelmholtz`](@ref)
   (``U = ∂(βF)/∂β``).
+- **Distributions & statistics** — [`MicroCanonical`](@ref) /
+  [`Canonical`](@ref) / [`GrandCanonical`](@ref) / [`Squeezed`](@ref)
+  with [`ensemble_weight`](@ref); [`Fermionic`](@ref)/[`Bosonic`](@ref)
+  [`occupation`](@ref) functions; the [`ThermalAverage`](@ref) marker
+  (``⟨Q⟩_D`` at the type level).
 - **Thermodynamic identities** — [`SpecificHeatFDT`](@ref),
   [`SusceptibilityFDT`](@ref), [`LinearResponseFDT`](@ref)
   (conventions: ``c_v = β^2\,\mathrm{Var}(E)/N``,

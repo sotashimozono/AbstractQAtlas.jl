@@ -109,6 +109,22 @@ abstract type AbstractQuantity end
 export AbstractQuantity
 
 """
+    _beta(; β=nothing, T=nothing)
+
+Resolve the β-or-T keyword convention used throughout this package:
+callers may pass either the inverse temperature `β` or the temperature
+`T` (exactly one).  Private helper shared by constructors and relations.
+"""
+_beta(; β=nothing, T=nothing) =
+    if β !== nothing
+        β
+    elseif T !== nothing
+        1 / T
+    else
+        error("pass either β or T")
+    end
+
+"""
     fetch(model, quantity, bc; kwargs...)
 
 Return the stored / computed value of `quantity` for `model` under

@@ -35,14 +35,7 @@ solve(SpecificHeatFDT(), Val(:C); var_E=v, β=β, N=N)  # the estimator
 struct SpecificHeatFDT <: AbstractRelation end
 export SpecificHeatFDT
 
-_beta(; β=nothing, T=nothing) =
-    if β !== nothing
-        β
-    elseif T !== nothing
-        1 / T
-    else
-        error("pass either β or T")
-    end
+# (the `_beta` β-or-T kwarg helper lives in core/types.jl)
 
 function residual(::SpecificHeatFDT; C, var_E, β=nothing, T=nothing, N=1)
     b = _beta(; β=β, T=T)
