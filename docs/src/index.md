@@ -1,7 +1,7 @@
-# MyModule.jl
+# AbstractQAtlas.jl
 
 ## Models
 
 ```@autodocs
-Modules = [MyModule]
+Modules = [AbstractQAtlas]
 ```
