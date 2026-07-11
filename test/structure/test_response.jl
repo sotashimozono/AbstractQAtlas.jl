@@ -15,9 +15,9 @@ using AbstractQAtlas:
     conjugate_field
 
 @testset "genealogy edges" begin
-    @test derivative_edge(MagnetizationZ()) == DerivativeEdge(FreeEnergy, MagneticField)
-    @test derivative_edge(SusceptibilityZZ()) ==
-        DerivativeEdge(MagnetizationZ, MagneticField)
+    @test derivative_edge(Magnetization(:z)) == DerivativeEdge(FreeEnergy, MagneticField)
+    @test derivative_edge(Susceptibility(:z, :z)) ==
+        DerivativeEdge(Magnetization{:z}, MagneticField)
     @test derivative_edge(SpecificHeat()) == DerivativeEdge(Energy, Temperature)
     @test derivative_edge(ThermalEntropy()) == DerivativeEdge(FreeEnergy, Temperature)
     # Energy is dispatched through its {G} parameter
@@ -29,30 +29,36 @@ using AbstractQAtlas:
 end
 
 @testset "is_response" begin
-    @test is_response(SusceptibilityZZ())
-    @test is_response(MagnetizationX())
+    @test is_response(Susceptibility(:z, :z))
+    @test is_response(Magnetization(:x))
     @test is_response(SpecificHeat())
     @test !is_response(FreeEnergy())
     @test !is_response(PartitionFunction())
 end
 
 @testset "differentiation chain roots at the free energy" begin
-    @test differentiation_chain(SusceptibilityZZ()) ==
-        [SusceptibilityZZ, MagnetizationZ, FreeEnergy]
-    @test differentiation_chain(MagnetizationX()) == [MagnetizationX, FreeEnergy]
+    @test differentiation_chain(Susceptibility(:z, :z)) ==
+        [typeof(Susceptibility(:z, :z)), typeof(Magnetization(:z)), FreeEnergy]
+    @test differentiation_chain(Magnetization(:x)) ==
+        [typeof(Magnetization(:x)), FreeEnergy]
     @test differentiation_chain(SpecificHeat()) == [SpecificHeat, Energy, FreeEnergy]
     @test differentiation_chain(FreeEnergy()) == [FreeEnergy]     # singleton root
     # every thermodynamic response roots at FreeEnergy
-    for q in
-        (SusceptibilityXX(), MagnetizationZ(), SpecificHeat(), ThermalEntropy(), Energy())
+    for q in (
+        Susceptibility(:x, :x),
+        Magnetization(:z),
+        SpecificHeat(),
+        ThermalEntropy(),
+        Energy(),
+    )
         @test potential_root(q) === FreeEnergy
     end
 end
 
 @testset "derivative order along the chain" begin
     # χ is a SECOND field-derivative of F; M is a first; C none
-    @test derivative_order(SusceptibilityZZ(), MagneticField()) == 2
-    @test derivative_order(MagnetizationZ(), MagneticField()) == 1
+    @test derivative_order(Susceptibility(:z, :z), MagneticField()) == 2
+    @test derivative_order(Magnetization(:z), MagneticField()) == 1
     @test derivative_order(SpecificHeat(), MagneticField()) == 0
     # C is a first T-derivative of U (one T-edge on the U→…→F chain)
     @test derivative_order(SpecificHeat(), Temperature()) == 1
@@ -60,9 +66,28 @@ end
     @test derivative_order(FreeEnergy(), MagneticField()) == 0
 end
 
+@testset "nonlinear response: the genealogy extends recursively" begin
+    # χ⁽²⁾_{x;yz} ⟵ χ⁽¹⁾_{x;y} ⟵ M_x ⟵ F  — each edge a field derivative
+    χ2 = Susceptibility(:x, :y, :z)
+    @test derivative_edge(χ2) ==
+        DerivativeEdge(typeof(Susceptibility(:x, :y)), MagneticField)
+    @test differentiation_chain(χ2) == [
+        typeof(Susceptibility(:x, :y, :z)),
+        typeof(Susceptibility(:x, :y)),
+        typeof(Magnetization(:x)),
+        FreeEnergy,
+    ]
+    @test potential_root(χ2) === FreeEnergy
+    # χ⁽ⁿ⁾ is an (n+1)-th field-derivative of F
+    @test derivative_order(Susceptibility(:x, :y), MagneticField()) == 2        # n=1
+    @test derivative_order(Susceptibility(:x, :y, :z), MagneticField()) == 3    # n=2
+    @test derivative_order(Susceptibility(:x, :x, :x, :x), MagneticField()) == 4  # n=3
+    @test is_response(χ2)
+end
+
 @testset "conjugate fields" begin
-    @test conjugate_field(MagnetizationZ()) == MagneticField()
-    @test conjugate_field(MagnetizationX()) == MagneticField()
+    @test conjugate_field(Magnetization(:z)) == MagneticField()
+    @test conjugate_field(Magnetization(:x)) == MagneticField()
     @test conjugate_field(ThermalEntropy()) == Temperature()
 end
 

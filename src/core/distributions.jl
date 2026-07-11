@@ -143,8 +143,10 @@ fetch(model, ThermalAverage(Energy(), Canonical(β)), bc)
 ```
 
 instead of the implicit "a `β` kwarg means canonical" convention.  The
-[`component`](@ref) trait passes through to the wrapped quantity, so
-per-component identities keep pairing correctly through the marker.
+tensor traits ([`indices`](@ref), [`tensor_rank`](@ref),
+[`index_spaces`](@ref)) pass through to the wrapped quantity, so a
+component average `⟨χ_xy⟩_D` keeps its index structure through the
+marker.
 
 Fields: `quantity`, `distribution` (accessed directly).
 """
@@ -152,5 +154,7 @@ struct ThermalAverage{Q<:AbstractQuantity,D<:AbstractDistribution} <: AbstractQu
     quantity::Q
     distribution::D
 end
-component(::Type{ThermalAverage{Q,D}}) where {Q,D} = component(Q)
+indices(::Type{ThermalAverage{Q,D}}) where {Q,D} = indices(Q)
+tensor_rank(::Type{ThermalAverage{Q,D}}) where {Q,D} = tensor_rank(Q)
+index_spaces(::Type{ThermalAverage{Q,D}}) where {Q,D} = index_spaces(Q)
 export ThermalAverage

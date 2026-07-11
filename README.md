@@ -96,6 +96,19 @@ Covered in v0.1:
   `DetailedBalance` (`S(q,−ω) = e^{−βω} S(q,ω)`), `NMRExponent`
   (`θ_NMR = 2Δ_op − 1`)
 
+**Tensor structure — internal degrees of freedom.** Quantities that are
+tensors are not blurred into scalars: they carry their indices as type
+parameters and declare `tensor_rank` / `index_spaces` / `indices`.
+`Susceptibility(:x, :y)` is the off-diagonal `χ_xy` the fused
+`SusceptibilityZZ`-style names could not express, and the design is
+**order-extensible to nonlinear response**: `Susceptibility(:x, :y, :z)`
+is the second-order `χ⁽²⁾_{x;yz} = ∂²M_x/∂h_y∂h_z` (`response_order == 2`,
+`tensor_rank == 3`), with the genealogy extending recursively `χ⁽ⁿ⁾ ⟵
+χ⁽ⁿ⁻¹⁾ ⟵ … ⟵ M ⟵ F`. Index spaces: `SpinAxis` / `SpatialDirection`
+(`Conductivity σ_μν`, also nonlinear) / `OrbitalIndex` (propagators
+`G_ab`). `Dyson` is written with `inv`, so the one identity holds for
+scalar single-band and matrix orbital-space propagators alike.
+
 **Structure — definitional correspondences** (the `structure/` layer):
 
 - **Critical correspondence**: `critical_scaling(quantity)` maps each

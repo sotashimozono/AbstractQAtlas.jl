@@ -12,8 +12,8 @@ const EXPS = (α=0//1, β=1//8, γ=7//4, δ=15//1, ν=1//1, η=1//4)   # 2D Isin
 
 @testset "correspondence: which exponent governs which quantity" begin
     @test critical_scaling(SpontaneousMagnetization()) == CriticalScaling(:β, +1)
-    @test critical_scaling(SusceptibilityZZ()) == CriticalScaling(:γ, -1)
-    @test critical_scaling(SusceptibilityXX()) == CriticalScaling(:γ, -1)  # any axis
+    @test critical_scaling(Susceptibility(:z, :z)) == CriticalScaling(:γ, -1)
+    @test critical_scaling(Susceptibility(:x, :x)) == CriticalScaling(:γ, -1)  # any axis
     @test critical_scaling(SpecificHeat()) == CriticalScaling(:α, -1)
     @test critical_scaling(CorrelationLength()) == CriticalScaling(:ν, -1)
     # quantities with no reduced-temperature critical law
@@ -21,7 +21,7 @@ const EXPS = (α=0//1, β=1//8, γ=7//4, δ=15//1, ν=1//1, η=1//4)   # 2D Isin
     @test critical_scaling(FreeEnergy()) === nothing
     # the field-driven / distance-driven laws have their own accessors
     @test critical_isotherm(SpontaneousMagnetization()) == :δ
-    @test correlation_decay(ZZCorrelation()) == :η
+    @test correlation_decay(SpinCorrelation(:z, :z)) == :η
 end
 
 @testset "singular_form derived from the correspondence (exact rationals)" begin
@@ -33,8 +33,8 @@ end
     @test m2 > m1
     @test m1 ≈ 0.01^(1 / 8)
     # χ ∼ |t|^{-γ}: diverges as t → 0
-    x1 = singular_form(SusceptibilityZZ(), 0.01; exponents=EXPS)
-    x2 = singular_form(SusceptibilityZZ(), 0.005; exponents=EXPS)
+    x1 = singular_form(Susceptibility(:z, :z), 0.01; exponents=EXPS)
+    x2 = singular_form(Susceptibility(:z, :z), 0.005; exponents=EXPS)
     @test x2 > x1
     @test x1 ≈ 0.01^(-7 / 4)
     # ξ ∼ |t|^{-ν}, C ∼ |t|^{-α}
@@ -46,7 +46,7 @@ end
 
 @testset "FSS size exponent derived (the γ/ν that used to live in a comment)" begin
     # χ_max ∼ L^{+γ/ν}
-    @test fss_size_exponent(SusceptibilityZZ(); exponents=EXPS) == 7 // 4
+    @test fss_size_exponent(Susceptibility(:z, :z); exponents=EXPS) == 7 // 4
     # M(Tc) ∼ L^{-β/ν}
     @test fss_size_exponent(SpontaneousMagnetization(); exponents=EXPS) == -1 // 8
     # ξ ∼ L^{1} — correlation length saturates at the system size
@@ -54,13 +54,13 @@ end
     # C_max ∼ L^{α/ν}
     @test fss_size_exponent(SpecificHeat(); exponents=EXPS) == 0 // 1
     # exactness preserved through the derivation (Rational in ⇒ Rational out)
-    @test fss_size_exponent(SusceptibilityZZ(); exponents=EXPS) isa Rational
+    @test fss_size_exponent(Susceptibility(:z, :z); exponents=EXPS) isa Rational
 end
 
 @testset "fss_peak round trip: synthetic data recovers the derived exponent" begin
-    ratio = fss_size_exponent(SusceptibilityZZ(); exponents=EXPS)   # 7/4, derived
+    ratio = fss_size_exponent(Susceptibility(:z, :z); exponents=EXPS)   # 7/4, derived
     Ls = [8, 16, 32, 64]
-    χmax = [2.31 * fss_peak(SusceptibilityZZ(), L; exponents=EXPS) for L in Ls]
+    χmax = [2.31 * fss_peak(Susceptibility(:z, :z), L; exponents=EXPS) for L in Ls]
     # least-squares log-log slope must recover the *derived* ratio
     mx, my = sum(log.(Ls)) / 4, sum(log.(χmax)) / 4
     slope = sum((log.(Ls) .- mx) .* (log.(χmax) .- my)) / sum((log.(Ls) .- mx) .^ 2)
@@ -75,7 +75,7 @@ end
         @test c.x == 0.0
         @test c.scale ≈ float(L)^(1 / 8)          # ρ = +β/ν = 1/8
     end
-    cχ = collapse_coordinates(SusceptibilityZZ(), Tc + 0.01, 16, Tc; exponents=EXPS)
+    cχ = collapse_coordinates(Susceptibility(:z, :z), Tc + 0.01, 16, Tc; exponents=EXPS)
     @test cχ.x ≈ 0.01 * 16.0                        # (T−Tc)·L^{1/ν}
     @test cχ.scale ≈ 16.0^(-7 / 4)                  # ρ = −γ/ν
     # perfect two-size collapse of a synthetic observable

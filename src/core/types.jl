@@ -102,8 +102,10 @@ end
     AbstractQuantity
 
 Abstract parent type for quantities.  Concrete quantity structs
-(e.g. `struct MagnetizationX <: AbstractQuantity end`) make dispatch
-static and naming explicit (axis, entropy variant, …).
+(e.g. `struct SpecificHeat <: AbstractQuantity end`, or the index-
+parametric `Susceptibility{A,B}` for tensor quantities) make dispatch
+static and naming explicit (axis, entropy variant, …).  Tensor character
+is carried by the `tensor_rank` / `index_spaces` / `indices` traits.
 """
 abstract type AbstractQuantity end
 export AbstractQuantity
