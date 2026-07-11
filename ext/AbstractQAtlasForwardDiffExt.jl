@@ -50,16 +50,11 @@ end
 #   χ⁽ⁿ⁾_{α;β₁…βₙ} = −∂ⁿ⁺¹F / ∂h_α ∂h_{β₁} … ∂h_{βₙ}
 # with the diagonal (all-equal indices) reproducing the single-field result.
 function _slot(s, components)
-    return (
-        p=findfirst(==(s), components);
-        if p === nothing
-            error(
-            "thermal_derivative: field component $(repr(s)) not in components $(components)"
-        )
-        else
-            p
-        end
+    p = findfirst(==(s), components)
+    p === nothing && error(
+        "thermal_derivative: field component $(repr(s)) not in components $(components)"
     )
+    return p
 end
 
 _bump(h⃗, p, t) = [i == p ? h⃗[i] + t : h⃗[i] for i in eachindex(h⃗)]
