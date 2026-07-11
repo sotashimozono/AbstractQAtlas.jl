@@ -32,6 +32,7 @@ using LinearAlgebra: det, eigen, Hermitian
 # core — type vocabulary
 include("core/types.jl")
 include("core/indices.jl")
+include("core/representations.jl")
 include("core/quantities.jl")
 include("core/universality.jl")
 include("core/distributions.jl")
@@ -46,6 +47,7 @@ include("structure/criticality.jl")
 include("structure/response.jl")
 include("structure/tensor_symmetry.jl")
 include("structure/spectral.jl")
+include("structure/fourier.jl")
 
 # relations — model-independent identities and forms
 include("relations/interface.jl")

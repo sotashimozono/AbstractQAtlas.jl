@@ -149,6 +149,17 @@ in the dynamical graph. References for the response theory
 ([`Rushbrooke1963`]…, [`CallenWelton1951`]) are in `docs/references.bib`,
 each DOI CI-verified against Crossref.
 
+**Fourier / conjugate representations.** Quantities carry the space they
+live in — `RealSpace` ↔ `MomentumSpace`, `TimeDomain` ↔ `FrequencyDomain`
+— paired by `fourier_conjugate`. `representation(DynamicalStructureFactor)
+== (MomentumSpace(), FrequencyDomain())`; `fourier_conjugate_quantity`
+and `fourier_pair` record the transform structure (`S(q) ↔ ⟨SS⟩(r)`
+spatial FT, `S(q,ω) ↔ ⟨AA⟩(r,t)` space-time FT). The *continuum*
+transform is structure here; its discrete realization on a grid is a DFT
+— the [`AbstractFFTs.jl`](https://github.com/JuliaMath/AbstractFFTs.jl)
+interface (`fft`/`fftfreq`) — and belongs to the functional sibling
+(issues #14, #19).
+
 **Structure — definitional correspondences** (the `structure/` layer):
 
 - **Critical correspondence**: `critical_scaling(quantity)` maps each
