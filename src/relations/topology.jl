@@ -117,3 +117,38 @@ component of the rank-2 conductivity tensor `σ_μν`
 Variables (in units of `e²/h`): `σxy`, `C`.
 """
 @relation :topology TKNN(σxy, C) = σxy - C
+
+"""
+    ChernFromBerryCurvature <: AbstractRelation
+
+The Chern number as the Brillouin-zone integral of the Berry curvature,
+
+`C = (1/2π) ∫_BZ Ω(k) d²k`,
+
+(Berry, Proc. R. Soc. Lond. A 392, 45 (1984); Thouless, Kohmoto,
+Nightingale & den Nijs, Phys. Rev. Lett. 49, 405 (1982)).  Supplied-
+integral convention: `berry_flux = ∫_BZ Ω d²k` is the caller-computed
+Berry-curvature flux over the Brillouin zone.  With [`TKNN`](@ref)
+(`σ_xy = C`) this fixes the intrinsic anomalous Hall conductivity from
+the Berry curvature (Xiao, Chang & Niu, Rev. Mod. Phys. 82, 1959 (2010)).
+
+Variables: `C`, `berry_flux`.
+"""
+@relation :topology ChernFromBerryCurvature(C, berry_flux) = C - berry_flux / (2π)
+
+"""
+    BulkBoundary <: AbstractRelation
+
+The bulk–boundary correspondence: the number of protected boundary
+(edge / surface) modes equals the magnitude of the bulk topological
+invariant,
+
+`n = |ν|`,
+
+(Hasan & Kane, Rev. Mod. Phys. 82, 3045 (2010)).  For a Chern insulator
+`ν = C` and `n` counts the chiral edge modes; for a ℤ₂ insulator `ν` is
+the ℤ₂ index mod 2.
+
+Variables: `n` (mode count), `ν` (invariant).
+"""
+@relation :topology BulkBoundary(n, ν) = n - abs(ν)

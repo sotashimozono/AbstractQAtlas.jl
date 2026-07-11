@@ -89,8 +89,16 @@ Covered in v0.1:
 - **Distributions & statistics**: `MicroCanonical` / `Canonical` / `GrandCanonical` / `Squeezed` + `ensemble_weight`; `Fermionic`/`Bosonic` occupation functions; `ThermalAverage` marker (⟨Q⟩_D at the type level)
 - **Wick's theorem**: `wick_contraction`, `wick_density_correlation`
   (number-conserving Gaussian fermions)
-- **Topological invariants**: `winding_number` (1D two-band),
-  `chern_number` (Fukui–Hatsugai–Suzuki lattice method), `TKNN`
+- **Topological invariants & characterization**: `winding_number` (1D
+  two-band), `chern_number` (Fukui–Hatsugai–Suzuki), `TKNN`
+  (`σ_xy = C`), `ChernFromBerryCurvature` (`C = (1/2π)∫Ω`),
+  `BulkBoundary` (`n = |ν|`, edge-mode count from the bulk invariant)
+- **Heat-capacity relations**: `SpecificHeatFDT`, `SpecificHeatFromEntropy`
+  (`c = T ∂s/∂T`), `HeatCapacityDifference` (Mayer `c_p − c_v = T v α²/κ_T`)
+- **Nonlinear-tensor symmetry**: `intrinsic_permutation_symmetric`,
+  `canonical_component`, `permutation_equivalent` — `χ⁽ⁿ⁾`'s field
+  indices (with their frequencies) are interchangeable, so
+  `χ⁽²⁾_{x;yz} = χ⁽²⁾_{x;zy}`
 - **Dynamical / spectral identities**: `Dyson` (`G⁻¹ = G₀⁻¹ − Σ`),
   `SpectralFromGreens` (`A = −Im Gᴿ/π`), `SpectralSumRule` (`∫A dω = 1`),
   `DetailedBalance` (`S(q,−ω) = e^{−βω} S(q,ω)`), `NMRExponent`

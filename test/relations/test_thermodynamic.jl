@@ -68,6 +68,38 @@ end
     end
 end
 
+@testset "SpecificHeatFromEntropy: c = T ∂s/∂T vs the closed-form ∂s/∂T" begin
+    # two-level system entropy s(T) in closed form; ∂s/∂T by finite diff,
+    # and c_v independently from Var(E)/T² — the two routes must agree.
+    ε = 1.1
+    for T in (0.4, 1.0, 2.5)
+        β = 1 / T
+        Z = 1 + exp(-β * ε)
+        s(TT) =
+            (bb=1 / TT; log(1 + exp(-bb * ε)) + bb * ε * exp(-bb * ε) / (1 + exp(-bb * ε)))
+        h = 1e-5 * T
+        dS_dT = (s(T + h) - s(T - h)) / (2h)
+        varE = ε^2 * exp(-β * ε) / Z^2
+        C = solve(SpecificHeatFDT(), Val(:C); var_E=varE, β=β)     # fluctuation route
+        @test check(SpecificHeatFromEntropy(); C=C, dS_dT=dS_dT, T=T, atol=1e-6)
+        @test solve(SpecificHeatFromEntropy(), Val(:C); dS_dT=dS_dT, T=T) ≈ C rtol = 1e-5
+    end
+end
+
+@testset "HeatCapacityDifference: Mayer relation c_p − c_v = T v α²/κ_T" begin
+    # exact by construction: pick α, κ_T, and set the difference accordingly
+    T, v, α, κT = 2.0, 1.0, 0.5, 1.3
+    diff = T * v * α^2 / κT
+    Cv = 1.5
+    Cp = Cv + diff
+    @test check(HeatCapacityDifference(); Cp=Cp, Cv=Cv, T=T, v=v, α=α, κT=κT, atol=1e-13)
+    # c_p ≥ c_v always (κ_T > 0)
+    @test Cp >= Cv
+    # solve for c_p given the rest
+    @test solve(HeatCapacityDifference(), Val(:Cp); Cv=Cv, T=T, v=v, α=α, κT=κT) ≈ Cp
+    @test !check(HeatCapacityDifference(); Cp=Cv, Cv=Cv, T=T, v=v, α=α, κT=κT)  # ignores diff
+end
+
 @testset "argument validation" begin
     @test_throws ErrorException residual(SpecificHeatFDT(); C=1.0, var_E=1.0)  # no β, no T
 end

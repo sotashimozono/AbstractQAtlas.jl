@@ -69,3 +69,37 @@ commuting observable):
 normalization.
 """
 @relation :thermodynamic LinearResponseFDT(dO_dλ, var_O, β) = dO_dλ - β * var_O
+
+"""
+    SpecificHeatFromEntropy <: AbstractRelation
+
+The specific heat as the temperature response of the entropy,
+
+`c = T ∂s/∂T`
+
+(at fixed volume, `c = c_v`).  Supplied-derivative convention: `dS_dT`
+is the caller-computed `∂s/∂T` at the working point.  The fluctuation
+route ([`SpecificHeatFDT`](@ref)) and this thermodynamic route must
+agree.
+
+Variables: `C`, `dS_dT`, `T`.
+"""
+@relation :thermodynamic SpecificHeatFromEntropy(C, dS_dT, T) = C - T * dS_dT
+
+"""
+    HeatCapacityDifference <: AbstractRelation
+
+The Mayer relation between the constant-pressure and constant-volume
+heat capacities,
+
+`c_p − c_v = T v α² / κ_T`,
+
+with `α = (1/V)(∂V/∂T)_p` the [`ThermalExpansionCoefficient`](@ref),
+`κ_T = −(1/V)(∂V/∂p)_T` the [`IsothermalCompressibility`](@ref), and `v`
+the (per-site) volume.  Purely thermodynamic — always non-negative since
+`κ_T > 0`, so `c_p ≥ c_v`.
+
+Variables: `Cp`, `Cv`, `T`, `v`, `α`, `κT`.
+"""
+@relation :thermodynamic HeatCapacityDifference(Cp, Cv, T, v, α, κT) =
+    (Cp - Cv) - T * v * α^2 / κT

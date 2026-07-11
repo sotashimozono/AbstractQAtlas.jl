@@ -121,6 +121,27 @@ the correlation. Response-theory and scaling/FDT references (Kubo 1957,
 Wan–Armitage 2019, Rushbrooke/Widom/Fisher/Josephson, Callen–Welton
 1951) live in `docs/references.bib`, DOI-verified in CI.
 
+## Nonlinear-tensor symmetry & accumulated relations
+
+The nonlinear susceptibility is *essentially* a higher-order tensor, and
+carries **intrinsic permutation symmetry** — `χ⁽ⁿ⁾`'s field indices (with
+their frequencies) are interchangeable, so
+`Susceptibility(:x, :y, :z) == Susceptibility(:x, :z, :y)` under
+[`permutation_equivalent`](@ref) ([`canonical_component`](@ref) sorts the
+field indices; the response index is fixed).
+
+Known inter-quantity relationships accumulate as first-class relations:
+`ChernFromBerryCurvature` (`C = (1/2π)∫Ω`) with [`TKNN`](@ref)
+(`σ_xy = C`) and `BulkBoundary` (`n = |ν|`) for the topological side;
+`SpecificHeatFromEntropy` (`c = T ∂s/∂T`) and `HeatCapacityDifference`
+(Mayer's `c_p − c_v = T v α²/κ_T`) for heat capacity. References are
+DOI-verified in `docs/references.bib`.
+
+**Scope note.** The Berry curvature is the *imaginary* part of the
+quantum geometric tensor; the real part (the quantum metric) and the
+mixed-state / Uhlmann generalizations are deliberately **out of scope** —
+this package stays at the model-independent textbook level.
+
 ## Structure — definitional correspondences
 
 The `structure/` layer holds the generic facts that are true *by
