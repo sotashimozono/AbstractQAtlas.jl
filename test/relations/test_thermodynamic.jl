@@ -100,6 +100,20 @@ end
     @test !check(HeatCapacityDifference(); Cp=Cv, Cv=Cv, T=T, v=v, α=α, κT=κT)  # ignores diff
 end
 
+@testset "StructureFactorSusceptibility: χ = β S(q→0) (static classical FDT)" begin
+    # two independent spins in a field: χ (per site) and S(q=0) = Var(M)/N
+    # both come from the same fluctuation, so χ = β S(0) exactly.
+    N = 2
+    for T in (0.5, 1.0, 2.5), h in (0.0, 0.3)
+        β = 1 / T
+        varM = 2 / cosh(β * h)^2                # exact Var(M) for two spins
+        Sq0 = varM / N                          # static structure factor at q=0
+        χ = solve(SusceptibilityFDT(), Val(:χ); var_M=varM, β=β, N=N)
+        @test check(StructureFactorSusceptibility(); χ=χ, Sq0=Sq0, β=β, atol=1e-13)
+        @test solve(StructureFactorSusceptibility(), Val(:χ); Sq0=Sq0, β=β) ≈ χ
+    end
+end
+
 @testset "argument validation" begin
     @test_throws ErrorException residual(SpecificHeatFDT(); C=1.0, var_E=1.0)  # no β, no T
 end

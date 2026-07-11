@@ -54,6 +54,27 @@ end
     @test !check(NMRExponent(); θ_NMR=0 // 1, Δ_op=1 // 8)
 end
 
+@testset "structure-factor sum rule: S(q) = ∫ S(q,ω) dω/(2π)" begin
+    @test residual(StaticFromDynamicalStructureFactor(); Sq=1.5, sqw_integral=1.5) == 0
+    @test check(StaticFromDynamicalStructureFactor(); Sq=2.0, sqw_integral=2.0)
+    @test !check(StaticFromDynamicalStructureFactor(); Sq=2.0, sqw_integral=1.0)
+    @test solve(StaticFromDynamicalStructureFactor(), Val(:Sq); sqw_integral=0.7) ≈ 0.7
+end
+
+@testset "dynamical FDT reproduces (convention-free) detailed balance" begin
+    # build S(±ω) from χ''(±ω) via the FDT, then the INDEPENDENT detailed-
+    # balance relation must hold — a cross-check between two relations.
+    for T in (0.5, 2.0), ω in (0.4, 1.3), χpp in (0.6, 2.5)
+        β = 1 / T
+        Sp = solve(DynamicalFDT(), Val(:S); χpp=χpp, ω=ω, β=β)
+        Sm = solve(DynamicalFDT(), Val(:S); χpp=(-χpp), ω=(-ω), β=β)   # χ'' is odd
+        @test isapprox(Sm / Sp, exp(-β * ω); rtol=1e-12)
+        @test check(DetailedBalance(); S_plus=Sp, S_minus=Sm, ω=ω, β=β, atol=1e-12)
+        # T-form kwarg agrees with β-form
+        @test solve(DynamicalFDT(), Val(:S); χpp=χpp, ω=ω, T=T) ≈ Sp
+    end
+end
+
 @testset "one-call sweep picks up the spectral identities by variable name" begin
     G0 = 1 / (0.5 + 0.1im)
     Σ = 0.2 - 0.3im

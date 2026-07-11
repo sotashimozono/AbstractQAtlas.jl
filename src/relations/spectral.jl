@@ -80,3 +80,36 @@ Exact-arithmetic: `Δ_op = 1//8` (1D TFIM QCP) gives `θ_NMR = −3//4`
 exactly.
 """
 @relation :spectral NMRExponent(θ_NMR, Δ_op) = θ_NMR - (2 * Δ_op - 1)
+
+"""
+    StaticFromDynamicalStructureFactor <: AbstractRelation
+
+The static (equal-time) structure factor as the frequency integral of
+the dynamical one,
+
+`S(q) = ∫ S(q, ω) dω / (2π)`
+
+(Van Hove, Phys. Rev. 95, 249 (1954)).  Supplied-integral convention:
+`sqw_integral = ∫ S(q, ω) dω/(2π)` is the caller-computed frequency
+integral at fixed `q`.
+
+Variables: `Sq`, `sqw_integral`.
+"""
+@relation :spectral StaticFromDynamicalStructureFactor(Sq, sqw_integral) = Sq - sqw_integral
+
+"""
+    DynamicalFDT <: AbstractRelation
+
+The finite-temperature fluctuation–dissipation theorem relating the
+dynamical structure factor to the dissipative part of the dynamical
+susceptibility,
+
+`S(q, ω) = χ''(q, ω) / [π (1 − e^{−βω})]`
+
+(Callen & Welton, Phys. Rev. 83, 34 (1951)).  Since `χ''` is odd in `ω`,
+this convention reproduces detailed balance `S(q,−ω) = e^{−βω} S(q, ω)`
+([`DetailedBalance`](@ref)) automatically.
+
+Variables: `S` = `S(q, ω)`, `χpp` = `χ''(q, ω)`, `ω`, and `β` (or `T`).
+"""
+@relation :spectral DynamicalFDT(S, χpp, ω, β) = S - χpp / (π * (1 - exp(-β * ω)))

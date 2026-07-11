@@ -436,6 +436,20 @@ index_spaces(::Type{DynamicalStructureFactor}) = (SpinAxis(), SpinAxis())
 frequency_arguments(::Type{DynamicalStructureFactor}) = 1
 
 """
+    StaticStructureFactor() <: AbstractStructureFactor
+
+The static (equal-time) structure factor `S(q)` — the frequency integral
+of the [`DynamicalStructureFactor`](@ref), `S(q) = ∫ S(q, ω) dω/(2π)`
+(Van Hove, Phys. Rev. 95, 249 (1954)).  Its `q → 0` limit fixes the
+static susceptibility (`χ = β S(q→0)`, classical).  Rank-2 in spin space,
+one frequency integrated out (`frequency_arguments == 0`).
+"""
+struct StaticStructureFactor <: AbstractStructureFactor end
+export StaticStructureFactor
+tensor_rank(::Type{StaticStructureFactor}) = 2
+index_spaces(::Type{StaticStructureFactor}) = (SpinAxis(), SpinAxis())
+
+"""
     DynamicalSusceptibility{I}() <: AbstractSusceptibility
     DynamicalSusceptibility(α, β₁, …, βₙ)          # each a Symbol
 

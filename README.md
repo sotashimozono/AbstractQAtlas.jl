@@ -101,6 +101,10 @@ Covered in v0.1:
   (`β = ∂S/∂E`, the microcanonical–canonical bridge), `CanonicalTPQ`
   (`Z = D·⟨ψ₀|e^{−βH}|ψ₀⟩`, Sugiura–Shimizu) — the identities an ED / MPS /
   TPQ calculation checks its measured quantities against
+- **Structure-factor sum rules & dynamical FDT**: `StaticFromDynamicalStructureFactor`
+  (`S(q) = ∫S(q,ω)dω/2π`, Van Hove), `DynamicalFDT`
+  (`S(q,ω) = χ''/[π(1−e^{−βω})]`, reproduces detailed balance),
+  `StructureFactorSusceptibility` (`χ = β S(q→0)`)
 - **Nonlinear-tensor symmetry**: `intrinsic_permutation_symmetric`,
   `canonical_component`, `permutation_equivalent` — `χ⁽ⁿ⁾`'s field
   indices (with their frequencies) are interchangeable, so

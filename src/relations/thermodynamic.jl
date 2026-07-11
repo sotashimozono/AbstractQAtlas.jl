@@ -103,3 +103,21 @@ Variables: `Cp`, `Cv`, `T`, `v`, `α`, `κT`.
 """
 @relation :thermodynamic HeatCapacityDifference(Cp, Cv, T, v, α, κT) =
     (Cp - Cv) - T * v * α^2 / κT
+
+"""
+    StructureFactorSusceptibility <: AbstractRelation
+
+The static susceptibility as the `q → 0` limit of the static structure
+factor (the classical / isothermal fluctuation–dissipation sum rule),
+
+`χ = β S(q → 0)`,
+
+with `S(q)` the equal-time structure factor of the conjugate observable
+(the compressibility sum rule for the density channel).  This is the
+static, classical limit of the [`DynamicalFDT`](@ref); the response and
+fluctuation of the *same* observable, one more way the two routes to `χ`
+must agree.
+
+Variables: `χ`, `Sq0` = `S(q → 0)`, `β` (or `T`).
+"""
+@relation :thermodynamic StructureFactorSusceptibility(χ, Sq0, β) = χ - β * Sq0
