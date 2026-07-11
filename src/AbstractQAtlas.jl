@@ -56,5 +56,6 @@ include("relations/statistics.jl")
 include("relations/wick.jl")
 include("relations/topology.jl")
 include("relations/spectral.jl")
+include("relations/ensembles.jl")
 
 end # module AbstractQAtlas
