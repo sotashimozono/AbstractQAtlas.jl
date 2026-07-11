@@ -24,7 +24,7 @@ representation(::Type{<:AbstractQuantity}) = ()
 representation(::Type{<:AbstractTwoPointCorrelation}) = (RealSpace(),)
 representation(::Type{<:AbstractStructureFactor}) = (MomentumSpace(),)
 # the dynamical (space+time / momentum+frequency) family
-representation(::Type{DynamicalCorrelation}) = (RealSpace(), TimeDomain())
+representation(::Type{<:DynamicalCorrelation}) = (RealSpace(), TimeDomain())
 representation(::Type{DynamicalStructureFactor}) = (MomentumSpace(), FrequencyDomain())
 function representation(::Type{DynamicalSusceptibility{I}}) where {I}
     return (MomentumSpace(), FrequencyDomain())
@@ -56,7 +56,7 @@ fourier_conjugate_quantity(::Type{<:AbstractQuantity}) = nothing
 
 fourier_conjugate_quantity(::Type{StaticStructureFactor}) = SpinCorrelation
 fourier_conjugate_quantity(::Type{DynamicalStructureFactor}) = DynamicalCorrelation
-fourier_conjugate_quantity(::Type{DynamicalCorrelation}) = DynamicalStructureFactor
+fourier_conjugate_quantity(::Type{<:DynamicalCorrelation}) = DynamicalStructureFactor
 export fourier_conjugate_quantity
 
 """
@@ -69,7 +69,7 @@ in conjugate representations (their `representation`s are elementwise
 
 ```julia
 fourier_pair(StaticStructureFactor(), SpinCorrelation(:z, :z))       # true (S(q) ↔ ⟨SS⟩(r))
-fourier_pair(DynamicalStructureFactor(), DynamicalCorrelation())     # true (space-time FT)
+fourier_pair(DynamicalStructureFactor(), DynamicalCorrelation(:x, :x)) # true (space-time FT)
 ```
 """
 function fourier_pair(a::AbstractQuantity, b::AbstractQuantity)

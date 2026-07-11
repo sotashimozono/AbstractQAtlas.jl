@@ -115,9 +115,12 @@ limit (`0`); the dynamical [`DynamicalSusceptibility`](@ref)`(:x, :y, :z)`
 is `χ⁽²⁾(ω₁, ω₂)` with `frequency_arguments == 2` — an `n`-th order
 nonlinear response is intrinsically multi-time (2D coherent
 spectroscopy). Its microscopic origin is the **Kubo formula**
-([`spectral_origin`](@ref)`(DynamicalSusceptibility(…)) == (DynamicalCorrelation,
-:kubo)`): the retarded `n`-fold nested-commutator response function of
-the correlation. Response-theory and scaling/FDT references (Kubo 1957,
+([`spectral_origin`](@ref)`(DynamicalSusceptibility(:x,:y,:z)) ==
+(DynamicalCorrelation{(:x,:y,:z)}, :kubo)`): the retarded `n`-fold
+nested-commutator response function of the **same-order** correlation —
+an `n`-th order response is an `n`-time (`(n+1)`-point) correlation, so
+the Kubo edge preserves the frequency count on both sides.
+Response-theory and scaling/FDT references (Kubo 1957,
 Wan–Armitage 2019, Rushbrooke/Widom/Fisher/Josephson, Callen–Welton
 1951) live in `docs/references.bib`, DOI-verified in CI.
 

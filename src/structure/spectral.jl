@@ -6,14 +6,17 @@
 #               --neg_im_over_pi-->  SpectralFunction
 #               --bz_average-->  DensityOfStates
 #
-#   DynamicalCorrelation  --spacetime_fourier-->  DynamicalStructureFactor
-#                         --kubo-->  DynamicalSusceptibility
-#                                    --low_frequency_limit-->  NMRSpinRelaxationRate
+#   DynamicalCorrelation{I}  --spacetime_fourier-->  DynamicalStructureFactor  (linear, 2-point)
+#                            --kubo-->  DynamicalSusceptibility{I}             (order-preserving)
+#                                       --low_frequency_limit-->  NMRSpinRelaxationRate
 #
 # The DynamicalCorrelation is the root of the response branch: both the
 # symmetric structure factor S(q,ω) and the antisymmetric (commutator)
 # response χ(q,ω) come from it — the two sides of the fluctuation–
-# dissipation theorem.
+# dissipation theorem.  It is order-parametric: an n-th order response
+# χ⁽ⁿ⁾(ω₁…ωₙ) is the retarded part of the n-time (n+1-point)
+# DynamicalCorrelation of the SAME order, so the :kubo edge preserves the
+# response order (the structure factor is the linear, 2-point branch).
 #
 # Each edge records WHICH operation turns the source quantity into the
 # target — the inter-quantity genealogy the response tree
@@ -68,8 +71,15 @@ end
 # (i/ħ)θ(t)⟨[A(t),B(0)]⟩ (Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)); the
 # n-th order χ⁽ⁿ⁾(ω₁…ωₙ) is the multi-time n-fold nested-commutator
 # response (2D coherent spectroscopy — Wan & Armitage, PRL 122, 257401
-# (2019)).  Any response order routes to the same source correlation.
-function spectral_origin(::Type{<:DynamicalSusceptibility})
+# (2019)).  An n-th order response is an n-TIME correlation: order-n
+# χ⁽ⁿ⁾{I} routes to the same-order DynamicalCorrelation{I} (the (n+1)-point
+# kernel), so `frequency_arguments` agree on both sides of the edge.
+function spectral_origin(::Type{DynamicalSusceptibility{I}}) where {I}
+    return SpectralOrigin(DynamicalCorrelation{I}, :kubo)
+end
+# the index-erased family (e.g. reached via NMRSpinRelaxationRate) routes to
+# the correlation family
+function spectral_origin(::Type{DynamicalSusceptibility})
     return SpectralOrigin(DynamicalCorrelation, :kubo)
 end
 function spectral_origin(::Type{NMRSpinRelaxationRate})

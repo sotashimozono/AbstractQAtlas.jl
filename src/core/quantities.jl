@@ -445,15 +445,48 @@ export DensityOfStates
 frequency_arguments(::Type{DensityOfStates}) = 1
 
 """
-    DynamicalCorrelation() <: AbstractTwoPointCorrelation
+    DynamicalCorrelation{I}() <: AbstractQuantity
+    DynamicalCorrelation(α, β₁, …, βₙ)             # each a Symbol
 
-The space-and-time-resolved correlation `⟨A(r, t) A(0, 0)⟩` whose
-space-time Fourier transform (any spatial dimension) is the
-[`DynamicalStructureFactor`](@ref).
+The space-and-time-resolved correlation of **arbitrary order** — the
+microscopic kernel of the Kubo response, carrying the **same order** as
+the [`DynamicalSusceptibility`](@ref) it feeds.
+
+The linear `DynamicalCorrelation(:x, :y)` is the two-point
+`⟨A^x(r, t) A^y(0, 0)⟩` whose space-time Fourier transform is the
+[`DynamicalStructureFactor`](@ref) `S(q, ω)` — one time difference,
+`frequency_arguments == 1`.
+
+The `n`-th order term `DynamicalCorrelation(α, β₁, …, βₙ)` is the
+`(n+1)`-point function `⟨A^α(t) A^{β₁}(t₁) ⋯ A^{βₙ}(tₙ)⟩` — `n+1`
+operators at `n` independent time differences, so it is intrinsically
+**n-time** (`frequency_arguments == n == response_order`).  Its `n`-fold
+nested-commutator (retarded) part is exactly the Kubo kernel of the
+order-`n` `DynamicalSusceptibility(α, β₁, …, βₙ)` (Kubo, J. Phys. Soc.
+Jpn. 12, 570 (1957)): an `n`-th order response is an `n`-time
+correlation.
 """
-struct DynamicalCorrelation <: AbstractTwoPointCorrelation end
+struct DynamicalCorrelation{I} <: AbstractQuantity
+    function DynamicalCorrelation{I}() where {I}
+        return (
+            length(_axistuple(I)) >= 2 || error(
+                "DynamicalCorrelation needs ≥2 operators (1 + n fields for order n), got $(repr(I))",
+            );
+            new{I}()
+        )
+    end
+end
+DynamicalCorrelation(idx::Symbol...) = DynamicalCorrelation{idx}()
 export DynamicalCorrelation
-frequency_arguments(::Type{DynamicalCorrelation}) = 1
+tensor_rank(::Type{DynamicalCorrelation{I}}) where {I} = length(I)
+function index_spaces(::Type{DynamicalCorrelation{I}}) where {I}
+    return ntuple(_ -> SpinAxis(), length(I))
+end
+indices(::Type{DynamicalCorrelation{I}}) where {I} = I
+response_order(::Type{DynamicalCorrelation{I}}) where {I} = length(I) - 1
+# n-time: an (n+1)-point correlation has n independent time differences,
+# matching the n frequencies of the order-n dynamical susceptibility.
+frequency_arguments(::Type{DynamicalCorrelation{I}}) where {I} = length(I) - 1
 
 """
     DynamicalStructureFactor() <: AbstractStructureFactor
