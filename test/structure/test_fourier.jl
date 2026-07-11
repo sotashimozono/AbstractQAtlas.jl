@@ -41,7 +41,10 @@ end
         DynamicalStructureFactor
     @test fourier_conjugate_quantity(Energy()) === nothing
 
-    # current channel mirrors the spin channel: S^j(q,ω) ↔ ⟨jj⟩(r,t)
+    # the momentum/frequency ↔ real-space/time conjugacy is declared in BOTH
+    # directions — the spatial spin pair (was previously one-sided)…
+    @test fourier_conjugate_quantity(SpinCorrelation(:z, :z)) === StaticStructureFactor
+    # …and the current channel mirrors the spin channel: S^j(q,ω) ↔ ⟨jj⟩(r,t)
     @test fourier_conjugate_quantity(CurrentNoise(:x, :y)) === CurrentCorrelation
     @test fourier_conjugate_quantity(CurrentCorrelation(:x, :y)) === CurrentNoise
     @test fourier_pair(CurrentNoise(:x, :y), CurrentCorrelation(:x, :y))
@@ -57,4 +60,22 @@ end
     rS = representation(DynamicalStructureFactor())
     rG = representation(DynamicalCorrelation(:x, :y))
     @test all(fourier_conjugate(x) === y for (x, y) in zip(rS, rG))
+end
+
+@testset "fourier_pair is symmetric (Fourier conjugacy is a symmetric relation)" begin
+    # INVARIANT: a ↔ b must agree with b ↔ a for every declared pair — a
+    # one-sided fourier_conjugate_quantity declaration (as the spatial spin
+    # pair once was) breaks this.
+    declared_pairs = [
+        (StaticStructureFactor(), SpinCorrelation(:z, :z)),
+        (DynamicalStructureFactor(), DynamicalCorrelation(:x, :y)),
+        (CurrentNoise(:x, :y), CurrentCorrelation(:x, :y)),
+    ]
+    for (a, b) in declared_pairs
+        @test fourier_pair(a, b)
+        @test fourier_pair(b, a)               # the reverse must hold too
+        @test fourier_pair(a, b) == fourier_pair(b, a)
+        # the declared conjugate round-trips: conj(conj(a)) is a's own family
+        @test typeof(a) <: fourier_conjugate_quantity(fourier_conjugate_quantity(typeof(a)))
+    end
 end
