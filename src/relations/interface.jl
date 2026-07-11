@@ -243,6 +243,7 @@ macro relation(dom, defn)
         $ename
     end
 end
+export var"@relation"
 
 # ─── Adoption surface: one-call verification over a data set ────────────
 
