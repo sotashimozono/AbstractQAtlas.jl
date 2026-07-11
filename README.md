@@ -189,6 +189,27 @@ Fock-space ED vs the Wick determinant, known topological phase
 structures (SSH, QWZ), and the correspondence reproducing the exact
 textbook power laws.
 
+## Automatic differentiation (extension)
+
+The supplied-derivative relations take a derivative *value*; the
+`ForwardDiff` package extension evaluates it from the underlying
+potential *function*, structured by the response genealogy — the
+genealogy declares that a quantity is a derivative of a potential,
+`thermal_derivative` computes it:
+
+```julia
+using AbstractQAtlas, ForwardDiff        # loading ForwardDiff activates the extension
+β = 1.3
+F(h) = -log(2cosh(β*h))/β                # a free-energy function
+thermal_derivative(Magnetization(:z), F, 0.4)      # M = −∂F/∂h  = tanh(β·0.4)
+thermal_derivative(Susceptibility(:z, :z), F, 0.4) # χ = −∂²F/∂h²
+thermal_derivative(Susceptibility(:z, :z, :z), F, 0.4) # χ⁽²⁾ = −∂³F/∂h³ (nonlinear!)
+thermal_derivative(Energy(), βF, β)                # U = ∂(βF)/∂β  (Gibbs–Helmholtz)
+```
+
+(`residual`/`check`/`solve` and the forms are pure arithmetic and already
+differentiate through any AD backend without the extension.)
+
 ## Installation
 
 ```julia

@@ -62,4 +62,7 @@ include("relations/ensembles.jl")
 include("relations/entanglement.jl")
 include("relations/cft.jl")
 
+# automatic-differentiation entry point (methods live in ext/, ForwardDiff)
+include("autodiff.jl")
+
 end # module AbstractQAtlas
