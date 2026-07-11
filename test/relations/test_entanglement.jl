@@ -1,0 +1,67 @@
+# Entanglement-entropy relations vs INDEPENDENT constructions:
+# purity from an explicit density matrix, the central charge read off a
+# synthetic CFT log-growth, and Page's formula against exact small cases
+# and a Haar-random-state average.
+
+using AbstractQAtlas
+using AbstractQAtlas: residual, check, solve
+using LinearAlgebra, Random
+
+@testset "Rényi-2 from purity: S_2 = −ln Tr ρ²" begin
+    # pure state: purity 1, S_2 = 0
+    @test solve(RenyiTwoPurity(), Val(:S2); purity=1.0) == 0.0
+    # maximally mixed on d levels: purity = 1/d, S_2 = ln d
+    for d in (2, 4, 8)
+        ρ = Matrix{Float64}(I, d, d) ./ d
+        purity = tr(ρ^2)                      # = 1/d, built independently
+        @test check(RenyiTwoPurity(); S2=log(d), purity=purity, atol=1e-13)
+    end
+    # a generic ρ: S_2 vs −ln Tr ρ² from the explicit matrix
+    ρ = [0.6 0.1; 0.1 0.4]
+    @test check(RenyiTwoPurity(); S2=(-log(tr(ρ^2))), purity=tr(ρ^2), atol=1e-13)
+end
+
+@testset "CFT entanglement slope reads off the central charge" begin
+    # synthetic S(ℓ) = (c/3) ln ℓ + const with c = 1/2 (Ising); the slope
+    # in ln ℓ must return c/3, independent of the (dropped) constant.
+    c = 1 / 2
+    S(ℓ) = (c / 3) * log(ℓ) + 0.77
+    ℓ = 40.0
+    h = 1e-4
+    dS_dlogℓ = (S(ℓ * exp(h)) - S(ℓ * exp(-h))) / (2h)   # d/d(ln ℓ)
+    @test check(CFTEntanglementSlope(); dS_dlogℓ=dS_dlogℓ, c=c, atol=1e-6)
+    @test solve(CFTEntanglementSlope(), Val(:c); dS_dlogℓ=dS_dlogℓ) ≈ c atol = 1e-6
+    # c = 1 free boson: slope 1/3
+    @test check(CFTEntanglementSlope(); dS_dlogℓ=1 / 3, c=1.0, atol=1e-14)
+end
+
+@testset "Page average entropy: exact small cases + symmetry" begin
+    # two qubits (dA=dB=2): ⟨S⟩ = 1/3 + 1/4 − 1/4 = 1/3, exactly known
+    @test page_average_entropy(2, 2) ≈ 1 / 3
+    # symmetric in the two dimensions
+    @test page_average_entropy(2, 64) == page_average_entropy(64, 2)
+    # nearly maximal: ⟨S⟩ → ln(dA) as dB → ∞, with a small positive deficit
+    # of order dA/(2 dB) (the harmonic-sum correction is the same order, so
+    # this is an asymptotic-form sanity, not a tight match).
+    @test page_average_entropy(2, 128) < log(2)                 # below maximal
+    @test log(2) - page_average_entropy(2, 128) < 2 / (2 * 128) * 1.5   # deficit ~ dA/(2dB)
+    @test page_average_entropy(2, 4096) ≈ log(2) rtol = 1e-3     # deficit vanishes as dB→∞
+    @test_throws ErrorException page_average_entropy(0, 4)
+end
+
+@testset "Page formula vs a Haar-random-state average" begin
+    # dA=2, dB=3: sample random pure states, average the reduced-ρ_A entropy
+    dA, dB = 2, 3
+    rng = MersenneTwister(2024)
+    Ssum = 0.0
+    M = 4000
+    for _ in 1:M
+        ψ = randn(rng, ComplexF64, dA * dB)
+        ψ ./= norm(ψ)
+        Ψ = reshape(ψ, dA, dB)              # A ⊗ B
+        ρA = Ψ * Ψ'                         # reduced density matrix on A
+        ev = filter(>(1e-14), real(eigvals(Hermitian(ρA))))
+        Ssum += -sum(ev .* log.(ev))
+    end
+    @test isapprox(Ssum / M, page_average_entropy(dA, dB); rtol=0.03)
+end

@@ -608,6 +608,41 @@ Bloch maps live in this package's relations layer
 struct TopologicalInvariant <: AbstractQuantity end
 export TopologicalInvariant
 
+# ─── Entanglement ────────────────────────────────────────────────────────
+
+"""
+    VonNeumannEntropy() <: AbstractEntanglementMeasure
+
+The von Neumann entanglement entropy `S = −Tr(ρ_A ln ρ_A)` of a
+subsystem — the `n → 1` limit of the [`RenyiEntropy`](@ref).  In a gapped
+phase it obeys an area law (Eisert, Cramer & Plenio, Rev. Mod. Phys. 82,
+277 (2010)); at a 1D critical point it grows logarithmically with the
+subsystem size, `S = (c/3) ln ℓ` (Calabrese & Cardy, J. Stat. Mech.
+(2004) P06002).
+"""
+struct VonNeumannEntropy <: AbstractEntanglementMeasure end
+export VonNeumannEntropy
+
+"""
+    RenyiEntropy() <: AbstractEntanglementMeasure
+
+The Rényi entanglement entropy `S_n = (1−n)⁻¹ ln Tr(ρ_A^n)`.  The order
+`n` is supplied at use; `n = 2` is fixed by the [`Purity`](@ref)
+(`S_2 = −ln Tr ρ_A²`), and `n → 1` recovers the [`VonNeumannEntropy`](@ref).
+"""
+struct RenyiEntropy <: AbstractEntanglementMeasure end
+export RenyiEntropy
+
+"""
+    Purity() <: AbstractQuantity
+
+The purity `Tr(ρ_A²) ∈ (0, 1]` of a (reduced) density matrix — `1` for a
+pure state, `1/d` for the maximally mixed one.  Fixes the Rényi-2 entropy
+via `S_2 = −ln Tr ρ_A²`.
+"""
+struct Purity <: AbstractQuantity end
+export Purity
+
 """
     ChernNumber() <: AbstractQuantity
 
