@@ -43,6 +43,7 @@ include("core/fields.jl")
 include("structure/transitions.jl")
 include("structure/criticality.jl")
 include("structure/response.jl")
+include("structure/spectral.jl")
 
 # relations — model-independent identities and forms
 include("relations/interface.jl")
@@ -52,5 +53,6 @@ include("relations/fundamental.jl")
 include("relations/statistics.jl")
 include("relations/wick.jl")
 include("relations/topology.jl")
+include("relations/spectral.jl")
 
 end # module AbstractQAtlas

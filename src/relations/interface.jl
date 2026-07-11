@@ -153,18 +153,19 @@ export solve
 # Generic solve: for a residual r(x) affine in x, r(x) = r₀ + (r₁ − r₀)x
 # exactly, so the root is x* = −r₀/(r₁ − r₀).  Three probes (x = 0, 1, 2)
 # both solve and VERIFY affinity: the parabola test r₂ − 2r₁ + r₀ must
-# vanish — exactly for exact inputs, to a relative 1e-8 for floats.
+# vanish — exactly for exact inputs (Integer/Rational), to a relative
+# 1e-8 for inexact ones (float OR complex-float — `abs` handles both).
 # Integer probes promote correctly, so Rational data stays Rational.
 function _solve(rel::AbstractRelation, ::Val{X}; kwargs...) where {X}
     kw = values(kwargs)
     at(v) = _residual(rel; merge(kw, NamedTuple{(X,)}((v,)))...)
     r0, r1, r2 = at(0), at(1), at(2)
     curv = r2 - 2r1 + r0
-    isaffine = if curv isa AbstractFloat
-        scale = max(abs(r0), abs(r1), abs(r2))
-        abs(curv) <= 1e-8 * max(scale, one(scale))
+    isaffine = if curv isa Union{Integer,Rational}
+        iszero(curv)                              # exact types: exact test
     else
-        iszero(curv)
+        scale = max(abs(r0), abs(r1), abs(r2))    # float / complex: relative tol
+        abs(curv) <= 1e-8 * max(scale, oneunit(scale))
     end
     isaffine || error(
         "solve: $(typeof(rel)) is not affine in :$X — define a specialized " *
