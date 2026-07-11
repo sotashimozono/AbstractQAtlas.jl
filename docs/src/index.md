@@ -108,6 +108,19 @@ response** — `Susceptibility(:x, :y, :z)` is `χ⁽²⁾_{x;yz} = ∂²M_x/∂
 (propagators). [`Dyson`](@ref) is written with `inv`, so the identity
 holds for scalar single-band and matrix orbital-space propagators alike.
 
+[`frequency_arguments`](@ref) is a quantity's **multi-time
+dimensionality** — the count of independent frequency (⇔ time)
+variables. The static [`Susceptibility`](@ref) is the zero-frequency
+limit (`0`); the dynamical [`DynamicalSusceptibility`](@ref)`(:x, :y, :z)`
+is `χ⁽²⁾(ω₁, ω₂)` with `frequency_arguments == 2` — an `n`-th order
+nonlinear response is intrinsically multi-time (2D coherent
+spectroscopy). Its microscopic origin is the **Kubo formula**
+([`spectral_origin`](@ref)`(DynamicalSusceptibility(…)) == (DynamicalCorrelation,
+:kubo)`): the retarded `n`-fold nested-commutator response function of
+the correlation. Response-theory and scaling/FDT references (Kubo 1957,
+Wan–Armitage 2019, Rushbrooke/Widom/Fisher/Josephson, Callen–Welton
+1951) live in `docs/references.bib`, DOI-verified in CI.
+
 ## Structure — definitional correspondences
 
 The `structure/` layer holds the generic facts that are true *by

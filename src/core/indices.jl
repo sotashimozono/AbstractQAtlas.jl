@@ -111,3 +111,28 @@ default).
 response_order(q::AbstractQuantity) = response_order(typeof(q))
 response_order(::Type{<:AbstractQuantity}) = 0
 export response_order
+
+"""
+    frequency_arguments(quantity) -> Int
+    frequency_arguments(::Type{<:AbstractQuantity}) -> Int
+
+The number of independent frequency variables a quantity depends on —
+equivalently, by Fourier transform, the number of independent **time**
+variables: its *multi-time dimensionality*.
+
+`0` for a static / instantaneous quantity (a thermodynamic potential, or
+the static susceptibility `χ⁽ⁿ⁾ = ∂ⁿM/∂hⁿ`, which is the zero-frequency
+limit).  `1` for a one-frequency dynamical quantity (`G(ω)`, `S(q, ω)`,
+the linear dynamical susceptibility `χ(ω)`).  For an `n`-th order
+**nonlinear dynamical** response the field is applied at `n` distinct
+times, so the response is intrinsically multi-time:
+`frequency_arguments == n`, e.g. `χ⁽²⁾(ω₁, ω₂)` in 2D coherent
+spectroscopy (Wan & Armitage, Phys. Rev. Lett. 122, 257401 (2019)).
+
+The static `Susceptibility{I}` and the dynamical `DynamicalSusceptibility{I}`
+of the same order are the zero-frequency limit and the full multi-time
+object respectively — see the Kubo formula in `structure/spectral.jl`.
+"""
+frequency_arguments(q::AbstractQuantity) = frequency_arguments(typeof(q))
+frequency_arguments(::Type{<:AbstractQuantity}) = 0
+export frequency_arguments

@@ -1,5 +1,9 @@
 # relations/thermodynamic.jl — fluctuation–dissipation identities.
 #
+# The static fluctuation–dissipation theorem (Callen & Welton, Phys. Rev.
+# 83, 34 (1951)) in its thermodynamic form: a response equals β times the
+# fluctuation (variance) of its conjugate observable.
+#
 # One @relation declaration each; the β-or-T keyword convention and all
 # solves come from the interface layer (every variable here is affine —
 # except β/T themselves, which the generic solve correctly refuses).

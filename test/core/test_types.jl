@@ -52,6 +52,27 @@ end
     @test_throws ErrorException Susceptibility{(:x, 2)}()        # non-symbol index
 end
 
+@testset "multi-time: frequency_arguments (dynamical nonlinear response)" begin
+    # static χ⁽ⁿ⁾ = ∂ⁿM/∂hⁿ is the zero-frequency limit — no frequency args
+    @test frequency_arguments(Susceptibility(:x, :y)) == 0
+    @test frequency_arguments(Susceptibility(:x, :y, :z)) == 0
+    # dynamical response: n-th order ⇒ n independent frequencies = multi-time
+    @test frequency_arguments(DynamicalSusceptibility(:x, :y)) == 1       # χ(ω)
+    @test frequency_arguments(DynamicalSusceptibility(:x, :y, :z)) == 2   # χ⁽²⁾(ω₁,ω₂)
+    @test frequency_arguments(DynamicalSusceptibility(:x, :x, :x, :x)) == 3
+    # the dynamical susceptibility carries the same tensor structure too
+    @test response_order(DynamicalSusceptibility(:x, :y, :z)) == 2
+    @test indices(DynamicalSusceptibility(:x, :y, :z)) == (:x, :y, :z)
+    # one-frequency dynamical quantities
+    @test frequency_arguments(RetardedGreensFunction()) == 1
+    @test frequency_arguments(DynamicalStructureFactor()) == 1
+    @test frequency_arguments(DensityOfStates()) == 1
+    # static / instantaneous quantities: none
+    @test frequency_arguments(Energy()) == 0
+    @test frequency_arguments(SpecificHeat()) == 0
+    @test frequency_arguments(Magnetization(:z)) == 0
+end
+
 @testset "Energy granularity" begin
     @test Energy() === Energy{:natural}()
     @test Energy(:total) === Energy{:total}()

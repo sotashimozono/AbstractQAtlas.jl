@@ -344,6 +344,7 @@ export RetardedGreensFunction
 # G_ab(q,ω): rank-2 in orbital space
 tensor_rank(::Type{RetardedGreensFunction}) = 2
 index_spaces(::Type{RetardedGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{RetardedGreensFunction}) = 1
 
 """
     SelfEnergy() <: AbstractPropagator
@@ -355,6 +356,7 @@ struct SelfEnergy <: AbstractPropagator end
 export SelfEnergy
 tensor_rank(::Type{SelfEnergy}) = 2
 index_spaces(::Type{SelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{SelfEnergy}) = 1
 
 """
     SpectralFunction() <: AbstractQuantity
@@ -366,6 +368,7 @@ struct SpectralFunction <: AbstractQuantity end
 export SpectralFunction
 tensor_rank(::Type{SpectralFunction}) = 2
 index_spaces(::Type{SpectralFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{SpectralFunction}) = 1
 
 """
     DensityOfStates() <: AbstractQuantity
@@ -375,6 +378,7 @@ average of the [`SpectralFunction`](@ref).
 """
 struct DensityOfStates <: AbstractQuantity end
 export DensityOfStates
+frequency_arguments(::Type{DensityOfStates}) = 1
 
 """
     DynamicalCorrelation() <: AbstractTwoPointCorrelation
@@ -385,6 +389,7 @@ space-time Fourier transform (any spatial dimension) is the
 """
 struct DynamicalCorrelation <: AbstractTwoPointCorrelation end
 export DynamicalCorrelation
+frequency_arguments(::Type{DynamicalCorrelation}) = 1
 
 """
     DynamicalStructureFactor() <: AbstractStructureFactor
@@ -399,18 +404,51 @@ export DynamicalStructureFactor
 # S_αβ(q,ω): rank-2 in spin space
 tensor_rank(::Type{DynamicalStructureFactor}) = 2
 index_spaces(::Type{DynamicalStructureFactor}) = (SpinAxis(), SpinAxis())
+frequency_arguments(::Type{DynamicalStructureFactor}) = 1
 
 """
-    DynamicalSusceptibility() <: AbstractSusceptibility
+    DynamicalSusceptibility{I}() <: AbstractSusceptibility
+    DynamicalSusceptibility(α, β₁, …, βₙ)          # each a Symbol
 
-The dynamical susceptibility `χ(q, ω)`; its imaginary part `χ''(q, ω)`
-is the dissipative response entering the fluctuation–dissipation theorem
-and the NMR relaxation rate.
+The dynamical susceptibility of **arbitrary response order** — the
+frequency-domain (multi-time) counterpart of the static
+[`Susceptibility`](@ref).  The linear `DynamicalSusceptibility(:x, :y)`
+is `χ_xy(ω)`, one frequency argument, and its imaginary part `χ''(q, ω)`
+is the dissipative response of the fluctuation–dissipation theorem and
+the NMR relaxation rate.
+
+The `n`-th order term `DynamicalSusceptibility(α, β₁, …, βₙ)` is
+`χ⁽ⁿ⁾_{α;β₁…βₙ}(ω₁, …, ωₙ)`: the field is applied at `n` distinct times,
+so the response is intrinsically **multi-time** — `frequency_arguments
+== n` (`response_order`).  `DynamicalSusceptibility(:x, :y, :z)` is the
+second-order `χ⁽²⁾(ω₁, ω₂)` of two-dimensional coherent spectroscopy
+(Wan & Armitage, Phys. Rev. Lett. 122, 257401 (2019)).  Its microscopic
+Kubo expression is the `n`-fold nested-commutator response function
+(Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)); see `structure/spectral.jl`.
+
+The static `Susceptibility{I}` of the same order is the zero-frequency
+limit, `χ⁽ⁿ⁾(0, …, 0)`.
 """
-struct DynamicalSusceptibility <: AbstractSusceptibility end
+struct DynamicalSusceptibility{I} <: AbstractSusceptibility
+    function DynamicalSusceptibility{I}() where {I}
+        return (
+            length(_axistuple(I)) >= 2 || error(
+                "DynamicalSusceptibility needs ≥2 indices (1 response + ≥1 field), got $(repr(I))",
+            );
+            new{I}()
+        )
+    end
+end
+DynamicalSusceptibility(idx::Symbol...) = DynamicalSusceptibility{idx}()
+tensor_rank(::Type{DynamicalSusceptibility{I}}) where {I} = length(I)
+function index_spaces(::Type{DynamicalSusceptibility{I}}) where {I}
+    return ntuple(_ -> SpinAxis(), length(I))
+end
+indices(::Type{DynamicalSusceptibility{I}}) where {I} = I
+response_order(::Type{DynamicalSusceptibility{I}}) where {I} = length(I) - 1
+# multi-time: an n-th order dynamical response depends on n frequencies
+frequency_arguments(::Type{DynamicalSusceptibility{I}}) where {I} = length(I) - 1
 export DynamicalSusceptibility
-tensor_rank(::Type{DynamicalSusceptibility}) = 2
-index_spaces(::Type{DynamicalSusceptibility}) = (SpinAxis(), SpinAxis())
 
 """
     NMRSpinRelaxationRate() <: AbstractQuantity
