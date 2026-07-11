@@ -7,7 +7,13 @@
 #               --bz_average-->  DensityOfStates
 #
 #   DynamicalCorrelation  --spacetime_fourier-->  DynamicalStructureFactor
-#   DynamicalSusceptibility  --low_frequency_limit-->  NMRSpinRelaxationRate
+#                         --kubo-->  DynamicalSusceptibility
+#                                    --low_frequency_limit-->  NMRSpinRelaxationRate
+#
+# The DynamicalCorrelation is the root of the response branch: both the
+# symmetric structure factor S(q,ω) and the antisymmetric (commutator)
+# response χ(q,ω) come from it — the two sides of the fluctuation–
+# dissipation theorem.
 #
 # Each edge records WHICH operation turns the source quantity into the
 # target — the inter-quantity genealogy the response tree
@@ -24,7 +30,7 @@
 One edge of the dynamical-quantity graph: the quantity carrying it is
 obtained from quantity type `from` by the operation named `via` — one of
 `:dyson`, `:neg_im_over_pi`, `:bz_average`, `:spacetime_fourier`,
-`:low_frequency_limit`.
+`:low_frequency_limit`, `:kubo`.
 """
 struct SpectralOrigin
     from::Type
@@ -37,8 +43,8 @@ end
 
 The dynamical-graph edge of `quantity`: the (`from`, `via`) it is
 obtained from, or `nothing` for a source quantity
-([`SelfEnergy`](@ref), [`DynamicalCorrelation`](@ref),
-[`DynamicalSusceptibility`](@ref)) or a quantity outside the graph.
+([`SelfEnergy`](@ref), [`DynamicalCorrelation`](@ref)) or a quantity
+outside the graph.
 
 ```julia
 spectral_origin(DensityOfStates())      # SpectralOrigin(SpectralFunction, :bz_average)
@@ -57,6 +63,15 @@ spectral_origin(::Type{DensityOfStates}) = SpectralOrigin(SpectralFunction, :bz_
 function spectral_origin(::Type{DynamicalStructureFactor})
     return SpectralOrigin(DynamicalCorrelation, :spacetime_fourier)
 end
+# Kubo formula: the dynamical susceptibility is the retarded (commutator)
+# response function of the correlation.  Linear χ(ω) = FT of
+# (i/ħ)θ(t)⟨[A(t),B(0)]⟩ (Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)); the
+# n-th order χ⁽ⁿ⁾(ω₁…ωₙ) is the multi-time n-fold nested-commutator
+# response (2D coherent spectroscopy — Wan & Armitage, PRL 122, 257401
+# (2019)).  Any response order routes to the same source correlation.
+function spectral_origin(::Type{<:DynamicalSusceptibility})
+    return SpectralOrigin(DynamicalCorrelation, :kubo)
+end
 function spectral_origin(::Type{NMRSpinRelaxationRate})
     return SpectralOrigin(DynamicalSusceptibility, :low_frequency_limit)
 end
@@ -72,7 +87,13 @@ sibling, issue #14):
 
 - `:dyson` → [`Dyson`](@ref),
 - `:neg_im_over_pi` → [`SpectralFromGreens`](@ref),
-- `:bz_average`, `:spacetime_fourier`, `:low_frequency_limit` → `nothing`.
+- `:bz_average`, `:spacetime_fourier`, `:low_frequency_limit`, `:kubo`
+  → `nothing` (transform / sum / limit / commutator-response — no
+  single-point form; evaluation is the functional sibling's job).
+
+The Kubo edge (`:kubo`) is a transform of a multi-time correlation
+(Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)), so it has no single-`(q,ω)`-
+point relation here.
 """
 origin_relation(via::Symbol) = origin_relation(Val(via))
 origin_relation(::Val{:dyson}) = Dyson()

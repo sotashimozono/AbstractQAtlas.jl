@@ -109,6 +109,20 @@ is the second-order `χ⁽²⁾_{x;yz} = ∂²M_x/∂h_y∂h_z` (`response_order
 `G_ab`). `Dyson` is written with `inv`, so the one identity holds for
 scalar single-band and matrix orbital-space propagators alike.
 
+**Multi-time.** `frequency_arguments` is a quantity's multi-time
+dimensionality — the number of independent frequency (⇔ time) variables.
+The static `Susceptibility{I}` is the zero-frequency limit (`0`); the
+**dynamical** `DynamicalSusceptibility(:x, :y, :z)` is
+`χ⁽²⁾(ω₁, ω₂)` — an `n`-th order nonlinear response applies the field at
+`n` distinct times, so `frequency_arguments == n` (2D coherent
+spectroscopy). Its microscopic origin is the **Kubo formula** — the
+retarded (`n`-fold nested-commutator) response function of the
+correlation, `DynamicalSusceptibility ⟵ :kubo ⟵ DynamicalCorrelation`
+in the dynamical graph. References for the response theory
+([`Kubo1957`], [`WanArmitage2019`]) and the scaling / FDT relations
+([`Rushbrooke1963`]…, [`CallenWelton1951`]) are in `docs/references.bib`,
+each DOI CI-verified against Crossref.
+
 **Structure — definitional correspondences** (the `structure/` layer):
 
 - **Critical correspondence**: `critical_scaling(quantity)` maps each
