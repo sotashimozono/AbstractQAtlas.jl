@@ -173,6 +173,41 @@ struct IsothermalCompressibility <: AbstractQuantity end
 export IsothermalCompressibility
 
 """
+    Pressure() <: AbstractQuantity
+
+The pressure `p = −(∂F/∂V)_T` — conjugate to the [`Volume`](@ref).
+"""
+struct Pressure <: AbstractQuantity end
+export Pressure
+
+"""
+    Volume() <: AbstractQuantity
+
+The volume `V` — conjugate to the [`Pressure`](@ref).
+"""
+struct Volume <: AbstractQuantity end
+export Volume
+
+"""
+    ParticleNumber() <: AbstractQuantity
+
+The particle number `N = −(∂Ω/∂μ)_{T,V}` — conjugate to the chemical
+potential ([`ChemicalPotential`](@ref)).
+"""
+struct ParticleNumber <: AbstractQuantity end
+export ParticleNumber
+
+"""
+    LatentHeat() <: AbstractQuantity
+
+The latent heat `L = T ΔS` of a first-order transition — the entropy
+jump across the phase boundary times the temperature.  Enters the
+Clausius–Clapeyron relation ([`ClausiusClapeyron`](@ref)).
+"""
+struct LatentHeat <: AbstractThermalPotential end
+export LatentHeat
+
+"""
     ThermalEntropy() <: AbstractThermalPotential
 
 Thermal entropy per site, `s = β(ε − f)`.

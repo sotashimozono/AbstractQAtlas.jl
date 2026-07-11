@@ -121,3 +121,86 @@ must agree.
 Variables: `χ`, `Sq0` = `S(q → 0)`, `β` (or `T`).
 """
 @relation :thermodynamic StructureFactorSusceptibility(χ, Sq0, β) = χ - β * Sq0
+
+# ─── Maxwell relations ───────────────────────────────────────────────────
+#
+# Equality of the mixed second derivatives of each thermodynamic
+# potential.  Supplied-derivative convention throughout: the caller
+# provides the two first-derivative values, the relation asserts they
+# match.  One relation per potential (U, H, F, G).
+
+"""
+    MaxwellHelmholtz <: AbstractRelation
+
+The Maxwell relation from the Helmholtz free energy `F(T, V)`:
+
+`(∂S/∂V)_T = (∂p/∂T)_V`.
+
+Variables: `dS_dV`, `dp_dT`.
+"""
+@relation :thermodynamic MaxwellHelmholtz(dS_dV, dp_dT) = dS_dV - dp_dT
+
+"""
+    MaxwellGibbs <: AbstractRelation
+
+The Maxwell relation from the Gibbs free energy `G(T, p)`:
+
+`(∂S/∂p)_T = −(∂V/∂T)_p`.
+
+Variables: `dS_dp`, `dV_dT`.
+"""
+@relation :thermodynamic MaxwellGibbs(dS_dp, dV_dT) = dS_dp + dV_dT
+
+"""
+    MaxwellInternal <: AbstractRelation
+
+The Maxwell relation from the internal energy `U(S, V)`:
+
+`(∂T/∂V)_S = −(∂p/∂S)_V`.
+
+Variables: `dT_dV`, `dp_dS`.
+"""
+@relation :thermodynamic MaxwellInternal(dT_dV, dp_dS) = dT_dV + dp_dS
+
+"""
+    MaxwellEnthalpy <: AbstractRelation
+
+The Maxwell relation from the enthalpy `H(S, p)`:
+
+`(∂T/∂p)_S = (∂V/∂S)_p`.
+
+Variables: `dT_dp`, `dV_dS`.
+"""
+@relation :thermodynamic MaxwellEnthalpy(dT_dp, dV_dS) = dT_dp - dV_dS
+
+# ─── Phase coexistence & the Gibbs–Duhem constraint ──────────────────────
+
+"""
+    ClausiusClapeyron <: AbstractRelation
+
+The Clausius–Clapeyron relation for the slope of a first-order phase
+boundary,
+
+`dp/dT = ΔS/ΔV = L/(T ΔV)`,
+
+with `L = T ΔS` the [`LatentHeat`](@ref) and `ΔV` the volume jump across
+the transition.  Connects to the [`FirstOrder`](@ref) transition type
+(the only one with `has_latent_heat`).
+
+Variables: `dp_dT`, `L`, `T`, `ΔV`.
+"""
+@relation :thermodynamic ClausiusClapeyron(dp_dT, L, T, ΔV) = dp_dT - L / (T * ΔV)
+
+"""
+    GibbsDuhem <: AbstractRelation
+
+The Gibbs–Duhem constraint among the intensive variations,
+
+`S dT − V dp + N dμ = 0`,
+
+expressing that the intensive parameters `(T, p, μ)` are not independent.
+Supplied-differential convention: `dT`, `dp`, `dμ` are the variations.
+
+Variables: `S`, `dT`, `V`, `dp`, `N`, `dμ`.
+"""
+@relation :thermodynamic GibbsDuhem(S, dT, V, dp, N, dμ) = S * dT - V * dp + N * dμ
