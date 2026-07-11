@@ -83,7 +83,7 @@ The order parameter as the field-derivative of the free energy,
 `M = −∂F/∂h`.
 
 The first edge of the field-derivative genealogy
-([`derivative_edge`](@ref)`(MagnetizationZ)`), stated exactly.
+([`derivative_edge`](@ref)`(Magnetization{:z})`), stated exactly.
 Supplied-derivative convention: `dF_dh` is the caller-computed
 `∂F/∂h` at the working point.
 """
@@ -97,7 +97,7 @@ The susceptibility as the field-derivative of the order parameter,
 `χ = ∂M/∂h  ( = −∂²F/∂h² )`.
 
 The second field-derivative edge of the genealogy
-([`derivative_edge`](@ref)`(SusceptibilityZZ)`), stated exactly — the
+([`derivative_edge`](@ref)`(Susceptibility{:z,:z})`), stated exactly — the
 *definitional* companion of the *statistical* [`SusceptibilityFDT`](@ref)
 (`χ = β·Var(M)`): the same response reached two ways.  Supplied-
 derivative convention: `dM_dh` is the caller-computed `∂⟨M⟩/∂h`.

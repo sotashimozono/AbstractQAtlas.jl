@@ -110,7 +110,9 @@ export chern_number
 
 The TKNN quantization statement: the zero-temperature Hall conductivity
 of a gapped 2D band insulator is `σ_xy = C · e²/h`, with `C` the total
-Chern number of the occupied bands.
+Chern number of the occupied bands.  `σ_xy` is the off-diagonal `(x, y)`
+component of the rank-2 conductivity tensor `σ_μν`
+([`Conductivity`](@ref)`(:x, :y)`).
 
 Variables (in units of `e²/h`): `σxy`, `C`.
 """

@@ -34,7 +34,8 @@ abstract type AbstractMagnetization <: AbstractQuantity end
 """
     AbstractSusceptibility <: AbstractQuantity
 
-Static linear-response susceptibilities χ_αα.
+Linear and nonlinear response susceptibilities `χ⁽ⁿ⁾_{α;β₁…βₙ}` — see
+[`Susceptibility`](@ref) for the arbitrary-order tensor.
 """
 abstract type AbstractSusceptibility <: AbstractQuantity end
 
@@ -78,24 +79,9 @@ export AbstractThermalPotential, AbstractMagnetization, AbstractSusceptibility
 export AbstractTwoPointCorrelation, AbstractStructureFactor, AbstractGap
 export AbstractVelocity, AbstractEntanglementMeasure
 
-# ─── component trait ────────────────────────────────────────────────────
-
-"""
-    component(q) -> Union{Symbol,Nothing}
-    component(::Type{<:AbstractQuantity}) -> Union{Symbol,Nothing}
-
-The component / index that a family leaf's *type name* encodes: the spin
-axis of a magnetization (`:x`/`:y`/`:z`), the diagonal axis pair of a
-susceptibility (`:xx`/`:yy`/`:zz`), or the excitation channel of a gap.
-`nothing` for quantities that carry no component (the default).
-
-Identities that hold per-component (e.g. the static FDT
-`χ_αα = β·Var(M_α)/N`, or SU(2) isotropy `χ_xx = χ_yy = χ_zz`) pair
-family members by matching `component`.
-"""
-component(q::AbstractQuantity) = component(typeof(q))
-component(::Type{<:AbstractQuantity}) = nothing
-export component
+# The tensor traits (`tensor_rank`, `index_spaces`, `indices`) — the
+# honest successors of the old fused `component` label — live in
+# `core/indices.jl`; concrete tensor quantities add their methods below.
 
 # ─── Scalar thermodynamics ──────────────────────────────────────────────
 
@@ -177,104 +163,154 @@ register it.
 struct PartitionFunction <: AbstractThermalPotential end
 export PartitionFunction
 
-# ─── Order parameters and responses ─────────────────────────────────────
+# ─── Order parameters and responses (tensors in spin space) ─────────────
+#
+# These were the quantities blurred into scalars by baking a component
+# into the type name (`MagnetizationX`, `SusceptibilityZZ`).  The honest
+# form carries the spin-axis index/indices as type parameters, so a
+# component is a *selection* of the tensor and off-diagonal components
+# (χ_xy) are expressible — not only the diagonal.  `_axis` validates that
+# a parameter is a bare spin-axis symbol.
+
+function _axis(a)
+    return if a isa Symbol
+        a
+    else
+        error("spin-axis index must be a Symbol (e.g. :x), got $(repr(a))")
+    end
+end
 
 """
-    MagnetizationX() <: AbstractMagnetization
+    Magnetization{A}() <: AbstractMagnetization
+    Magnetization(a::Symbol)
 
-Uniform magnetization ⟨M_x⟩ per site.
+Uniform magnetization component `⟨M_A⟩` per site — a rank-1 tensor in
+[`SpinAxis`](@ref) space, `A ∈ {:x, :y, :z, …}`.  `Magnetization(:z)`
+replaces the old `MagnetizationZ`.
 """
-struct MagnetizationX <: AbstractMagnetization end
-component(::Type{MagnetizationX}) = :x
-export MagnetizationX
-
-"""
-    MagnetizationY() <: AbstractMagnetization
-
-Uniform magnetization ⟨M_y⟩ per site.
-"""
-struct MagnetizationY <: AbstractMagnetization end
-component(::Type{MagnetizationY}) = :y
-export MagnetizationY
-
-"""
-    MagnetizationZ() <: AbstractMagnetization
-
-Uniform magnetization ⟨M_z⟩ per site.
-"""
-struct MagnetizationZ <: AbstractMagnetization end
-component(::Type{MagnetizationZ}) = :z
-export MagnetizationZ
+struct Magnetization{A} <: AbstractMagnetization
+    Magnetization{A}() where {A} = (_axis(A); new{A}())
+end
+Magnetization(a::Symbol) = Magnetization{a}()
+tensor_rank(::Type{<:Magnetization}) = 1
+index_spaces(::Type{<:Magnetization}) = (SpinAxis(),)
+indices(::Type{Magnetization{A}}) where {A} = (A,)
+export Magnetization
 
 """
     SpontaneousMagnetization() <: AbstractMagnetization
 
-Spontaneous (symmetry-broken) order parameter `M(T)` in the ordered
-phase; identically zero above the critical temperature.
-
-Generic home for a tag that previously lived inside a model file.
+The spontaneous (symmetry-broken) order-parameter magnitude `M(T)` in
+the ordered phase; identically zero above `T_c`.  A scalar — the
+magnitude, not a spin component — so `tensor_rank == 0`; its critical
+exponent is β (see `critical_scaling`).
 """
 struct SpontaneousMagnetization <: AbstractMagnetization end
 export SpontaneousMagnetization
 
-"""
-    SusceptibilityXX() <: AbstractSusceptibility
-
-Static susceptibility χ_xx per site.  Defining identity:
-[`SusceptibilityFDT`](@ref).
-"""
-struct SusceptibilityXX <: AbstractSusceptibility end
-component(::Type{SusceptibilityXX}) = :xx
-export SusceptibilityXX
-
-"""
-    SusceptibilityYY() <: AbstractSusceptibility
-
-Static susceptibility χ_yy per site.
-"""
-struct SusceptibilityYY <: AbstractSusceptibility end
-component(::Type{SusceptibilityYY}) = :yy
-export SusceptibilityYY
+function _axistuple(I)
+    return if (I isa Tuple && !isempty(I) && all(a -> a isa Symbol, I))
+        I
+    else
+        error(
+            "index parameter must be a non-empty Tuple of spin-axis Symbols, got $(repr(I))"
+        )
+    end
+end
 
 """
-    SusceptibilityZZ() <: AbstractSusceptibility
+    Susceptibility{I}() <: AbstractSusceptibility
+    Susceptibility(α, β₁, …, βₙ)          # each a Symbol
 
-Static susceptibility χ_zz per site.
+Susceptibility of **arbitrary response order** — the `n`-th order term
+of the order-parameter response to its conjugate field,
+
+`χ⁽ⁿ⁾_{α; β₁…βₙ} = ∂ⁿ⟨M_α⟩ / ∂h_{β₁}…∂h_{βₙ}`,
+
+a rank-`(n+1)` tensor in [`SpinAxis`](@ref) space whose index parameter
+`I = (α, β₁, …, βₙ)` carries one response direction `α` and `n` field
+directions.  The response order is `n = length(I) − 1`
+([`response_order`](@ref)):
+
+- `Susceptibility(:x, :y)` — **linear** `χ_xy = ∂M_x/∂h_y` (order 1),
+  the off-diagonal component the fused `SusceptibilityXX/ZZ` names could
+  not express;
+- `Susceptibility(:x, :y, :z)` — **second-order nonlinear**
+  `χ⁽²⁾_{x;yz} = ∂²M_x/∂h_y∂h_z` (order 2);
+- `Susceptibility(:x, :x, :x, :x)` — third-order `χ⁽³⁾`, and so on.
+
+The genealogy is recursive: `χ⁽ⁿ⁾ ⟵ χ⁽ⁿ⁻¹⁾ ⟵ … ⟵ M ⟵ F`
+(`derivative_edge`), so `derivative_order(χ⁽ⁿ⁾, MagneticField) == n + 1`.
+The linear component's defining identity is [`SusceptibilityFDT`](@ref)
+`χ_AB = β·Cov(M_A, M_B)`.
 """
-struct SusceptibilityZZ <: AbstractSusceptibility end
-component(::Type{SusceptibilityZZ}) = :zz
-export SusceptibilityZZ
+struct Susceptibility{I} <: AbstractSusceptibility
+    function Susceptibility{I}() where {I}
+        return (
+            length(_axistuple(I)) >= 2 || error(
+                "Susceptibility needs ≥2 indices (1 response + ≥1 field), got $(repr(I))",
+            );
+            new{I}()
+        )
+    end
+end
+Susceptibility(idx::Symbol...) = Susceptibility{idx}()
+tensor_rank(::Type{Susceptibility{I}}) where {I} = length(I)
+index_spaces(::Type{Susceptibility{I}}) where {I} = ntuple(_ -> SpinAxis(), length(I))
+indices(::Type{Susceptibility{I}}) where {I} = I
+response_order(::Type{Susceptibility{I}}) where {I} = length(I) - 1
+export Susceptibility
 
-# ─── Two-point correlations ─────────────────────────────────────────────
-
-"""
-    XXCorrelation() <: AbstractTwoPointCorrelation
-
-Two-point correlation `⟨S^x_i S^x_j⟩` (connected or full per the
-implementing atlas).  At criticality its decay is governed by the
-anomalous dimension η — see the `correlation_decay` correspondence.
-"""
-struct XXCorrelation <: AbstractTwoPointCorrelation end
-component(::Type{XXCorrelation}) = :xx
-export XXCorrelation
-
-"""
-    YYCorrelation() <: AbstractTwoPointCorrelation
-
-Two-point correlation `⟨S^y_i S^y_j⟩`.
-"""
-struct YYCorrelation <: AbstractTwoPointCorrelation end
-component(::Type{YYCorrelation}) = :yy
-export YYCorrelation
+# ─── Two-point correlations (tensors in spin space) ─────────────────────
 
 """
-    ZZCorrelation() <: AbstractTwoPointCorrelation
+    SpinCorrelation{A,B}() <: AbstractTwoPointCorrelation
+    SpinCorrelation(a::Symbol, b::Symbol)
 
-Two-point correlation `⟨S^z_i S^z_j⟩`.
+Two-point spin correlation `⟨S^A_i S^B_j⟩` — a rank-2 tensor in
+[`SpinAxis`](@ref) space (`SpinCorrelation(:z, :z)` replaces the old
+`ZZCorrelation`).  At criticality its decay is governed by the anomalous
+dimension η — see the `correlation_decay` correspondence.
 """
-struct ZZCorrelation <: AbstractTwoPointCorrelation end
-component(::Type{ZZCorrelation}) = :zz
-export ZZCorrelation
+struct SpinCorrelation{A,B} <: AbstractTwoPointCorrelation
+    SpinCorrelation{A,B}() where {A,B} = (_axis(A); _axis(B); new{A,B}())
+end
+SpinCorrelation(a::Symbol, b::Symbol) = SpinCorrelation{a,b}()
+tensor_rank(::Type{<:SpinCorrelation}) = 2
+index_spaces(::Type{<:SpinCorrelation}) = (SpinAxis(), SpinAxis())
+indices(::Type{SpinCorrelation{A,B}}) where {A,B} = (A, B)
+export SpinCorrelation
+
+"""
+    Conductivity{I}() <: AbstractQuantity
+    Conductivity(μ, ν₁, …, νₙ)            # each a Symbol
+
+Electrical conductivity of **arbitrary response order** — the `n`-th
+order current response `j_μ = Σ σ⁽ⁿ⁾_{μ; ν₁…νₙ} E_{ν₁}…E_{νₙ}`, a
+rank-`(n+1)` tensor in [`SpatialDirection`](@ref) space with one current
+direction `μ` and `n` field directions.  `response_order = length(I) − 1`:
+
+- `Conductivity(:x, :y)` — **linear** `σ_xy` (order 1); its Hall
+  component is quantized by [`TKNN`](@ref);
+- `Conductivity(:x, :y, :z)` — **second-order** `σ⁽²⁾` (nonlinear /
+  photogalvanic response), and so on.
+"""
+struct Conductivity{I} <: AbstractQuantity
+    function Conductivity{I}() where {I}
+        return (
+            length(_axistuple(I)) >= 2 || error(
+                "Conductivity needs ≥2 indices (1 current + ≥1 field), got $(repr(I))"
+            );
+            new{I}()
+        )
+    end
+end
+Conductivity(idx::Symbol...) = Conductivity{idx}()
+tensor_rank(::Type{Conductivity{I}}) where {I} = length(I)
+index_spaces(::Type{Conductivity{I}}) where {I} = ntuple(_ -> SpatialDirection(), length(I))
+indices(::Type{Conductivity{I}}) where {I} = I
+response_order(::Type{Conductivity{I}}) where {I} = length(I) - 1
+export Conductivity
 
 # ─── Dynamical & spectral quantities ────────────────────────────────────
 #
@@ -305,6 +341,9 @@ representation `A = −Im G^R/π` and the Dyson equation
 """
 struct RetardedGreensFunction <: AbstractPropagator end
 export RetardedGreensFunction
+# G_ab(q,ω): rank-2 in orbital space
+tensor_rank(::Type{RetardedGreensFunction}) = 2
+index_spaces(::Type{RetardedGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
 
 """
     SelfEnergy() <: AbstractPropagator
@@ -314,6 +353,8 @@ The single-particle self-energy `Σ(q, ω)` — the Dyson correction
 """
 struct SelfEnergy <: AbstractPropagator end
 export SelfEnergy
+tensor_rank(::Type{SelfEnergy}) = 2
+index_spaces(::Type{SelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
 
 """
     SpectralFunction() <: AbstractQuantity
@@ -323,6 +364,8 @@ normalized by `∫ A(q, ω) dω = 1`.
 """
 struct SpectralFunction <: AbstractQuantity end
 export SpectralFunction
+tensor_rank(::Type{SpectralFunction}) = 2
+index_spaces(::Type{SpectralFunction}) = (OrbitalIndex(), OrbitalIndex())
 
 """
     DensityOfStates() <: AbstractQuantity
@@ -353,6 +396,9 @@ transform of the [`DynamicalCorrelation`](@ref); obeys detailed balance
 """
 struct DynamicalStructureFactor <: AbstractStructureFactor end
 export DynamicalStructureFactor
+# S_αβ(q,ω): rank-2 in spin space
+tensor_rank(::Type{DynamicalStructureFactor}) = 2
+index_spaces(::Type{DynamicalStructureFactor}) = (SpinAxis(), SpinAxis())
 
 """
     DynamicalSusceptibility() <: AbstractSusceptibility
@@ -363,6 +409,8 @@ and the NMR relaxation rate.
 """
 struct DynamicalSusceptibility <: AbstractSusceptibility end
 export DynamicalSusceptibility
+tensor_rank(::Type{DynamicalSusceptibility}) = 2
+index_spaces(::Type{DynamicalSusceptibility}) = (SpinAxis(), SpinAxis())
 
 """
     NMRSpinRelaxationRate() <: AbstractQuantity

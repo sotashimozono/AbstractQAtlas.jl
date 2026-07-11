@@ -20,11 +20,14 @@ self-energy, at fixed `(q, ω)`:
 
 `G^{-1} = G₀^{-1} − Σ`.
 
-Scalar (single-band) form; the matrix generalization
-`G^{-1} = G₀^{-1} − Σ` in orbital/band space is a tracked follow-up.
-Complex-valued — pass complex `G`, `G0`, `Σ`.
+Written with `inv` rather than `1/…`, so the SAME identity is honest
+about the orbital-tensor character of the propagators: it holds
+verbatim for scalar (single-band) `G, G0, Σ` AND for matrix-valued
+`G_ab, Σ_ab` in orbital/band space — `residual` returns the residual
+matrix, whose norm should vanish.  (`check`/`solve` are scalar; matrix
+inputs use `residual` + a norm.)  Complex-valued.
 """
-@relation :spectral Dyson(G, G0, Σ) = 1 / G - (1 / G0 - Σ)
+@relation :spectral Dyson(G, G0, Σ) = inv(G) - (inv(G0) - Σ)
 
 """
     SpectralFromGreens <: AbstractRelation

@@ -40,21 +40,23 @@ derivative of, or `nothing` for a root potential (the free energy) or a
 quantity outside the thermodynamic-derivative tree.
 
 ```julia
-derivative_edge(SusceptibilityZZ())  # DerivativeEdge(MagnetizationZ, MagneticField)  (χ = ∂M/∂h)
-derivative_edge(MagnetizationZ())    # DerivativeEdge(FreeEnergy, MagneticField)      (M = −∂F/∂h)
-derivative_edge(FreeEnergy())        # nothing — the root
+derivative_edge(Susceptibility(:z, :z))  # DerivativeEdge(Magnetization{:z}, MagneticField)  (χ_zz = ∂M_z/∂h)
+derivative_edge(Magnetization(:z))       # DerivativeEdge(FreeEnergy, MagneticField)          (M_z = −∂F/∂h)
+derivative_edge(FreeEnergy())            # nothing — the root
 ```
 """
 derivative_edge(q::AbstractQuantity) = derivative_edge(typeof(q))
 derivative_edge(::Type{<:AbstractQuantity}) = nothing
 
-# Field-derivative branch: M = −∂F/∂h, χ = ∂M/∂h  (per axis component)
-derivative_edge(::Type{MagnetizationX}) = DerivativeEdge(FreeEnergy, MagneticField)
-derivative_edge(::Type{MagnetizationY}) = DerivativeEdge(FreeEnergy, MagneticField)
-derivative_edge(::Type{MagnetizationZ}) = DerivativeEdge(FreeEnergy, MagneticField)
-derivative_edge(::Type{SusceptibilityXX}) = DerivativeEdge(MagnetizationX, MagneticField)
-derivative_edge(::Type{SusceptibilityYY}) = DerivativeEdge(MagnetizationY, MagneticField)
-derivative_edge(::Type{SusceptibilityZZ}) = DerivativeEdge(MagnetizationZ, MagneticField)
+# Field-derivative branch, index-aware AND order-recursive:
+#   M_α = −∂F/∂h,   χ⁽¹⁾_{α;β} = ∂M_α/∂h,   χ⁽ⁿ⁾ = ∂χ⁽ⁿ⁻¹⁾/∂h
+# so a nonlinear susceptibility's parent is the next-lower-order one,
+# bottoming out at the α-component magnetization.
+derivative_edge(::Type{<:Magnetization}) = DerivativeEdge(FreeEnergy, MagneticField)
+function derivative_edge(::Type{Susceptibility{I}}) where {I}
+    length(I) == 2 && return DerivativeEdge(Magnetization{I[1]}, MagneticField)
+    return DerivativeEdge(Susceptibility{I[1:(end - 1)]}, MagneticField)
+end
 # Temperature branch: S = −∂F/∂T, U = ∂(βF)/∂β, C = ∂U/∂T
 derivative_edge(::Type{ThermalEntropy}) = DerivativeEdge(FreeEnergy, Temperature)
 derivative_edge(::Type{<:Energy}) = DerivativeEdge(FreeEnergy, InverseTemperature)
@@ -78,8 +80,8 @@ of quantity *types* `[typeof(quantity), parent, …, FreeEnergy]`.  A root
 (or non-genealogy) quantity returns the singleton `[typeof(quantity)]`.
 
 ```julia
-differentiation_chain(SusceptibilityZZ())
-# [SusceptibilityZZ, MagnetizationZ, FreeEnergy]  — i.e. χ ⟵ M ⟵ F
+differentiation_chain(Susceptibility(:z, :z))
+# [Susceptibility{:z,:z}, Magnetization{:z}, FreeEnergy]  — χ ⟵ M ⟵ F
 ```
 
 The chain terminates because the genealogy is a finite tree rooted at
@@ -119,8 +121,8 @@ the way up to the root — the order of `quantity` as a `field`-derivative
 of its root potential.
 
 ```julia
-derivative_order(SusceptibilityZZ(), MagneticField())  # 2  (χ = ∂²F/∂h²)
-derivative_order(MagnetizationZ(),   MagneticField())  # 1  (M = ∂F/∂h)
+derivative_order(Susceptibility(:z,:z), MagneticField())  # 2  (χ = ∂²F/∂h²)
+derivative_order(Magnetization(:z),   MagneticField())  # 1  (M = ∂F/∂h)
 derivative_order(SpecificHeat(),     MagneticField())  # 0  (no field derivatives)
 ```
 """

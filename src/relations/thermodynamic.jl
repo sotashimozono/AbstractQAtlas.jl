@@ -37,14 +37,18 @@ solve(SpecificHeatFDT(), Val(:C); var_E=v, T=T, N=N)  # the estimator
 """
     SusceptibilityFDT <: AbstractRelation
 
-The static (zero-frequency) fluctuation–dissipation identity
+The static (zero-frequency) fluctuation–dissipation identity, **per
+tensor component**:
 
-`χ = β (⟨M²⟩ − ⟨M⟩²) / N = β Var(M) / N`,
+`χ_AB = β (⟨M_A M_B⟩ − ⟨M_A⟩⟨M_B⟩) / N = β Cov(M_A, M_B) / N`,
 
-with `M` the total (extensive) order parameter conjugate to the applied
-field and `N` the site count (`N = 1` ⇒ total susceptibility).  This is
-the h → 0 limit of the linear response `χ = ∂⟨M⟩/∂h` for
-`H(h) = H₀ − h·M`; response route and fluctuation route must agree.
+with `M_A` the total (extensive) order-parameter component conjugate to
+the field `h_B` and `N` the site count (`N = 1` ⇒ total susceptibility).
+Susceptibility is a rank-2 tensor `χ_AB` (`Susceptibility{A,B}`); this
+identity relates the `(A, B)` component to the `(A, B)` covariance, so
+`var_M` here is `Cov(M_A, M_B)` (the diagonal `A = B` case is the
+familiar `Var(M_A)`).  It is the `h → 0` limit of `χ_AB = ∂⟨M_A⟩/∂h_B`;
+response route and fluctuation route must agree.
 """
 @relation :thermodynamic SusceptibilityFDT(χ, var_M, β, N=1) = χ - β * var_M / N
 

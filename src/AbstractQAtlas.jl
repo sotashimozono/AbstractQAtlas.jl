@@ -31,6 +31,7 @@ using LinearAlgebra: det, eigen, Hermitian
 
 # core — type vocabulary
 include("core/types.jl")
+include("core/indices.jl")
 include("core/quantities.jl")
 include("core/universality.jl")
 include("core/distributions.jl")

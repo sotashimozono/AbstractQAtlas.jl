@@ -94,6 +94,20 @@ declare their own relations with the same [`@relation`](@ref) macro.
 - **Topological invariants** — [`winding_number`](@ref) (1D two-band),
   [`chern_number`](@ref) (Fukui–Hatsugai–Suzuki), [`TKNN`](@ref).
 
+## Tensor structure — internal degrees of freedom
+
+Quantities that are tensors carry their indices as type parameters and
+declare [`tensor_rank`](@ref) / [`index_spaces`](@ref) / [`indices`](@ref),
+so they are not silently scalarized. `Susceptibility(:x, :y)` is the
+off-diagonal `χ_xy`; the design is **order-extensible to nonlinear
+response** — `Susceptibility(:x, :y, :z)` is `χ⁽²⁾_{x;yz} = ∂²M_x/∂h_y∂h_z`
+([`response_order`](@ref) `== 2`, [`tensor_rank`](@ref) `== 3`) and the
+[`differentiation_chain`](@ref) extends recursively `χ⁽ⁿ⁾ ⟵ χ⁽ⁿ⁻¹⁾ ⟵ … ⟵ M
+⟵ F`. Index spaces: [`SpinAxis`](@ref), [`SpatialDirection`](@ref)
+([`Conductivity`](@ref), also nonlinear), [`OrbitalIndex`](@ref)
+(propagators). [`Dyson`](@ref) is written with `inv`, so the identity
+holds for scalar single-band and matrix orbital-space propagators alike.
+
 ## Structure — definitional correspondences
 
 The `structure/` layer holds the generic facts that are true *by

@@ -12,23 +12,44 @@ using AbstractQAtlas: _bc_size, fetch
     @test CriticalExponents() isa AbstractQuantity
     @test SpecificHeat() isa AbstractThermalPotential
     @test SpecificHeat() isa AbstractQuantity
-    @test MagnetizationZ() isa AbstractMagnetization
-    @test SusceptibilityZZ() isa AbstractSusceptibility
+    @test Magnetization(:z) isa AbstractMagnetization
+    @test Susceptibility(:z, :z) isa AbstractSusceptibility
     @test PartitionFunction() isa AbstractThermalPotential
     @test SpontaneousMagnetization() isa AbstractMagnetization
     @test CriticalTemperature() isa AbstractQuantity
     @test TopologicalInvariant() isa AbstractQuantity
 end
 
-@testset "component trait" begin
-    @test component(MagnetizationX()) == :x
-    @test component(MagnetizationY()) == :y
-    @test component(MagnetizationZ()) == :z
-    @test component(SusceptibilityXX()) == :xx
-    @test component(SusceptibilityZZ()) == :zz
-    # default: no component
-    @test component(SpecificHeat()) === nothing
-    @test component(CriticalExponents()) === nothing
+@testset "tensor traits (indices / rank / spaces)" begin
+    # honest index tuples, one entry per tensor slot
+    @test indices(Magnetization(:x)) == (:x,)
+    @test indices(Magnetization(:z)) == (:z,)
+    @test indices(Susceptibility(:x, :x)) == (:x, :x)
+    @test indices(Susceptibility(:z, :z)) == (:z, :z)
+    @test indices(Susceptibility(:x, :y)) == (:x, :y)          # off-diagonal expressible
+    # scalars: empty index tuple, rank 0
+    @test indices(SpecificHeat()) == ()
+    @test indices(CriticalExponents()) == ()
+    @test tensor_rank(SpecificHeat()) == 0
+    @test tensor_rank(Magnetization(:x)) == 1
+    @test tensor_rank(Susceptibility(:x, :y)) == 2
+    @test index_spaces(Susceptibility(:x, :y)) == (SpinAxis(), SpinAxis())
+    @test index_spaces(RetardedGreensFunction()) == (OrbitalIndex(), OrbitalIndex())
+    @test index_spaces(Conductivity(:x, :y)) == (SpatialDirection(), SpatialDirection())
+end
+
+@testset "nonlinear response order (higher-order susceptibility)" begin
+    # χ⁽ⁿ⁾_{α;β₁…βₙ} = ∂ⁿM_α/∂hⁿ : n = length(indices) − 1
+    @test response_order(Susceptibility(:x, :y)) == 1            # linear
+    @test response_order(Susceptibility(:x, :y, :z)) == 2        # 2nd-order nonlinear
+    @test response_order(Susceptibility(:x, :x, :x, :x)) == 3    # 3rd-order
+    @test tensor_rank(Susceptibility(:x, :y, :z)) == 3           # rank = n + 1
+    @test index_spaces(Susceptibility(:x, :y, :z)) == (SpinAxis(), SpinAxis(), SpinAxis())
+    @test response_order(Conductivity(:x, :y, :z)) == 2          # nonlinear conductivity
+    @test response_order(SpecificHeat()) == 0                    # not a response function
+    # a susceptibility needs ≥2 indices (1 response + ≥1 field)
+    @test_throws ErrorException Susceptibility(:x)
+    @test_throws ErrorException Susceptibility{(:x, 2)}()        # non-symbol index
 end
 
 @testset "Energy granularity" begin

@@ -88,7 +88,7 @@ exponent and which sign:
 ```julia
 exps = (α=0//1, β=1//8, γ=7//4, δ=15//1, ν=1//1, η=1//4)
 singular_form(SpontaneousMagnetization(), -0.01; exponents=exps)  # |t|^{+1/8}
-singular_form(SusceptibilityZZ(), 0.01; exponents=exps)           # |t|^{-7/4}
+singular_form(Susceptibility(:z, :z), 0.01; exponents=exps)           # |t|^{-7/4}
 ```
 
 Throws for a quantity with no reduced-temperature critical law.
@@ -113,7 +113,7 @@ from the correspondence — a divergent quantity `Q ∼ |t|^{−x}` scales as
 exponent is always `−(power·e)/ν`:
 
 ```julia
-fss_size_exponent(SusceptibilityZZ(); exponents=exps)          # +γ/ν  (= 7/4)
+fss_size_exponent(Susceptibility(:z, :z); exponents=exps)          # +γ/ν  (= 7/4)
 fss_size_exponent(SpontaneousMagnetization(); exponents=exps)  # −β/ν  (= −1/8)
 fss_size_exponent(CorrelationLength(); exponents=exps)         # +1    (ξ ∼ L)
 ```
@@ -134,7 +134,7 @@ Finite-size scaling of `quantity`'s critical peak with linear size `L`,
 [`critical_scaling`](@ref) correspondence, not passed by hand.
 
 ```julia
-fss_peak(SusceptibilityZZ(), 64; exponents=exps)   # ∝ 64^{γ/ν}
+fss_peak(Susceptibility(:z, :z), 64; exponents=exps)   # ∝ 64^{γ/ν}
 ```
 """
 function fss_peak(q::AbstractQuantity, L; exponents::NamedTuple)

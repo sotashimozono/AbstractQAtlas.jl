@@ -47,12 +47,14 @@ end
 end
 
 @testset "ThermalAverage marker" begin
-    ta = ThermalAverage(MagnetizationZ(), Canonical(1.0))
+    ta = ThermalAverage(Magnetization(:z), Canonical(1.0))
     @test ta isa AbstractQuantity                 # composes with fetch
-    @test ta.quantity === MagnetizationZ()
+    @test ta.quantity === Magnetization(:z)
     @test ta.distribution.β == 1.0
-    # component trait passes through the marker
-    @test component(ta) == :z
-    @test component(ThermalAverage(SusceptibilityXX(), GrandCanonical(1.0, 0.0))) == :xx
-    @test component(ThermalAverage(SpecificHeat(), Canonical(1.0))) === nothing
+    # tensor traits pass through the marker
+    @test indices(ta) == (:z,)
+    @test indices(ThermalAverage(Susceptibility(:x, :y), GrandCanonical(1.0, 0.0))) ==
+        (:x, :y)
+    @test tensor_rank(ThermalAverage(Susceptibility(:x, :y), Canonical(1.0))) == 2
+    @test indices(ThermalAverage(SpecificHeat(), Canonical(1.0))) == ()
 end
