@@ -134,8 +134,11 @@ Known inter-quantity relationships accumulate as first-class relations:
 `ChernFromBerryCurvature` (`C = (1/2π)∫Ω`) with [`TKNN`](@ref)
 (`σ_xy = C`) and `BulkBoundary` (`n = |ν|`) for the topological side;
 `SpecificHeatFromEntropy` (`c = T ∂s/∂T`) and `HeatCapacityDifference`
-(Mayer's `c_p − c_v = T v α²/κ_T`) for heat capacity. References are
-DOI-verified in `docs/references.bib`.
+(Mayer's `c_p − c_v = T v α²/κ_T`) for heat capacity; `MicrocanonicalTemperature`
+(`β = ∂S/∂E`, the microcanonical–canonical bridge) and `CanonicalTPQ`
+(`Z = D·⟨ψ₀|e^{−βH}|ψ₀⟩`, Sugiura–Shimizu) for statistical ensembles and
+thermal-pure-quantum estimators. References are DOI-verified in
+`docs/references.bib`.
 
 **Scope note.** The Berry curvature is the *imaginary* part of the
 quantum geometric tensor; the real part (the quantum metric) and the

@@ -27,6 +27,8 @@ Three layers, each model-independent:
 
 The implementing atlas holds the **values** — critical temperatures, exact magnetizations, exponent tables. This package holds only what is true *independently of any model*: the vocabulary, the definitional correspondences, and the identities they must satisfy.
 
+**Use as a verification engine.** Beyond serving an atlas, this is meant to be the relation web a quantum-many-body calculation (ED, MPS, TPQ, …) checks its *measured* quantities against — you compute an observable, then use the library's relations directly to test consistency (fluctuation–dissipation, ensemble equivalence, scaling laws, Kubo, …) rather than re-deriving each identity by hand. (Bridging these continuum relations to discrete grids / finite size is tracked in [#19](https://github.com/sotashimozono/AbstractQAtlas.jl/issues/19).)
+
 ## Declare once, derive everything
 
 A relation is written **exactly once** — one line, one mathematical
@@ -95,6 +97,10 @@ Covered in v0.1:
   `BulkBoundary` (`n = |ν|`, edge-mode count from the bulk invariant)
 - **Heat-capacity relations**: `SpecificHeatFDT`, `SpecificHeatFromEntropy`
   (`c = T ∂s/∂T`), `HeatCapacityDifference` (Mayer `c_p − c_v = T v α²/κ_T`)
+- **Ensembles & thermal pure quantum states**: `MicrocanonicalTemperature`
+  (`β = ∂S/∂E`, the microcanonical–canonical bridge), `CanonicalTPQ`
+  (`Z = D·⟨ψ₀|e^{−βH}|ψ₀⟩`, Sugiura–Shimizu) — the identities an ED / MPS /
+  TPQ calculation checks its measured quantities against
 - **Nonlinear-tensor symmetry**: `intrinsic_permutation_symmetric`,
   `canonical_component`, `permutation_equivalent` — `χ⁽ⁿ⁾`'s field
   indices (with their frequencies) are interchangeable, so
