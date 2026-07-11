@@ -15,16 +15,32 @@ using AbstractQAtlas: spectral_origin, spectral_chain, origin_relation
         SpectralOrigin(DynamicalCorrelation, :spacetime_fourier)
     @test spectral_origin(NMRSpinRelaxationRate()) ==
         SpectralOrigin(DynamicalSusceptibility, :low_frequency_limit)
-    # Kubo edge: the dynamical susceptibility (any response order) comes from
-    # the correlation function; same source for linear and multi-time nonlinear
+    # Kubo edge: an n-th order response is an n-time correlation — the
+    # dynamical susceptibility routes to the SAME-ORDER correlation, so the
+    # index tuple (hence the number of times) is preserved across the edge.
     @test spectral_origin(DynamicalSusceptibility(:x, :y)) ==
-        SpectralOrigin(DynamicalCorrelation, :kubo)
+        SpectralOrigin(DynamicalCorrelation{(:x, :y)}, :kubo)          # linear ⟵ 2-point
     @test spectral_origin(DynamicalSusceptibility(:x, :y, :z)) ==
-        SpectralOrigin(DynamicalCorrelation, :kubo)   # χ⁽²⁾(ω₁,ω₂), same origin
+        SpectralOrigin(DynamicalCorrelation{(:x, :y, :z)}, :kubo)      # χ⁽²⁾(ω₁,ω₂) ⟵ 3-point
     # sources / off-graph quantities have no edge
     @test spectral_origin(SelfEnergy()) === nothing
-    @test spectral_origin(DynamicalCorrelation()) === nothing
+    @test spectral_origin(DynamicalCorrelation(:x, :y)) === nothing
     @test spectral_origin(FreeEnergy()) === nothing
+end
+
+@testset "n-th order response ⟺ n-time correlation (Kubo edge is order-faithful)" begin
+    # the physical invariant the user asked for: the Kubo correlation partner
+    # of an order-n response has exactly n time differences = n frequencies,
+    # matching the response's own frequency count.
+    using AbstractQAtlas: frequency_arguments, response_order
+    for I in ((:x, :y), (:x, :y, :z), (:x, :x, :x, :x))
+        χ = DynamicalSusceptibility(I...)
+        corr = spectral_origin(χ).from            # the DynamicalCorrelation{I}
+        n = response_order(χ)
+        @test frequency_arguments(χ) == n                       # n-th order → n frequencies
+        @test frequency_arguments(corr) == n                    # …and its correlation is n-time
+        @test frequency_arguments(corr) == frequency_arguments(χ)
+    end
 end
 
 @testset "chains trace back to the source quantity" begin
