@@ -108,6 +108,9 @@ Covered in v0.1:
   (`S(q) = ∫S(q,ω)dω/2π`, Van Hove), `DynamicalFDT`
   (`S(q,ω) = χ''/[π(1−e^{−βω})]`, reproduces detailed balance),
   `StructureFactorSusceptibility` (`χ = β S(q→0)`)
+- **Entanglement entropy**: `RenyiTwoPurity` (`S_2 = −ln Tr ρ²`),
+  `CFTEntanglementSlope` (`dS/d ln ℓ = c/3`, reads off the central charge;
+  Calabrese–Cardy), `page_average_entropy` (Page's random-state formula)
 - **Nonlinear-tensor symmetry**: `intrinsic_permutation_symmetric`,
   `canonical_component`, `permutation_equivalent` — `χ⁽ⁿ⁾`'s field
   indices (with their frequencies) are interchangeable, so
