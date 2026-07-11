@@ -71,6 +71,11 @@ end
     @test frequency_arguments(Energy()) == 0
     @test frequency_arguments(SpecificHeat()) == 0
     @test frequency_arguments(Magnetization(:z)) == 0
+    # Conductivity is the DC (static) response — the current-channel analogue
+    # of the static Susceptibility — so it has NO frequency arguments at any
+    # order (the AC σ⁽ⁿ⁾(ω₁…ωₙ) is a future DynamicalConductivity).
+    @test frequency_arguments(Conductivity(:x, :y)) == 0
+    @test frequency_arguments(Conductivity(:x, :y, :z)) == 0
 end
 
 @testset "Energy granularity" begin

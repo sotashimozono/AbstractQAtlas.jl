@@ -349,15 +349,23 @@ export SpinCorrelation
     Conductivity{I}() <: AbstractQuantity
     Conductivity(μ, ν₁, …, νₙ)            # each a Symbol
 
-Electrical conductivity of **arbitrary response order** — the `n`-th
-order current response `j_μ = Σ σ⁽ⁿ⁾_{μ; ν₁…νₙ} E_{ν₁}…E_{νₙ}`, a
-rank-`(n+1)` tensor in [`SpatialDirection`](@ref) space with one current
-direction `μ` and `n` field directions.  `response_order = length(I) − 1`:
+The **DC (static)** electrical conductivity of **arbitrary response
+order** — the `n`-th order current response
+`j_μ = Σ σ⁽ⁿ⁾_{μ; ν₁…νₙ} E_{ν₁}…E_{νₙ}`, a rank-`(n+1)` tensor in
+[`SpatialDirection`](@ref) space with one current direction `μ` and `n`
+field directions.  `response_order = length(I) − 1`:
 
 - `Conductivity(:x, :y)` — **linear** `σ_xy` (order 1); its Hall
   component is quantized by [`TKNN`](@ref);
-- `Conductivity(:x, :y, :z)` — **second-order** `σ⁽²⁾` (nonlinear /
-  photogalvanic response), and so on.
+- `Conductivity(:x, :y, :z)` — **second-order** `σ⁽²⁾`, and so on.
+
+This is the zero-frequency response (`frequency_arguments == 0`), the
+current-channel analogue of the static [`Susceptibility`](@ref); like it,
+it carries intrinsic permutation symmetry over its field indices (at zero
+frequency).  The frequency-resolved AC conductivity `σ⁽ⁿ⁾(ω₁, …, ωₙ)`
+(optical `σ(ω)`, the photogalvanic `σ⁽²⁾(ω₁, ω₂)`, Drude / f-sum rule) is
+the AC counterpart a future `DynamicalConductivity` will carry — the
+current-channel mirror of [`DynamicalSusceptibility`](@ref).
 """
 struct Conductivity{I} <: AbstractQuantity
     function Conductivity{I}() where {I}
