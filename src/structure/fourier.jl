@@ -60,6 +60,7 @@ fourier_conjugate_quantity(q::AbstractQuantity) = fourier_conjugate_quantity(typ
 fourier_conjugate_quantity(::Type{<:AbstractQuantity}) = nothing
 
 fourier_conjugate_quantity(::Type{StaticStructureFactor}) = SpinCorrelation
+fourier_conjugate_quantity(::Type{<:SpinCorrelation}) = StaticStructureFactor
 fourier_conjugate_quantity(::Type{DynamicalStructureFactor}) = DynamicalCorrelation
 fourier_conjugate_quantity(::Type{<:DynamicalCorrelation}) = DynamicalStructureFactor
 # current channel: S^j(q,ω) ↔ ⟨jj⟩(r,t)
