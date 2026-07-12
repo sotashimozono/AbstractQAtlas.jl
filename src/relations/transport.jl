@@ -262,3 +262,63 @@ with the von Klitzing constant `R_K = h/e²` and the integer
 Variables: `Rxy`, `ν`, `e`, `h`.
 """
 @relation :transport VonKlitzing(Rxy, ν, e, h) = Rxy * ν * e^2 - h
+
+"""
+    ThermoelectricFigureOfMerit <: AbstractRelation
+
+The dimensionless thermoelectric figure of merit,
+
+`ZT = S² σ T / κ`,
+
+setting the Carnot-fraction efficiency of a thermoelectric
+([`Thermopower`](@ref) `S`, electrical [`Conductivity`](@ref) `σ`, total
+[`ThermalConductivity`](@ref) `κ`).
+
+Variables: `ZT`, `S`, `σ`, `T`, `κ`.
+"""
+@relation :transport ThermoelectricFigureOfMerit(ZT, S, σ, T, κ) = ZT - S^2 * σ * T / κ
+
+"""
+    PowerFactor <: AbstractRelation
+
+The thermoelectric power factor,
+
+`PF = S² σ`,
+
+the numerator of `ZT`; the material's electrical thermoelectric quality
+([`Thermopower`](@ref) `S`, [`Conductivity`](@ref) `σ`).
+
+Variables: `PF`, `S`, `σ`.
+"""
+@relation :transport PowerFactor(PF, S, σ) = PF - S^2 * σ
+
+"""
+    NernstCoefficient <: AbstractRelation
+
+The Nernst coefficient — the transverse (off-diagonal) thermopower per
+unit magnetic field,
+
+`ν_N = S_xy / B`,
+
+the thermoelectric analogue of the Hall effect ([`MagneticFluxDensity`](@ref)
+`B`).
+
+Variables: `νN`, `S_xy`, `B`.
+"""
+@relation :transport NernstCoefficient(νN, S_xy, B) = νN - S_xy / B
+
+"""
+    IoffeRegel <: AbstractInequality
+
+The Mott–Ioffe–Regel criterion for coherent (metallic) transport
+(Ioffe & Regel, Prog. Semicond. 4, 237 (1960)): the mean free path must
+exceed the inverse Fermi wavevector,
+
+`k_F ℓ ≥ 1`   (slack `k_F ℓ − 1`).
+
+Its saturation `k_F ℓ ≈ 1` marks the Mott–Ioffe–Regel limit, the breakdown
+of Boltzmann quasiparticle transport (the "bad-metal" regime).
+
+Variables: `kFℓ` = `k_F ℓ`.
+"""
+@inequality :transport IoffeRegel(kFℓ) = kFℓ - 1
