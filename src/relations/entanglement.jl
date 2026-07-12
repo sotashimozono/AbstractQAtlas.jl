@@ -320,3 +320,82 @@ function free_fermion_renyi_entropy(ζ, n)
     return sum(x -> log(x^n + (1 - x)^n), ζ) / (1 - n)
 end
 export free_fermion_renyi_entropy
+
+# ─── Multipartite entanglement: monogamy, tangle, tripartite (#27) ───────
+
+"""
+    ConcurrenceTangle <: AbstractRelation
+
+The tangle is the squared concurrence (Wootters, Phys. Rev. Lett. 80,
+2245 (1998)),
+
+`τ = C²`,
+
+([`Tangle`](@ref), [`Concurrence`](@ref)).
+
+Variables: `τ`, `C`.
+"""
+@relation :entanglement ConcurrenceTangle(τ, C) = τ - C^2
+
+"""
+    Monogamy <: AbstractInequality
+
+The Coffman–Kundu–Wootters monogamy of entanglement (Coffman, Kundu &
+Wootters, Phys. Rev. A 61, 052306 (2000)): the tangle of `A` with the rest
+bounds the sum of its pairwise tangles,
+
+`τ(A:BC) ≥ τ(A:B) + τ(A:C)`
+
+(slack `τ_ABC − τ_AB − τ_AC` = the [`ThreeTangle`](@ref) `τ₃ ≥ 0`).
+Entanglement cannot be freely shared.
+
+Variables: `τ_ABC`, `τ_AB`, `τ_AC`.
+"""
+@inequality :entanglement Monogamy(τ_ABC, τ_AB, τ_AC) = τ_ABC - τ_AB - τ_AC
+
+"""
+    ThreeTangleDefinition <: AbstractRelation
+
+The residual three-tangle — the genuinely tripartite entanglement beyond
+the pairwise budget (Coffman, Kundu & Wootters, Phys. Rev. A 61, 052306
+(2000)),
+
+`τ₃ = τ(A:BC) − τ(A:B) − τ(A:C)`,
+
+the saturation gap of [`Monogamy`](@ref).
+
+Variables: `τ3`, `τ_ABC`, `τ_AB`, `τ_AC`.
+"""
+@relation :entanglement ThreeTangleDefinition(τ3, τ_ABC, τ_AB, τ_AC) =
+    τ3 - (τ_ABC - τ_AB - τ_AC)
+
+"""
+    TripartiteInformationDefinition <: AbstractRelation
+
+The tripartite information,
+
+`I₃(A:B:C) = I(A:B) + I(A:C) − I(A:BC)`,
+
+([`TripartiteInformation`](@ref)); a negative `I₃` signals genuinely
+multipartite (scrambled) correlation.
+
+Variables: `I3`, `I_AB`, `I_AC`, `I_ABC`.
+"""
+@relation :entanglement TripartiteInformationDefinition(I3, I_AB, I_AC, I_ABC) =
+    I3 - (I_AB + I_AC - I_ABC)
+
+"""
+    KitaevPreskillTEE <: AbstractRelation
+
+The topological entanglement entropy from a tripartition (Kitaev &
+Preskill, Phys. Rev. Lett. 96, 110404 (2006)),
+
+`S_A + S_B + S_C − S_AB − S_BC − S_CA + S_ABC = −γ`,
+
+the universal constant `γ = ln D` isolated from the area law by the
+alternating tripartite sum (`γ > 0` ⇒ topological order).
+
+Variables: `γ`, `S_A`, `S_B`, `S_C`, `S_AB`, `S_BC`, `S_CA`, `S_ABC`.
+"""
+@relation :entanglement KitaevPreskillTEE(γ, S_A, S_B, S_C, S_AB, S_BC, S_CA, S_ABC) =
+    (S_A + S_B + S_C - S_AB - S_BC - S_CA + S_ABC) + γ

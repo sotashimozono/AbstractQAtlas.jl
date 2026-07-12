@@ -1134,6 +1134,58 @@ struct MarkovEntropy <: AbstractEntanglementMeasure end
 export MarkovEntropy
 
 """
+    Concurrence() <: AbstractEntanglementMeasure
+
+The two-qubit concurrence `C ∈ [0, 1]` (Wootters, Phys. Rev. Lett. 80,
+2245 (1998)) — an entanglement monotone; `C = 0` for separable, `C = 1`
+for a Bell pair.  Its square is the [`Tangle`](@ref).
+"""
+struct Concurrence <: AbstractEntanglementMeasure end
+export Concurrence
+
+"""
+    Tangle() <: AbstractEntanglementMeasure
+
+The tangle `τ = C²` — the squared [`Concurrence`](@ref); the bipartite
+entanglement measure obeying the CKW monogamy inequality
+`τ(A:BC) ≥ τ(A:B) + τ(A:C)`.
+"""
+struct Tangle <: AbstractEntanglementMeasure end
+export Tangle
+
+"""
+    ThreeTangle() <: AbstractEntanglementMeasure
+
+The residual three-tangle `τ₃ = τ(A:BC) − τ(A:B) − τ(A:C)` (Coffman,
+Kundu & Wootters, Phys. Rev. A 61, 052306 (2000)) — the genuinely
+tripartite entanglement left over after the monogamy budget; `τ₃ = 1` for
+GHZ, `0` for W.
+"""
+struct ThreeTangle <: AbstractEntanglementMeasure end
+export ThreeTangle
+
+"""
+    TripartiteInformation() <: AbstractEntanglementMeasure
+
+The tripartite information `I₃(A:B:C) = I(A:B) + I(A:C) − I(A:BC)` — can be
+negative (a diagnostic of scrambling / multipartite correlation).
+"""
+struct TripartiteInformation <: AbstractEntanglementMeasure end
+export TripartiteInformation
+
+"""
+    TopologicalEntanglementEntropy() <: AbstractEntanglementMeasure
+
+The topological entanglement entropy `γ = ln D` (`D` the total quantum
+dimension) — the universal constant subleading term of the area law
+`S(∂) = α|∂| − γ`, extracted from a tripartition by the Kitaev–Preskill
+combination (Kitaev & Preskill, Phys. Rev. Lett. 96, 110404 (2006);
+Levin & Wen 2006); nonzero signals topological order.
+"""
+struct TopologicalEntanglementEntropy <: AbstractEntanglementMeasure end
+export TopologicalEntanglementEntropy
+
+"""
     Purity() <: AbstractQuantity
 
 The purity `Tr(ρ_A²) ∈ (0, 1]` of a (reduced) density matrix — `1` for a

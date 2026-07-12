@@ -185,3 +185,76 @@ end
     @test free_fermion_renyi_entropy([0.3], 2) ≈ -log(0.3^2 + 0.7^2) atol = 1e-12
     @test_throws ErrorException free_fermion_renyi_entropy(ζset, 1)   # n=1 is the vN limit
 end
+
+@testset "multipartite: monogamy / three-tangle on GHZ and W states" begin
+    using AbstractQAtlas: check, solve, slack, AbstractInequality
+
+    # tangle = concurrence²; a Bell pair has C=1 ⇒ τ=1
+    @test check(ConcurrenceTangle(); τ=1.0, C=1.0, atol=1e-12)
+    @test solve(ConcurrenceTangle(), Val(:τ); C=2 / 3) ≈ 4 / 9   # W-state pair concurrence
+
+    # GHZ = (|000⟩+|111⟩)/√2: pairwise reduced states are separable ⇒ τ_AB=τ_AC=0,
+    # while A is maximally entangled with BC ⇒ τ(A:BC)=1, so the three-tangle = 1.
+    τ_ABC_ghz, τ_AB_ghz, τ_AC_ghz = 1.0, 0.0, 0.0
+    @test check(Monogamy(); τ_ABC=τ_ABC_ghz, τ_AB=τ_AB_ghz, τ_AC=τ_AC_ghz)
+    τ3_ghz = solve(
+        ThreeTangleDefinition(), Val(:τ3); τ_ABC=τ_ABC_ghz, τ_AB=τ_AB_ghz, τ_AC=τ_AC_ghz
+    )
+    @test τ3_ghz ≈ 1.0 atol = 1e-12                              # GHZ: genuine tripartite entanglement
+    @test τ3_ghz ≈ slack(Monogamy(); τ_ABC=τ_ABC_ghz, τ_AB=τ_AB_ghz, τ_AC=τ_AC_ghz) atol =
+        1e-12
+
+    # W = (|001⟩+|010⟩+|100⟩)/√3: τ(A:B)=τ(A:C)=4/9, τ(A:BC)=8/9 ⇒ three-tangle = 0
+    # (W saturates monogamy — no residual tripartite tangle).
+    τ_ABC_w, τ_AB_w, τ_AC_w = 8 / 9, 4 / 9, 4 / 9
+    @test check(Monogamy(); τ_ABC=τ_ABC_w, τ_AB=τ_AB_w, τ_AC=τ_AC_w, atol=1e-12)
+    @test slack(Monogamy(); τ_ABC=τ_ABC_w, τ_AB=τ_AB_w, τ_AC=τ_AC_w) ≈ 0 atol = 1e-12
+    @test solve(
+        ThreeTangleDefinition(), Val(:τ3); τ_ABC=τ_ABC_w, τ_AB=τ_AB_w, τ_AC=τ_AC_w
+    ) ≈ 0 atol = 1e-12
+
+    # monogamy is a genuine bound: over-sharing (τ_AB+τ_AC > τ_ABC) is forbidden
+    @test Monogamy() isa AbstractInequality
+    @test !check(Monogamy(); τ_ABC=0.5, τ_AB=0.4, τ_AC=0.4, atol=1e-9)
+end
+
+@testset "tripartite information + Kitaev–Preskill TEE" begin
+    using AbstractQAtlas: check, solve
+    # I₃ = I(A:B) + I(A:C) − I(A:BC)
+    @test check(
+        TripartiteInformationDefinition();
+        I3=0.3 + 0.5 - 1.1,
+        I_AB=0.3,
+        I_AC=0.5,
+        I_ABC=1.1,
+        atol=1e-12,
+    )
+    @test solve(
+        TripartiteInformationDefinition(), Val(:I3); I_AB=0.3, I_AC=0.5, I_ABC=1.1
+    ) ≈ -0.3
+
+    # Kitaev–Preskill: the alternating tripartite sum isolates −γ. Build a
+    # toric-code-like assignment (all singles a, pairs b, triple c):
+    # 3a − 3b + c = −γ ⇒ pick a,b,c so γ = ln 2 (toric code total dimension D=2).
+    a, b = 1.7, 2.4
+    γ = log(2)
+    c = -γ - (3a - 3b)                          # so 3a − 3b + c = −γ
+    @test check(
+        KitaevPreskillTEE();
+        γ=γ,
+        S_A=a,
+        S_B=a,
+        S_C=a,
+        S_AB=b,
+        S_BC=b,
+        S_CA=b,
+        S_ABC=c,
+        atol=1e-12,
+    )
+    @test solve(
+        KitaevPreskillTEE(), Val(:γ); S_A=a, S_B=a, S_C=a, S_AB=b, S_BC=b, S_CA=b, S_ABC=c
+    ) ≈ log(2) atol = 1e-12                      # extracts γ = ln 2
+
+    @test tensor_rank(Concurrence()) == 0
+    @test tensor_rank(TopologicalEntanglementEntropy()) == 0
+end
