@@ -37,6 +37,7 @@ details.
 module AbstractQAtlas
 
 using LinearAlgebra: det, eigen, Hermitian
+using InteractiveUtils: subtypes    # quantity-graph node discovery (structure/graph.jl)
 
 # core — type vocabulary
 include("core/types.jl")
@@ -144,6 +145,13 @@ end
 # top level, so it goes AFTER the re-export) — makes the registry queryable
 # via `quantities` / `relations_constraining`.
 include("relations/quantity_links.jl")
+
+# the UNIFIED quantity-relationship graph: folds the separate typed edges
+# (derivative_edge / spectral_origin / fourier_conjugate + the relation↔quantity
+# links) into one queryable graph — related_quantities / quantity_path /
+# quantity_graph_jsonl.  Included last: it needs every edge accessor AND the
+# relation↔quantity map at the top level.
+include("structure/graph.jl")
 
 # automatic-differentiation entry point (methods live in ext/, ForwardDiff)
 include("autodiff.jl")
