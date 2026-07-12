@@ -385,6 +385,31 @@ response_order(::Type{Conductivity{I}}) where {I} = length(I) - 1
 export Conductivity
 
 """
+    Resistivity{I}() <: AbstractQuantity
+    Resistivity(μ, ν)                             # each a Symbol
+
+The resistivity tensor `ρ_μν` — the matrix inverse of the
+[`Conductivity`](@ref) `σ_μν`.  Rank-2 in [`SpatialDirection`](@ref)
+space; in a magnetic field the 2×2 inversion gives
+`ρ_xx = σ_xx/(σ_xx²+σ_xy²)`, `ρ_xy = σ_xy/(σ_xx²+σ_xy²)` — so a
+dissipationless Hall state (`σ_xx = 0`) has `ρ_xy = 1/σ_xy`, `ρ_xx = 0`.
+"""
+struct Resistivity{I} <: AbstractQuantity
+    function Resistivity{I}() where {I}
+        return (
+            length(_axistuple(I)) == 2 ||
+                error("Resistivity is a rank-2 tensor ρ_μν (2 indices), got $(repr(I))");
+            new{I}()
+        )
+    end
+end
+Resistivity(idx::Symbol...) = Resistivity{idx}()
+tensor_rank(::Type{Resistivity{I}}) where {I} = length(I)
+index_spaces(::Type{Resistivity{I}}) where {I} = ntuple(_ -> SpatialDirection(), length(I))
+indices(::Type{Resistivity{I}}) where {I} = I
+export Resistivity
+
+"""
     DynamicalConductivity{I}() <: AbstractQuantity
     DynamicalConductivity(μ, ν₁, …, νₙ)           # each a Symbol
 
@@ -681,6 +706,24 @@ The Hall coefficient `R_H = E_y / (j_x B_z)` — for a single carrier band
 """
 struct HallCoefficient <: AbstractQuantity end
 export HallCoefficient
+
+"""
+    MagneticFluxDensity() <: AbstractQuantity
+
+The magnetic flux density `B` — sets the cyclotron frequency
+`ω_c = eB/m` and, in 2D, the Landau-level filling `ν = n h / (e B)`.
+"""
+struct MagneticFluxDensity <: AbstractQuantity end
+export MagneticFluxDensity
+
+"""
+    FillingFactor() <: AbstractQuantity
+
+The Landau-level filling factor `ν = n h /(e B)` — the number of filled
+Landau levels; quantizes the Hall resistance `R_xy = h/(ν e²)`.
+"""
+struct FillingFactor <: AbstractQuantity end
+export FillingFactor
 
 # ─── Dynamical & spectral quantities ────────────────────────────────────
 #
