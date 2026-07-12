@@ -131,3 +131,78 @@ particular `S_0 ≥ S_1 (von Neumann) ≥ S_2 ≥ … ≥ S_∞`.
 Variables: `S_low` = `S_{α_low}`, `S_high` = `S_{α_high}` (with `α_low < α_high`).
 """
 @inequality :entanglement RenyiMonotonicity(S_low, S_high) = S_low - S_high
+
+# ─── The entropy zoo: Rényi / Tsallis / mutual / conditional / relative ──
+#
+# The defining relations of the one-parameter entropy families and the
+# composite (multi-party) entropies — unifying the entanglement measures a
+# many-body calculation reports (issue #27).
+
+"""
+    RenyiEntropyMoment <: AbstractRelation
+
+The Rényi entropy from the density-matrix moment `Tr ρ^α` (α ≠ 1),
+
+`S_α = ln(Tr ρ^α) / (1 − α)`,
+
+the general form behind [`RenyiTwoPurity`](@ref) (α = 2: `S_2 = −ln Tr ρ²`)
+and, as `α → 1`, the [`VonNeumannEntropy`](@ref).
+
+Variables: `Sα`, `moment` = `Tr ρ^α`, `α`.
+"""
+@relation :entanglement RenyiEntropyMoment(Sα, moment, α) = Sα - log(moment) / (1 - α)
+
+"""
+    TsallisEntropyMoment <: AbstractRelation
+
+The Tsallis entropy from the moment `Tr ρ^q` (q ≠ 1; Tsallis, J. Stat.
+Phys. 52, 479 (1988)),
+
+`S_q = (1 − Tr ρ^q) / (q − 1)`.
+
+Variables: `Sq`, `moment` = `Tr ρ^q`, `q`.
+"""
+@relation :entanglement TsallisEntropyMoment(Sq, moment, q) = Sq - (1 - moment) / (q - 1)
+
+"""
+    MutualInformationDefinition <: AbstractRelation
+
+The quantum mutual information,
+
+`I(A:B) = S(A) + S(B) − S(AB)`,
+
+([`MutualInformation`](@ref); non-negative by [`Subadditivity`](@ref)).
+
+Variables: `I`, `S_A`, `S_B`, `S_AB`.
+"""
+@relation :entanglement MutualInformationDefinition(I, S_A, S_B, S_AB) =
+    I - (S_A + S_B - S_AB)
+
+"""
+    ConditionalEntropyDefinition <: AbstractRelation
+
+The quantum conditional entropy,
+
+`S(A|B) = S(AB) − S(B)`,
+
+([`ConditionalEntropy`](@ref); can be negative — an entanglement witness).
+
+Variables: `S_cond`, `S_AB`, `S_B`.
+"""
+@relation :entanglement ConditionalEntropyDefinition(S_cond, S_AB, S_B) =
+    S_cond - (S_AB - S_B)
+
+"""
+    RelativeEntropyNonNegativity <: AbstractInequality
+
+Klein's inequality: the quantum relative entropy is non-negative,
+
+`S(ρ‖σ) ≥ 0`,
+
+(slack `S_rel`; zero iff `ρ = σ`).  The bedrock positivity behind
+subadditivity and the second law (Lindblad, Commun. Math. Phys. 40, 147
+(1975); Vedral, Rev. Mod. Phys. 74, 197 (2002)).
+
+Variables: `S_rel` = `S(ρ‖σ)`.
+"""
+@inequality :entanglement RelativeEntropyNonNegativity(S_rel) = S_rel

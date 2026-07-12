@@ -1067,6 +1067,48 @@ struct RenyiEntropy <: AbstractEntanglementMeasure end
 export RenyiEntropy
 
 """
+    TsallisEntropy() <: AbstractEntanglementMeasure
+
+The Tsallis entropy `S_q = (1 − Tr ρ_A^q)/(q − 1)` (Tsallis, J. Stat.
+Phys. 52, 479 (1988)) — the other one-parameter deformation of the
+[`VonNeumannEntropy`](@ref) (`q → 1` limit), non-additive across
+independent subsystems.
+"""
+struct TsallisEntropy <: AbstractEntanglementMeasure end
+export TsallisEntropy
+
+"""
+    MutualInformation() <: AbstractEntanglementMeasure
+
+The quantum mutual information `I(A:B) = S(A) + S(B) − S(AB)` — the total
+(classical + quantum) correlation between `A` and `B`; non-negative by
+subadditivity ([`Subadditivity`](@ref)).
+"""
+struct MutualInformation <: AbstractEntanglementMeasure end
+export MutualInformation
+
+"""
+    ConditionalEntropy() <: AbstractEntanglementMeasure
+
+The conditional entropy `S(A|B) = S(AB) − S(B)` — can be **negative**
+quantum-mechanically (a signature of entanglement), unlike its classical
+counterpart.
+"""
+struct ConditionalEntropy <: AbstractEntanglementMeasure end
+export ConditionalEntropy
+
+"""
+    RelativeEntropy() <: AbstractEntanglementMeasure
+
+The quantum relative entropy `S(ρ‖σ) = Tr ρ(ln ρ − ln σ)` — the
+distinguishability of `ρ` from `σ`; non-negative (Klein's inequality) and
+monotone under CPTP maps (Lindblad, Commun. Math. Phys. 40, 147 (1975);
+Vedral, Rev. Mod. Phys. 74, 197 (2002)).
+"""
+struct RelativeEntropy <: AbstractEntanglementMeasure end
+export RelativeEntropy
+
+"""
     Purity() <: AbstractQuantity
 
 The purity `Tr(ρ_A²) ∈ (0, 1]` of a (reduced) density matrix — `1` for a

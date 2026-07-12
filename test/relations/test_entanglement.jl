@@ -65,3 +65,46 @@ end
     end
     @test isapprox(Ssum / M, page_average_entropy(dA, dB); rtol=0.03)
 end
+
+@testset "entropy zoo: Rényi/Tsallis moments, mutual & conditional, Klein" begin
+    using AbstractQAtlas: check, solve, slack, residual, AbstractInequality
+
+    # Schmidt spectrum {p, 1−p}: moments Tr ρ^α = p^α + (1−p)^α
+    p = 0.3
+    mom(α) = p^α + (1 - p)^α
+    SvN = -p * log(p) - (1 - p) * log(1 - p)
+
+    # Rényi from the moment reduces to −ln(purity) at α=2 (= RenyiTwoPurity) …
+    S2 = solve(RenyiEntropyMoment(), Val(:Sα); moment=mom(2), α=2)
+    @test S2 ≈ -log(mom(2)) atol = 1e-12
+    @test check(RenyiTwoPurity(); S2=S2, purity=mom(2), atol=1e-12)      # cross-relation
+    # … and → S_vN as α → 1 (l'Hôpital limit, numerically)
+    @test solve(RenyiEntropyMoment(), Val(:Sα); moment=mom(1.0001), α=1.0001) ≈ SvN atol =
+        1e-3
+
+    # Tsallis from the moment; q → 1 limit is S_vN
+    @test check(
+        TsallisEntropyMoment(); Sq=(1 - mom(2)) / (2 - 1), moment=mom(2), q=2, atol=1e-12
+    )
+    @test solve(TsallisEntropyMoment(), Val(:Sq); moment=mom(1.0001), q=1.0001) ≈ SvN atol =
+        1e-3
+
+    # mutual information I = S_A+S_B−S_AB ≥ 0, and on a pure state (S_AB=0)
+    # with S_A=S_B=H(p): I = 2 H(p); consistency with Subadditivity slack
+    S_A = S_B = SvN
+    S_AB = 0.0
+    I = solve(MutualInformationDefinition(), Val(:I); S_A=S_A, S_B=S_B, S_AB=S_AB)
+    @test I ≈ 2 * SvN atol = 1e-12
+    @test slack(Subadditivity(); S_A=S_A, S_B=S_B, S_AB=S_AB) ≈ I atol = 1e-12   # I = subadditivity slack
+
+    # conditional entropy of a pure entangled state is NEGATIVE: S(A|B)=S_AB−S_B=−S_B
+    S_cond = solve(ConditionalEntropyDefinition(), Val(:S_cond); S_AB=S_AB, S_B=S_B)
+    @test S_cond ≈ -S_B atol = 1e-12
+    @test S_cond < 0                                                     # entanglement witness
+
+    # Klein's inequality S(ρ‖σ) ≥ 0 (inequality kind), zero iff ρ=σ
+    @test RelativeEntropyNonNegativity() isa AbstractInequality
+    @test check(RelativeEntropyNonNegativity(); S_rel=0.4)
+    @test slack(RelativeEntropyNonNegativity(); S_rel=0.0) == 0.0        # ρ = σ saturates
+    @test !check(RelativeEntropyNonNegativity(); S_rel=-1e-3, atol=1e-9)
+end
