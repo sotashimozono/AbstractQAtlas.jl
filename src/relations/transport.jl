@@ -189,3 +189,76 @@ the ratio of the transverse (Hall) to longitudinal conductivity.
 Variables: `tanθ_H`, `σxy`, `σxx`.
 """
 @relation :transport HallAngle(tanθ_H, σxy, σxx) = tanθ_H - σxy / σxx
+
+"""
+    LongitudinalResistivity <: AbstractRelation
+
+The longitudinal resistivity from the 2×2 magnetotransport tensor
+inversion `ρ = σ⁻¹`,
+
+`ρ_xx = σ_xx / (σ_xx² + σ_xy²)`,
+
+(convention-free — the diagonal element of the inverse).  In a
+dissipationless Hall state (`σ_xx = 0`) it vanishes.
+
+Variables: `ρxx`, `σxx`, `σxy`.
+"""
+@relation :transport LongitudinalResistivity(ρxx, σxx, σxy) = ρxx - σxx / (σxx^2 + σxy^2)
+
+"""
+    HallResistivity <: AbstractRelation
+
+The Hall resistivity from the 2×2 magnetotransport tensor inversion,
+
+`ρ_xy = σ_xy / (σ_xx² + σ_xy²)`,
+
+(standard quantum-Hall sign convention, `ρ_xy` and `σ_xy` carrying the
+same sign).  A dissipationless Hall state (`σ_xx = 0`) gives the inverse
+Hall conductivity `ρ_xy = 1/σ_xy`.
+
+Variables: `ρxy`, `σxx`, `σxy`.
+"""
+@relation :transport HallResistivity(ρxy, σxx, σxy) = ρxy - σxy / (σxx^2 + σxy^2)
+
+"""
+    CyclotronFrequency <: AbstractRelation
+
+The cyclotron frequency of a carrier in a magnetic field,
+
+`ω_c = e B / m`,
+
+([`MagneticFluxDensity`](@ref) `B`, [`EffectiveMass`](@ref) `m`); sets the
+Hall angle `tan θ_H = ω_c τ` ([`HallAngle`](@ref)).
+
+Variables: `ωc`, `e`, `B`, `m`.
+"""
+@relation :transport CyclotronFrequency(ωc, e, B, m) = ωc - e * B / m
+
+"""
+    RighiLeduc <: AbstractRelation
+
+The Righi–Leduc (thermal Hall) effect: the thermal and electrical Hall
+conductivities obey the Wiedemann–Franz law in the transverse channel,
+
+`κ_xy = L₀ · T · σ_xy`,
+
+the off-diagonal companion of [`WiedemannFranz`](@ref) (`L₀ = π²/3`).
+
+Variables: `κxy`, `L0`, `T`, `σxy`.
+"""
+@relation :transport RighiLeduc(κxy, L0, T, σxy) = κxy - L0 * T * σxy
+
+"""
+    VonKlitzing <: AbstractRelation
+
+The quantized Hall resistance of the integer quantum Hall effect (von
+Klitzing, Dorda & Pepper, Phys. Rev. Lett. 45, 494 (1980)),
+
+`R_xy = h / (ν e²) = R_K / ν`,
+
+with the von Klitzing constant `R_K = h/e²` and the integer
+[`FillingFactor`](@ref) `ν` (`R_xy·ν·e² = h`).
+
+Variables: `Rxy`, `ν`, `e`, `h`.
+"""
+@relation :transport VonKlitzing(Rxy, ν, e, h) = Rxy * ν * e^2 - h

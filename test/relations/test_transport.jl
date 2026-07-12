@@ -128,3 +128,42 @@ end
         @test tensor_rank(Q()) == 0
     end
 end
+
+@testset "magnetotransport: σ↔ρ tensor inversion, cyclotron, Righi–Leduc, von Klitzing" begin
+    # 2×2 conductivity/resistivity inversion: build ρ from σ, then ρ = σ⁻¹ exactly
+    σxx, σxy = 2.0, 1.5
+    D = σxx^2 + σxy^2
+    ρxx = σxx / D
+    ρxy = σxy / D
+    @test check(LongitudinalResistivity(); ρxx=ρxx, σxx=σxx, σxy=σxy, atol=1e-12)
+    @test check(HallResistivity(); ρxy=ρxy, σxx=σxx, σxy=σxy, atol=1e-12)
+    # INDEPENDENT: ρ is genuinely the matrix inverse of σ (antisymmetric Hall tensor)
+    σ = [σxx σxy; -σxy σxx]
+    ρ = [ρxx -ρxy; ρxy ρxx]                    # inv of [[a,b],[-b,a]] is (1/D)[[a,-b],[b,a]]
+    @test ρ * σ ≈ [1.0 0.0; 0.0 1.0] atol = 1e-12
+
+    # dissipationless quantum-Hall limit σ_xx = 0 ⇒ ρ_xy = 1/σ_xy, ρ_xx = 0
+    @test solve(HallResistivity(), Val(:ρxy); σxx=0.0, σxy=σxy) ≈ 1 / σxy
+    @test solve(LongitudinalResistivity(), Val(:ρxx); σxx=0.0, σxy=σxy) ≈ 0.0
+
+    # cyclotron frequency ω_c = eB/m; ties the Hall angle tan θ = ω_c τ
+    e, B, m, τ = 1.0, 0.7, 2.0, 0.9
+    ωc = solve(CyclotronFrequency(), Val(:ωc); e=e, B=B, m=m)
+    @test ωc ≈ e * B / m
+    @test check(HallAngle(); tanθ_H=ωc * τ, σxy=ωc * τ, σxx=1.0, atol=1e-12)   # tan θ = ω_c τ
+
+    # Righi–Leduc: κ_xy = L₀ T σ_xy (Wiedemann–Franz in the Hall channel)
+    L0, T = π^2 / 3, 1.4
+    @test check(RighiLeduc(); κxy=L0 * T * σxy, L0=L0, T=T, σxy=σxy, atol=1e-12)
+
+    # von Klitzing R_xy = h/(ν e²); natural units h = 2π ⇒ R_xy = 2π/(ν e²)
+    h, ν = 2π, 3.0
+    @test check(VonKlitzing(); Rxy=h / (ν * e^2), ν=ν, e=e, h=h, atol=1e-12)
+    @test solve(VonKlitzing(), Val(:Rxy); ν=ν, e=e, h=h) ≈ h / (ν * e^2)
+    @test solve(VonKlitzing(), Val(:ν); Rxy=h / (ν * e^2), e=e, h=h) ≈ ν   # read ν off R_xy
+
+    # the new quantities
+    @test tensor_rank(Resistivity(:x, :y)) == 2
+    @test tensor_rank(MagneticFluxDensity()) == 0
+    @test tensor_rank(FillingFactor()) == 0
+end
