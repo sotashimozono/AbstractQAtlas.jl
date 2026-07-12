@@ -14,7 +14,7 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
 
 @testset "registry + traits" begin
     rels = all_relations()
-    @test length(rels) == 64          # +5 transport (magnetotransport: ρ-inversion ×2, cyclotron, Righi–Leduc, von Klitzing)
+    @test length(rels) == 70          # +6 quantum (virial, Hellmann–Feynman, Ehrenfest ×2, zero-variance, Robertson)
     @test allunique(typeof.(rels))
     @test length(all_relations(; domain=:scaling)) == 5
     @test length(all_relations(; domain=:thermodynamic)) == 12
@@ -22,6 +22,7 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
     @test length(all_relations(; domain=:topology)) == 3
     @test length(all_relations(; domain=:spectral)) == 10
     @test length(all_relations(; domain=:transport)) == 16
+    @test length(all_relations(; domain=:quantum)) == 6
     @test length(all_relations(; domain=:ensemble)) == 2
     @test length(all_relations(; domain=:entanglement)) == 8
     @test length(all_relations(; domain=:cft)) == 2
