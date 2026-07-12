@@ -129,3 +129,40 @@ and the measured gap must satisfy `ξΔ = v`.
 Variables: `ξ`, `v`, `Δ`.
 """
 @relation :spectral CorrelationLengthGap(ξ, v, Δ) = ξ - v / Δ
+
+"""
+    KramersKronigReal <: AbstractRelation
+
+The Kramers–Kronig relation fixing the **real** part of a causal
+(retarded, analytic-in-the-upper-half-plane) response function from the
+Hilbert transform of its imaginary part,
+
+`χ'(ω) = (1/π) P ∫ χ''(ω') / (ω' − ω) dω'`,
+
+(Kronig, J. Opt. Soc. Am. 12, 547 (1926); Toll, Phys. Rev. 104, 1760
+(1956)).  Applies to any causal response — the optical conductivity
+`σ(ω)`, the susceptibility `χ(ω)`, the retarded Green's function, the
+dielectric function `ε(ω)`.  Supplied-integral convention: `pv_imag` is
+the caller-computed principal-value Hilbert transform
+`P ∫ χ''(ω')/(ω' − ω) dω'`.
+
+Variables: `Reχ` = `χ'(ω)`, `pv_imag`.
+"""
+@relation :spectral KramersKronigReal(Reχ, pv_imag) = Reχ - pv_imag / π
+
+"""
+    KramersKronigImag <: AbstractRelation
+
+The Kramers–Kronig relation fixing the **imaginary** part of a causal
+response function from the Hilbert transform of its real part,
+
+`χ''(ω) = −(1/π) P ∫ χ'(ω') / (ω' − ω) dω'`,
+
+the companion of [`KramersKronigReal`](@ref) (Kronig, J. Opt. Soc. Am. 12,
+547 (1926); Toll, Phys. Rev. 104, 1760 (1956)).  Supplied-integral
+convention: `pv_real` is the caller-computed principal-value Hilbert
+transform `P ∫ χ'(ω')/(ω' − ω) dω'`.
+
+Variables: `Imχ` = `χ''(ω)`, `pv_real`.
+"""
+@relation :spectral KramersKronigImag(Imχ, pv_real) = Imχ + pv_real / π
