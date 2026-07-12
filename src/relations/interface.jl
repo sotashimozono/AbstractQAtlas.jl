@@ -66,6 +66,20 @@ exponent `β` vs the inverse temperature `β`).
 function domain end
 export domain
 
+"""
+    quantities(rel::AbstractRelation) -> Tuple{Vararg{Type}}
+
+The physical-quantity TYPES a relation directly constrains — the machine
+link from a relation to the vocabulary it speaks about (beyond the bare
+variable *symbols* of [`variables`](@ref)).  E.g.
+`quantities(SusceptibilityFDT()) == (Susceptibility,)`.  Defaults to `()`
+for relations that constrain parameters/exponents rather than named
+quantities (scaling laws, Maxwell relations).  The reverse index is
+[`relations_constraining`](@ref).
+"""
+quantities(::AbstractRelation) = ()
+export quantities
+
 # ─── Registry ───────────────────────────────────────────────────────────
 
 const _RELATION_REGISTRY = AbstractRelation[]
@@ -83,6 +97,24 @@ function all_relations(; domain::Union{Nothing,Symbol}=nothing)
     return filter(r -> AbstractQAtlas.domain(r) === domain, _RELATION_REGISTRY)
 end
 export all_relations
+
+"""
+    relations_constraining(q) -> Vector{AbstractRelation}
+
+Every registered relation that directly constrains the quantity `q` (its
+type appears in the relation's [`quantities`](@ref)) — the reverse of
+`quantities`, so a consumer can ask a quantity "which universal laws must
+you obey?".  Accepts a quantity instance or its type.
+
+```julia
+relations_constraining(Susceptibility(:z, :z))   # [SusceptibilityFDT(), SusceptibilityResponse()]
+```
+"""
+relations_constraining(q::AbstractQuantity) = relations_constraining(typeof(q))
+function relations_constraining(::Type{Q}) where {Q<:AbstractQuantity}
+    return filter(r -> any(T -> Q <: T, quantities(r)), _RELATION_REGISTRY)
+end
+export relations_constraining
 
 # ─── β-or-T normalization (single point) ────────────────────────────────
 

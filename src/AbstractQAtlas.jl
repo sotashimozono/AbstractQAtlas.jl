@@ -140,6 +140,11 @@ for _M in _PHYSICS_MODULES
     end
 end
 
+# the relation → quantity map (needs every relation + quantity name at the
+# top level, so it goes AFTER the re-export) — makes the registry queryable
+# via `quantities` / `relations_constraining`.
+include("relations/quantity_links.jl")
+
 # automatic-differentiation entry point (methods live in ext/, ForwardDiff)
 include("autodiff.jl")
 
