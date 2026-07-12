@@ -54,6 +54,7 @@ include("core/fields.jl")
 # response-function derivative genealogy rooted at the free energy.
 include("structure/transitions.jl")
 include("structure/criticality.jl")
+include("structure/scaling_dimensions.jl")
 include("structure/response.jl")
 include("structure/tensor_symmetry.jl")
 include("structure/spectral.jl")
