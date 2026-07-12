@@ -14,20 +14,20 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
 
 @testset "registry + traits" begin
     rels = all_relations()
-    @test length(rels) == 100         # +4 spinglass (Edwards–Anderson, Nishimori energy & overlap, de Almeida–Thouless)
+    @test length(rels) == 94          # universal-only: model-specific (spin glass, Drude mobility, single-band Hall) moved to QAtlas
     @test allunique(typeof.(rels))
     @test length(all_relations(; domain=:scaling)) == 5
     @test length(all_relations(; domain=:thermodynamic)) == 15
     @test length(all_relations(; domain=:fundamental)) == 6
     @test length(all_relations(; domain=:topology)) == 3
     @test length(all_relations(; domain=:spectral)) == 10
-    @test length(all_relations(; domain=:transport)) == 20
+    @test length(all_relations(; domain=:transport)) == 18
     @test length(all_relations(; domain=:quantum)) == 7
     @test length(all_relations(; domain=:ensemble)) == 2
     @test length(all_relations(; domain=:entanglement)) == 22
     @test length(all_relations(; domain=:wick)) == 2
     @test length(all_relations(; domain=:cft)) == 4
-    @test length(all_relations(; domain=:spinglass)) == 4
+    @test isempty(all_relations(; domain=:spinglass))   # model-specific — lives in QAtlas now
     @test variables(Widom()) == (:β, :γ, :δ)
     @test variables(SpecificHeatFDT()) == (:C, :var_E, :β)   # N optional, not listed
     @test domain(Rushbrooke()) == :scaling

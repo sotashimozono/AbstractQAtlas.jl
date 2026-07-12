@@ -14,9 +14,13 @@
 #
 # References (doiget-verified, docs/references.bib): Onsager, Phys. Rev.
 # 37, 405 (1931) and 38, 2265 (1931); Cutler & Mott, Phys. Rev. 181, 1336
-# (1969); Scalapino, White & Zhang, Phys. Rev. B 47, 7995 (1993); Drude,
-# Ann. Phys. 306, 566 (1900); Einstein, Ann. Phys. 322, 549 (1905); Hall,
-# Am. J. Math. 2, 287 (1879).
+# (1969); Scalapino, White & Zhang, Phys. Rev. B 47, 7995 (1993); Einstein,
+# Ann. Phys. 322, 549 (1905).
+#
+# NOTE: model-SPECIFIC transport relations (the Drude mobility μ=eτ/m, the
+# single-band Hall coefficient R_H=1/ne) are deliberately NOT here — they
+# assume a particular model / band structure, so they belong to the
+# implementing atlas (QAtlas), not this universal layer.
 
 """
     WiedemannFranz <: AbstractRelation
@@ -134,21 +138,6 @@ Variables: `σ`, `n`, `e`, `μ`.
 @relation :transport MobilityConductivity(σ, n, e, μ) = σ - n * e * μ
 
 """
-    DrudeMobility <: AbstractRelation
-
-The Drude mobility from the transport scattering time and effective mass
-(Drude, Ann. Phys. 306, 566 (1900)),
-
-`μ = e τ / m`,
-
-([`ScatteringTime`](@ref) `τ`, [`EffectiveMass`](@ref) `m`).  Composed
-with [`MobilityConductivity`](@ref) it gives `σ = n e² τ / m`.
-
-Variables: `μ`, `e`, `τ`, `m`.
-"""
-@relation :transport DrudeMobility(μ, e, τ, m) = μ - e * τ / m
-
-"""
     EinsteinRelation <: AbstractRelation
 
 The Einstein (Einstein–Smoluchowski) relation between mobility and the
@@ -156,26 +145,12 @@ diffusion constant (Einstein, Ann. Phys. 322, 549 (1905)),
 
 `μ = e D / k_B T = e D β`,
 
-the fluctuation–dissipation link for transport ([`DiffusionConstant`](@ref)
-`D`).  With [`DrudeMobility`](@ref) it fixes `D = k_B T τ / m`.
+the universal fluctuation–dissipation link for transport
+([`DiffusionConstant`](@ref) `D`).
 
 Variables: `μ`, `e`, `D`, and `β` (or `T`).
 """
 @relation :transport EinsteinRelation(μ, e, D, β) = μ - e * D * β
-
-"""
-    SingleBandHall <: AbstractRelation
-
-The single-band Hall coefficient (Hall, Am. J. Math. 2, 287 (1879)),
-
-`R_H = 1 / (n e)`,
-
-fixing the [`HallCoefficient`](@ref) `R_H` (and its sign) from the carrier
-density and charge (`R_H·n·e = 1`; the sign of `e` gives the carrier sign).
-
-Variables: `R_H`, `n`, `e`.
-"""
-@relation :transport SingleBandHall(R_H, n, e) = R_H * n * e - 1
 
 """
     HallAngle <: AbstractRelation

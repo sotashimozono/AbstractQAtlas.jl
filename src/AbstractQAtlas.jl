@@ -21,9 +21,18 @@ Two responsibilities:
    Wick's theorem, standard topological invariants, and finite-size
    scaling forms.
 
-**Values do not live here.**  Reference numbers (critical temperatures,
-exact magnetizations, exponent tables, …) belong to the implementing
-atlas; this package owns only what is true independently of any model.
+**Values do not live here, and neither do model-specific laws.**  This
+package owns only what holds **universally within a domain** — independent
+of the system's symmetry, Hamiltonian, or any individual detail (Wick's
+theorem, the fluctuation–dissipation and Maxwell relations, the entropy
+inequalities, Kramers–Kronig, the scaling laws, …).  Reference *numbers*
+(critical temperatures, exact magnetizations, exponent tables) AND
+*model-specific* relations (the Drude mobility `μ=eτ/m`, the ±J Nishimori-
+line energy, the SK de Almeida–Thouless line, single-band `R_H=1/ne`, …)
+belong to the implementing atlas (QAtlas), not here.  The library is a
+**universal yardstick**: apply its relations to measured quantities to
+check whether a system obeys the laws that must hold regardless of its
+details.
 """
 module AbstractQAtlas
 
@@ -60,7 +69,6 @@ include("relations/topology.jl")
 include("relations/spectral.jl")
 include("relations/transport.jl")
 include("relations/quantum.jl")
-include("relations/spinglass.jl")
 include("relations/ensembles.jl")
 include("relations/entanglement.jl")
 include("relations/cft.jl")
