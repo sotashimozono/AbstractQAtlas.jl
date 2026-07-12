@@ -208,6 +208,22 @@ restated:
   (`S(q,−ω) = e^{−βω} S(q,ω)`) and [`NMRExponent`](@ref)
   (`θ_NMR = 2Δ_op − 1`). Transform / BZ-sum / limit edges have no
   pointwise form — their *evaluation* is the functional sibling's job.
+- **Keldysh RAK structure & fluctuation–dissipation** — the real-time
+  sibling of the Matsubara Dyson layer. The retarded/advanced/Keldysh
+  components obey the state-independent identities `G^K = G^> + G^<` and
+  `G^R − G^A = G^> − G^<` ([`KeldyshComponent`](@ref),
+  [`KeldyshCausality`](@ref)) plus the adjoint tie `G^A = (G^R)†`
+  ([`AdvancedRetardedConjugate`](@ref), which also puts `G^A` on the
+  spectral graph via the `:adjoint` edge). In equilibrium the Keldysh
+  component is *not* independent: the **fluctuation–dissipation theorem**
+  [`KeldyshFDT`](@ref) locks it to the spectral part,
+  `G^K = h(ω)(G^R − G^A)`, with the distribution function
+  [`keldysh_distribution`](@ref) `h = coth(βω/2)` (bosons) `= tanh(βω/2)`
+  (fermions) `= 1 ∓ 2n`. That `h` is itself a *consequence* of the
+  [`KMSGreaterLesser`](@ref) detailed-balance relation
+  `G^<(ω) = ζe^{−βω}G^>(ω)` — FDT is derived, not assumed — and
+  [`SpectralFromKeldysh`](@ref) `A = i(G^R−G^A)/2π` reduces to `−Im G^R/π`,
+  bridging back to the normalized spectral function.
 
 ## One queryable graph of physics
 

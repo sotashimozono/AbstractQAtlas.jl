@@ -43,6 +43,27 @@ function quantities(::StaticFromDynamicalStructureFactor)
     return (StaticStructureFactor, DynamicalStructureFactor)
 end
 
+# ── Keldysh RAK structure & fluctuation–dissipation ──
+function quantities(::KeldyshComponent)
+    return (KeldyshGreensFunction, GreaterGreensFunction, LesserGreensFunction)
+end
+function quantities(::KeldyshCausality)
+    return (
+        RetardedGreensFunction,
+        AdvancedGreensFunction,
+        GreaterGreensFunction,
+        LesserGreensFunction,
+    )
+end
+quantities(::AdvancedRetardedConjugate) = (AdvancedGreensFunction, RetardedGreensFunction)
+function quantities(::KeldyshFDT)
+    return (KeldyshGreensFunction, RetardedGreensFunction, AdvancedGreensFunction)
+end
+quantities(::KMSGreaterLesser) = (LesserGreensFunction, GreaterGreensFunction)
+function quantities(::SpectralFromKeldysh)
+    return (SpectralFunction, RetardedGreensFunction, AdvancedGreensFunction)
+end
+
 # ── Transport ──
 quantities(::WiedemannFranz) = (ThermalConductivity, Conductivity)
 quantities(::RighiLeduc) = (ThermalConductivity,)

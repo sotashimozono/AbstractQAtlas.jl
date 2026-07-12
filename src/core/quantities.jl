@@ -800,6 +800,64 @@ index_spaces(::Type{SelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
 frequency_arguments(::Type{SelfEnergy}) = 1
 
 """
+    AdvancedGreensFunction() <: AbstractPropagator
+
+The advanced single-particle Green's function `G^A(q, ω)`.  The adjoint
+partner of the retarded one, `G^A = (G^R)†` (scalar: `G^A(ω) =
+conj(G^R(ω))`), so `G^R − G^A = 2i Im G^R` is the (un-normalized)
+spectral weight.  Part of the Keldysh triple `(G^R, G^A, G^K)` — see
+`relations/keldysh.jl`.
+"""
+struct AdvancedGreensFunction <: AbstractPropagator end
+export AdvancedGreensFunction
+tensor_rank(::Type{AdvancedGreensFunction}) = 2
+index_spaces(::Type{AdvancedGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{AdvancedGreensFunction}) = 1
+
+"""
+    KeldyshGreensFunction() <: AbstractPropagator
+
+The Keldysh component `G^K(q, ω)` of the contour-ordered Green's function
+in the retarded–advanced–Keldysh (RAK) rotation.  `G^K = G^> + G^<`
+carries the occupation/distribution information; in equilibrium it is
+fixed by the fluctuation–dissipation theorem `G^K = h(ω)(G^R − G^A)` with
+`h = coth(βω/2)` (bosons) or `tanh(βω/2)` (fermions) — see
+`relations/keldysh.jl`.
+"""
+struct KeldyshGreensFunction <: AbstractPropagator end
+export KeldyshGreensFunction
+tensor_rank(::Type{KeldyshGreensFunction}) = 2
+index_spaces(::Type{KeldyshGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{KeldyshGreensFunction}) = 1
+
+"""
+    GreaterGreensFunction() <: AbstractPropagator
+
+The greater Green's function `G^>(q, ω) ∼ −i⟨A(t)A†(0)⟩`.  With its lesser
+partner it builds the RAK components: `G^R − G^A = G^> − G^<` and
+`G^K = G^> + G^<`; in equilibrium the two obey the KMS/detailed-balance
+relation `G^<(ω) = ζ e^{−βω} G^>(ω)` (`ζ = +1` bosons, `−1` fermions).
+"""
+struct GreaterGreensFunction <: AbstractPropagator end
+export GreaterGreensFunction
+tensor_rank(::Type{GreaterGreensFunction}) = 2
+index_spaces(::Type{GreaterGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{GreaterGreensFunction}) = 1
+
+"""
+    LesserGreensFunction() <: AbstractPropagator
+
+The lesser Green's function `G^<(q, ω) ∼ ±i⟨A†(0)A(t)⟩`.  The occupied-state
+counterpart of [`GreaterGreensFunction`](@ref); see there for the RAK and
+KMS relations tying the two.
+"""
+struct LesserGreensFunction <: AbstractPropagator end
+export LesserGreensFunction
+tensor_rank(::Type{LesserGreensFunction}) = 2
+index_spaces(::Type{LesserGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{LesserGreensFunction}) = 1
+
+"""
     SpectralFunction() <: AbstractQuantity
 
 The single-particle spectral function `A(q, ω) = −(1/π) Im G^R(q, ω)`,

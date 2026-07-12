@@ -57,6 +57,7 @@ include("structure/criticality.jl")
 include("structure/response.jl")
 include("structure/tensor_symmetry.jl")
 include("structure/spectral.jl")
+include("structure/keldysh.jl")
 include("structure/fourier.jl")
 
 # relations — the CORE relation machinery (the AbstractFFTs-like interface:
@@ -89,11 +90,12 @@ module Criticality
     include("relations/cft.jl")
 end
 
-"Correlations, Green's functions and response: the spectral graph (Dyson, A=−ImG/π), Wick / Bloch–De Dominicis (Gaussian factorization), Kramers–Kronig, detailed balance."
+"Correlations, Green's functions and response: the spectral graph (Dyson, A=−ImG/π), the Keldysh RAK structure + fluctuation–dissipation, Wick / Bloch–De Dominicis (Gaussian factorization), Kramers–Kronig, detailed balance."
 module Correlations
     using ..AbstractQAtlas
     using LinearAlgebra: inv, det
     include("relations/spectral.jl")
+    include("relations/keldysh.jl")
     include("relations/wick.jl")
 end
 
