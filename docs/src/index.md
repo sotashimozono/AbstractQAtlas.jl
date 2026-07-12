@@ -209,6 +209,33 @@ restated:
   (`θ_NMR = 2Δ_op − 1`). Transform / BZ-sum / limit edges have no
   pointwise form — their *evaluation* is the functional sibling's job.
 
+## One queryable graph of physics
+
+The genealogy, the spectral graph, the Fourier pairs and the
+relation ↔ quantity links are all the same shape — a *typed edge between
+quantity kinds* — so they fold into **one** queryable graph
+([`quantity_graph`](@ref)), mirroring the vocabulary of QAtlas's *model*
+graph (`relations(model)`): the two atlases share one graph language,
+models ⊕ quantities.
+
+- [`related_quantities`](@ref)`(q)` — the neighborhood of a quantity: every
+  edge it participates in, tagged by kind (`:derivative`, `:spectral`,
+  `:fourier`, `:law`) as a [`QuantityEdge`](@ref). For `Susceptibility` this
+  surfaces both `Magnetization` (as `∂/∂h` **and** via the FDT) and
+  `StaticStructureFactor` (via the structure-factor sum rule) at once.
+- [`quantity_path`](@ref)`(a, b)` — the machine answer to *"how are `a` and
+  `b` related?"*: a shortest path of typed edges. `SpecificHeat` and
+  `Magnetization` connect through their shared [`FreeEnergy`](@ref) root.
+- [`quantity_neighbors`](@ref)`(fam)` — incident edges in both directions
+  (so a derivative *root* like `FreeEnergy` still surfaces the quantities
+  that point at it), and [`quantity_graph_jsonl`](@ref) streams the whole
+  network as stdlib-only JSONL for a graph view.
+
+Nodes are quantity *families* (the index-erased `Susceptibility`, not
+`Susceptibility{(:z,:z)}`) so the structural graph is finite; the concrete
+index is still used to *resolve* an edge (`χ⁽²⁾ ⟶ χ⁽¹⁾ ⟶ M`) before the
+endpoints collapse to their families.
+
 ## The scope line: definitional vs functional
 
 Where does a dynamical quantity's *value* come from — this package or the
