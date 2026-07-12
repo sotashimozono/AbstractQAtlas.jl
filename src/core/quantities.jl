@@ -227,6 +227,34 @@ register it.
 struct PartitionFunction <: AbstractThermalPotential end
 export PartitionFunction
 
+"""
+    KineticEnergy() <: AbstractThermalPotential
+
+The kinetic-energy expectation `⟨T⟩` — the `T` of the virial theorem
+`2⟨T⟩ = n⟨V⟩` (homogeneous potential of degree `n`).
+"""
+struct KineticEnergy <: AbstractThermalPotential end
+export KineticEnergy
+
+"""
+    PotentialEnergy() <: AbstractThermalPotential
+
+The potential-energy expectation `⟨V⟩` — the `V` of the virial theorem
+`2⟨T⟩ = n⟨V⟩`.
+"""
+struct PotentialEnergy <: AbstractThermalPotential end
+export PotentialEnergy
+
+"""
+    EnergyVariance() <: AbstractQuantity
+
+The energy variance `Var(H) = ⟨H²⟩ − ⟨H⟩²` — zero iff the state is an
+exact eigenstate, the convergence metric of a variational / DMRG
+calculation.
+"""
+struct EnergyVariance <: AbstractQuantity end
+export EnergyVariance
+
 # ─── Order parameters and responses (tensors in spin space) ─────────────
 #
 # These were the quantities blurred into scalars by baking a component
