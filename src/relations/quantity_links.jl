@@ -26,6 +26,9 @@ quantities(::GibbsHelmholtz) = (Energy, FreeEnergy)
 quantities(::FreeEnergyFromZ) = (FreeEnergy, PartitionFunction)
 quantities(::FreeEnergyLegendre) = (FreeEnergy, Energy, ThermalEntropy)
 quantities(::ClausiusClapeyron) = (LatentHeat,)
+quantities(::GibbsDuhem) = (ThermalEntropy, Volume, ParticleNumber)
+quantities(::MicrocanonicalTemperature) = (ThermalEntropy, Energy)
+quantities(::CanonicalTPQ) = (PartitionFunction,)
 
 # ── Correlations / Green's functions ──
 quantities(::Dyson) = (RetardedGreensFunction, SelfEnergy)
@@ -33,6 +36,9 @@ quantities(::SpectralFromGreens) = (SpectralFunction, RetardedGreensFunction)
 quantities(::SpectralSumRule) = (SpectralFunction,)
 quantities(::DetailedBalance) = (DynamicalStructureFactor,)
 quantities(::DynamicalFDT) = (DynamicalStructureFactor, DynamicalSusceptibility)
+quantities(::CorrelationLengthGap) = (CorrelationLength, MassGap)
+quantities(::NMRExponent) = (NMRSpinRelaxationRate,)
+quantities(::FiniteSizeGap) = (MassGap,)
 function quantities(::StaticFromDynamicalStructureFactor)
     return (StaticStructureFactor, DynamicalStructureFactor)
 end
@@ -48,6 +54,12 @@ quantities(::ThermoelectricFigureOfMerit) = (Thermopower, Conductivity, ThermalC
 quantities(::LongitudinalResistivity) = (Resistivity, Conductivity)
 quantities(::HallResistivity) = (Resistivity, Conductivity)
 quantities(::VonKlitzing) = (Resistivity, FillingFactor)
+quantities(::MobilityConductivity) = (Conductivity, Mobility, CarrierDensity)
+quantities(::EinsteinRelation) = (Mobility, DiffusionConstant)
+quantities(::HallAngle) = (Conductivity,)
+quantities(::CyclotronFrequency) = (EffectiveMass, MagneticFluxDensity)
+quantities(::PowerFactor) = (Thermopower, Conductivity)
+quantities(::NernstCoefficient) = (Thermopower, MagneticFluxDensity)
 
 # ── Quantum information & entanglement ──
 quantities(::RenyiTwoPurity) = (RenyiEntropy, Purity)
@@ -65,7 +77,16 @@ quantities(::TripartiteInformationDefinition) = (TripartiteInformation,)
 quantities(::KitaevPreskillTEE) = (TopologicalEntanglementEntropy,)
 quantities(::EntropyNonNegativity) = (VonNeumannEntropy,)
 quantities(::MaxEntropyBound) = (VonNeumannEntropy,)
+quantities(::Subadditivity) = (VonNeumannEntropy,)
+quantities(::ArakiLieb) = (VonNeumannEntropy,)
+quantities(::StrongSubadditivity) = (VonNeumannEntropy,)
+quantities(::RenyiMonotonicity) = (RenyiEntropy,)
+quantities(::RelativeEntropyNonNegativity) = (RelativeEntropy,)
+quantities(::CFTEntanglementSlope) = (VonNeumannEntropy,)
 
 # ── Quantum-mechanical foundations ──
 quantities(::VirialTheorem) = (KineticEnergy, PotentialEnergy)
 quantities(::EnergyVarianceEigenstate) = (EnergyVariance,)
+
+# ── Topology ──
+quantities(::TKNN) = (Conductivity,)
