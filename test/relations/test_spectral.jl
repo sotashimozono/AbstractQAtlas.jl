@@ -75,6 +75,41 @@ end
     end
 end
 
+@testset "Kramers–Kronig: exact arithmetic + convention vs a Hilbert transform" begin
+    # exactness of the relation itself (the 1/π factor and the signs)
+    for (Reχ, Imχ) in ((0.7, -0.4), (-1.3, 2.1))
+        @test check(KramersKronigReal(); Reχ=Reχ, pv_imag=π * Reχ, atol=1e-12)
+        @test check(KramersKronigImag(); Imχ=Imχ, pv_real=(-π * Imχ), atol=1e-12)
+        @test solve(KramersKronigReal(), Val(:Reχ); pv_imag=π * Reχ) ≈ Reχ
+        @test solve(KramersKronigImag(), Val(:Imχ); pv_real=(-π * Imχ)) ≈ Imχ
+    end
+
+    # INDEPENDENT convention check: the retarded Green's function of a single
+    # level (ε = 0, width Γ) is an exact Kramers–Kronig pair; feed the
+    # numerically Hilbert-transformed part and confirm the OTHER part.
+    Γ = 1.0
+    ReG(ω) = ω / (ω^2 + Γ^2)
+    ImG(ω) = -Γ / (ω^2 + Γ^2)
+    # P∫ g(ω')/(ω'−ω) dω' by pole subtraction:
+    # ∫[g(ω')−g(ω)]/(ω'−ω) dω' + g(ω)·ln|(L−ω)/(L+ω)| (bracket smooth at ω'=ω)
+    function hilbert_pv(g, ω; L=5000.0, n=2_000_000)
+        h = 2L / n
+        s = 0.0
+        gω = g(ω)
+        for k in 0:n
+            ωp = -L + k * h
+            s +=
+                ((k == 0 || k == n) ? 0.5 : 1.0) * (ωp == ω ? 0.0 : (g(ωp) - gω) / (ωp - ω))
+        end
+        return s * h + gω * log((L - ω) / (L + ω))
+    end
+    for ω in (0.3, 1.2, -0.7)
+        # χ'(ω) = (1/π) P∫ χ''/(ω'−ω) reproduces ReG; χ''(ω) = −(1/π) P∫ χ'/(ω'−ω) reproduces ImG
+        @test check(KramersKronigReal(); Reχ=ReG(ω), pv_imag=hilbert_pv(ImG, ω), atol=3e-4)
+        @test check(KramersKronigImag(); Imχ=ImG(ω), pv_real=hilbert_pv(ReG, ω), atol=3e-4)
+    end
+end
+
 @testset "one-call sweep picks up the spectral identities by variable name" begin
     G0 = 1 / (0.5 + 0.1im)
     Σ = 0.2 - 0.3im
