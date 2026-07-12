@@ -14,7 +14,7 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
 
 @testset "registry + traits" begin
     rels = all_relations()
-    @test length(rels) == 96          # +3 thermo stability, +1 quantum Lieb–Robinson, +2 cft (Cardy DOS, c-theorem)
+    @test length(rels) == 100         # +4 spinglass (Edwards–Anderson, Nishimori energy & overlap, de Almeida–Thouless)
     @test allunique(typeof.(rels))
     @test length(all_relations(; domain=:scaling)) == 5
     @test length(all_relations(; domain=:thermodynamic)) == 15
@@ -27,6 +27,7 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
     @test length(all_relations(; domain=:entanglement)) == 22
     @test length(all_relations(; domain=:wick)) == 2
     @test length(all_relations(; domain=:cft)) == 4
+    @test length(all_relations(; domain=:spinglass)) == 4
     @test variables(Widom()) == (:β, :γ, :δ)
     @test variables(SpecificHeatFDT()) == (:C, :var_E, :β)   # N optional, not listed
     @test domain(Rushbrooke()) == :scaling

@@ -1186,6 +1186,27 @@ struct TopologicalEntanglementEntropy <: AbstractEntanglementMeasure end
 export TopologicalEntanglementEntropy
 
 """
+    EdwardsAndersonParameter() <: AbstractQuantity
+
+The Edwards–Anderson spin-glass order parameter `q_EA = [⟨s_i⟩²]` (Edwards
+& Anderson, J. Phys. F 5, 965 (1975)) — the disorder-averaged squared
+local magnetization; nonzero (with zero net magnetization) marks the
+spin-glass phase where spins freeze in random directions.
+"""
+struct EdwardsAndersonParameter <: AbstractQuantity end
+export EdwardsAndersonParameter
+
+"""
+    SpinGlassSusceptibility() <: AbstractQuantity
+
+The spin-glass susceptibility `χ_SG = (1/N) Σ_ij [⟨s_i s_j⟩_c²]` — diverges
+at the spin-glass transition; the ordering susceptibility of the
+[`EdwardsAndersonParameter`](@ref).
+"""
+struct SpinGlassSusceptibility <: AbstractQuantity end
+export SpinGlassSusceptibility
+
+"""
     Purity() <: AbstractQuantity
 
 The purity `Tr(ρ_A²) ∈ (0, 1]` of a (reduced) density matrix — `1` for a
