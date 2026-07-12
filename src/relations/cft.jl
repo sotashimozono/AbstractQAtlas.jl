@@ -38,3 +38,35 @@ universal amplitude `2πvx`.  Reads `x` off the measured finite-size gap.
 Variables: `gap` = `E_x(L) − E₀(L)`, `x`, `v`, `L`.
 """
 @relation :cft FiniteSizeGap(gap, x, v, L) = gap - 2π * v * x / L
+
+"""
+    CardyDensityOfStates <: AbstractRelation
+
+Cardy's asymptotic density of states of a 2D CFT (Cardy, Nucl. Phys. B
+270, 186 (1986)): the number of states at large scaling dimension `Δ`
+grows as
+
+`ln ρ(Δ) = 2π √(c Δ / 6)`
+
+(the modular-invariance image of the ground-state Casimir energy; fixes
+the microcanonical entropy of a CFT from its central charge `c`).
+
+Variables: `ln_ρ` = `ln ρ(Δ)`, `c`, `Δ`.
+"""
+@relation :cft CardyDensityOfStates(ln_ρ, c, Δ) = ln_ρ - 2π * sqrt(c * Δ / 6)
+
+"""
+    CTheorem <: AbstractInequality
+
+Zamolodchikov's c-theorem (Zamolodchikov, JETP Lett. 43, 730 (1986)): the
+central charge decreases monotonically along renormalization-group flow
+from the ultraviolet to the infrared fixed point,
+
+`c_UV ≥ c_IR`
+
+(slack `c_UV − c_IR`).  Irreversibility of RG flow — `c` counts the
+massless degrees of freedom, which can only be integrated out.
+
+Variables: `c_UV`, `c_IR`.
+"""
+@inequality :cft CTheorem(c_UV, c_IR) = c_UV - c_IR

@@ -204,3 +204,48 @@ Supplied-differential convention: `dT`, `dp`, `dμ` are the variations.
 Variables: `S`, `dT`, `V`, `dp`, `N`, `dμ`.
 """
 @relation :thermodynamic GibbsDuhem(S, dT, V, dp, N, dμ) = S * dT - V * dp + N * dμ
+
+# ─── Thermodynamic stability (convexity ⇒ ≥ 0; @inequality) ─────────────
+
+"""
+    SpecificHeatPositivity <: AbstractInequality
+
+Thermal stability: the specific heat is non-negative,
+
+`C_v ≥ 0`
+
+(slack `C_v`; from `C_v = β²·Var(E)/N`, [`SpecificHeatFDT`](@ref), a
+variance).  A measured `C_v < 0` is unphysical — a diagnostic that catches
+a broken simulation.
+
+Variables: `Cv`.
+"""
+@inequality :thermodynamic SpecificHeatPositivity(Cv) = Cv
+
+"""
+    CompressibilityPositivity <: AbstractInequality
+
+Mechanical stability: the isothermal compressibility is non-negative,
+
+`κ_T ≥ 0`
+
+(slack `κ_T`), the convexity of the free energy in volume.
+
+Variables: `κT`.
+"""
+@inequality :thermodynamic CompressibilityPositivity(κT) = κT
+
+"""
+    SusceptibilityPositivity <: AbstractInequality
+
+Order-parameter stability: the isothermal susceptibility to the conjugate
+field is non-negative,
+
+`χ_T = −∂²F/∂h² ≥ 0`
+
+(slack `χ_T`), the concavity of the free energy in its conjugate field
+(`χ = β·Var(M)/N`, [`SusceptibilityFDT`](@ref), a variance).
+
+Variables: `χT`.
+"""
+@inequality :thermodynamic SusceptibilityPositivity(χT) = χT

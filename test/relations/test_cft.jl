@@ -49,3 +49,18 @@ end
     @test length(rep) == 2
     @test all(row -> row.pass, rep)
 end
+
+@testset "Cardy density of states + Zamolodchikov c-theorem" begin
+    using AbstractQAtlas: check, solve, slack, AbstractInequality
+    # ln ρ(Δ) = 2π√(cΔ/6): Ising c=1/2 at Δ=3 ⇒ ln ρ = 2π√(1/4) = π
+    @test check(
+        CardyDensityOfStates(); ln_ρ=2π * sqrt((1 / 2) * 3 / 6), c=1 / 2, Δ=3, atol=1e-12
+    )
+    @test solve(CardyDensityOfStates(), Val(:ln_ρ); c=1 / 2, Δ=3) ≈ 2π * sqrt(1 / 4)
+    @test solve(CardyDensityOfStates(), Val(:ln_ρ); c=1 / 2, Δ=3) ≈ π atol = 1e-12
+    # c-theorem c_UV ≥ c_IR: tricritical→critical Ising 7/10 → 1/2 (an allowed flow)
+    @test CTheorem() isa AbstractInequality
+    @test check(CTheorem(); c_UV=7 // 10, c_IR=1 // 2)
+    @test slack(CTheorem(); c_UV=1 // 2, c_IR=1 // 2) == 0 // 1     # a fixed point (no flow)
+    @test !check(CTheorem(); c_UV=1 // 2, c_IR=7 // 10)            # c increasing ⇒ forbidden
+end

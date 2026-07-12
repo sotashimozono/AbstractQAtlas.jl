@@ -65,3 +65,12 @@ end
     @test tensor_rank(PotentialEnergy()) == 0
     @test tensor_rank(EnergyVariance()) == 0
 end
+
+@testset "Lieb–Robinson causality bound" begin
+    using AbstractQAtlas: check, slack, solve, AbstractInequality
+    @test LiebRobinsonBound() isa AbstractInequality
+    @test check(LiebRobinsonBound(); v=1.2, v_LR=3.0)               # inside the light cone
+    @test slack(LiebRobinsonBound(); v=3.0, v_LR=3.0) == 0.0        # saturating the LR velocity
+    @test !check(LiebRobinsonBound(); v=4.0, v_LR=3.0, atol=1e-9)   # superluminal ⇒ forbidden
+    @test solve(LiebRobinsonBound(), Val(:v_LR); v=2.5) ≈ 2.5       # the bound is tight at v=v_LR
+end
