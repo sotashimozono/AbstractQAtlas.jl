@@ -184,6 +184,23 @@ restated:
   hand-passed ratio), [`fss_peak`](@ref), [`collapse_coordinates`](@ref).
   Field-driven and distance-driven laws: [`critical_isotherm`](@ref)
   (δ), [`correlation_decay`](@ref) (η).
+- **The exponents' RG origin** — the four scaling laws
+  ([`Rushbrooke`](@ref), [`Widom`](@ref), [`Fisher`](@ref),
+  [`Josephson`](@ref)) are not four independent axioms: they all follow
+  from the homogeneity of the singular free energy
+  `f_s(t,h) = b^{-d} f_s(b^{y_t}t, b^{y_h}h)`, i.e. from just two RG
+  eigenvalues plus `d`. [`ScalingDimensions`](@ref)`(y_t, y_h, d)` carries
+  them and [`critical_exponents`](@ref) *derives* the whole set
+  `(α,β,γ,δ,ν,η)` — for which every scaling relation has residual `≡ 0` by
+  construction ([`exponents_consistent`](@ref) is `true` for any input).
+  The inverse [`scaling_dimensions`](@ref)`(; ν, η, d)` recovers the
+  eigenvalues, so `δ`, `β`, `γ`, `α` are all reconstructible from `(ν, η,
+  d)` alone. Values are inputs; the map is the universal content:
+
+  ```julia
+  critical_exponents(ScalingDimensions(1//1, 15//8, 2))
+  # (α=0//1, β=1//8, γ=7//4, δ=15//1, ν=1//1, η=1//4)  ← 2D Ising, exact
+  ```
 - **Transition classification** — [`FirstOrder`](@ref) /
   [`ContinuousTransition`](@ref) / [`KosterlitzThouless`](@ref), each
   carrying [`ehrenfest_order`](@ref), [`has_order_parameter`](@ref),
