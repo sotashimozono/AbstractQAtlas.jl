@@ -150,3 +150,38 @@ end
     @test tensor_rank(MeasurementEntropy()) == 0
     @test tensor_rank(MarkovEntropy()) == 0
 end
+
+@testset "free-fermion entanglement from the correlation matrix (Peschel)" begin
+    using AbstractQAtlas:
+        check, solve, free_fermion_entanglement_entropy, free_fermion_renyi_entropy
+    using LinearAlgebra: eigvals, Hermitian
+
+    # GENUINE Gaussian case: the bonding orbital (c†₁+c†₂)/√2|0⟩ of a 2-site
+    # hopping model.  Correlation matrix C_ij = ⟨c†_i c_j⟩ = 1/2 (all entries);
+    # trace out site 2 ⇒ C_A = [1/2], eigenvalue ζ = 1/2 ⇒ S_A = ln 2 (one Bell pair).
+    C = [0.5 0.5; 0.5 0.5]
+    C_A = C[1:1, 1:1]                              # region A = site 1
+    ζ = real(eigvals(Hermitian(C_A)))
+    @test ζ ≈ [0.5] atol = 1e-12
+    @test free_fermion_entanglement_entropy(ζ) ≈ log(2) atol = 1e-12
+
+    # a filled/empty mode contributes nothing; a maximal mode ln 2
+    @test free_fermion_entanglement_entropy([0.0, 1.0, 1.0]) == 0.0
+    @test free_fermion_entanglement_entropy([0.5, 0.5, 0.5]) ≈ 3 * log(2) atol = 1e-12
+
+    # Peschel single-particle spectrum ε = ln((1−ζ)/ζ): ζ=1/2 ⇒ ε=0 (max entangled)
+    @test check(EntanglementSpectrumCorrelation(); ε=0.0, ζ=0.5, atol=1e-12)
+    @test solve(EntanglementSpectrumCorrelation(), Val(:ε); ζ=0.3) ≈ log(0.7 / 0.3)
+    # inverting the spectrum recovers the Fermi-Dirac occupation ζ = 1/(e^ε+1)
+    ε = 1.1
+    ζinv = 1 / (exp(ε) + 1)
+    @test check(EntanglementSpectrumCorrelation(); ε=ε, ζ=ζinv, atol=1e-12)
+
+    # Rényi → von Neumann as n → 1 (INDEPENDENT: two different formulas agree)
+    ζset = [0.15, 0.5, 0.82, 0.97]
+    @test free_fermion_renyi_entropy(ζset, 1.0001) ≈ free_fermion_entanglement_entropy(ζset) atol =
+        1e-3
+    # Rényi-2 = −Σ ln(ζ²+(1−ζ)²) matches the moment definition per mode
+    @test free_fermion_renyi_entropy([0.3], 2) ≈ -log(0.3^2 + 0.7^2) atol = 1e-12
+    @test_throws ErrorException free_fermion_renyi_entropy(ζset, 1)   # n=1 is the vN limit
+end

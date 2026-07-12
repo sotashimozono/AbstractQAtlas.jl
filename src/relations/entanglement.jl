@@ -253,3 +253,70 @@ Variables: `I_cmi`, `S_AB`, `S_BC`, `S_ABC`, `S_B`.
 """
 @relation :entanglement MarkovEntropyDefinition(I_cmi, S_AB, S_BC, S_ABC, S_B) =
     I_cmi - (S_AB + S_BC - S_ABC - S_B)
+
+# ─── Free-fermion (Gaussian) entanglement from the correlation matrix ────
+#
+# For a Gaussian (free-fermion) state the reduced density matrix ρ_A is
+# fixed ENTIRELY by the restricted two-point correlation matrix
+# C_ij = ⟨c†_i c_j⟩|_A — because Wick's theorem (relations/wick.jl) makes
+# every higher moment a determinant of C.  ρ_A = e^{−H_ent}/Z with a
+# QUADRATIC entanglement Hamiltonian, so the eigenvalues ζ_k ∈ [0,1] of
+# C_A give the whole entanglement spectrum (Peschel, J. Phys. A 36, L205
+# (2003); Chung & Peschel, Phys. Rev. B 64, 064412 (2001)).  This mapping
+# holds for Gaussian states ONLY — an interacting ρ_A is not fixed by its
+# two-point function.
+
+"""
+    EntanglementSpectrumCorrelation <: AbstractRelation
+
+The free-fermion entanglement (single-particle) spectrum from the
+correlation-matrix eigenvalue `ζ ∈ (0, 1)` (Peschel, J. Phys. A 36, L205
+(2003)),
+
+`ε = ln((1 − ζ)/ζ)`,
+
+the eigenvalue of the quadratic entanglement Hamiltonian `H_ent`; inverting
+gives the Fermi-Dirac occupation `ζ = 1/(e^ε + 1)`.  A maximally-entangled
+mode `ζ = ½` sits at `ε = 0`.  **Gaussian states only** — the correlation
+matrix fixes `ρ_A` via Wick's theorem ([`wick_contraction`](@ref)).
+
+Variables: `ε`, `ζ`.
+"""
+@relation :entanglement EntanglementSpectrumCorrelation(ε, ζ) = ε - log((1 - ζ) / ζ)
+
+"""
+    free_fermion_entanglement_entropy(ζ) -> Float64
+
+The von Neumann entanglement entropy of a free-fermion (Gaussian) region
+from the eigenvalues `ζ_k ∈ [0, 1]` of its restricted correlation matrix
+`C_ij = ⟨c†_i c_j⟩` (Peschel, J. Phys. A 36, L205 (2003)),
+
+`S_A = −Σ_k [ζ_k ln ζ_k + (1 − ζ_k) ln(1 − ζ_k)]`
+
+(the sum of per-mode binary entropies).  A fully occupied/empty mode
+(`ζ = 0, 1`) contributes nothing; a maximally-entangled mode (`ζ = ½`)
+contributes `ln 2`.  Valid for **Gaussian states only**.
+"""
+function free_fermion_entanglement_entropy(ζ)
+    h(x) = (x <= 0 || x >= 1) ? 0.0 : -x * log(x) - (1 - x) * log(1 - x)
+    return sum(h, ζ)
+end
+export free_fermion_entanglement_entropy
+
+"""
+    free_fermion_renyi_entropy(ζ, n) -> Float64
+
+The order-`n` Rényi entanglement entropy of a free-fermion region from the
+correlation-matrix eigenvalues `ζ_k` (`n ≠ 1`),
+
+`S_A^{(n)} = (1 − n)⁻¹ Σ_k ln[ζ_k^n + (1 − ζ_k)^n]`,
+
+recovering [`free_fermion_entanglement_entropy`](@ref) as `n → 1`.
+"""
+function free_fermion_renyi_entropy(ζ, n)
+    n == 1 && error(
+        "Rényi order n = 1 is the von Neumann limit; use free_fermion_entanglement_entropy",
+    )
+    return sum(x -> log(x^n + (1 - x)^n), ζ) / (1 - n)
+end
+export free_fermion_renyi_entropy
