@@ -94,3 +94,21 @@ squeezed) state.
 Variables: `ΔA`, `ΔB`, `comm` = `⟨[A, B]⟩`.
 """
 @inequality :quantum RobertsonUncertainty(ΔA, ΔB, comm) = ΔA * ΔB - abs(comm) / 2
+
+"""
+    LiebRobinsonBound <: AbstractInequality
+
+The Lieb–Robinson bound (Lieb & Robinson, Commun. Math. Phys. 28, 251
+(1972)): information in a locally-interacting quantum system spreads no
+faster than an emergent velocity `v_LR` — the group velocity of
+correlations is bounded,
+
+`v ≤ v_LR`
+
+(slack `v_LR − v`).  An effective light cone; the many-body analogue of
+relativistic causality, setting entanglement-growth and thermalization
+rates.
+
+Variables: `v`, `v_LR`.
+"""
+@inequality :quantum LiebRobinsonBound(v, v_LR) = v_LR - v

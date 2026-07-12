@@ -14,19 +14,19 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
 
 @testset "registry + traits" begin
     rels = all_relations()
-    @test length(rels) == 90          # +5 entanglement multipartite (tangle, monogamy, 3-tangle, tripartite info, Kitaev–Preskill TEE)
+    @test length(rels) == 96          # +3 thermo stability, +1 quantum Lieb–Robinson, +2 cft (Cardy DOS, c-theorem)
     @test allunique(typeof.(rels))
     @test length(all_relations(; domain=:scaling)) == 5
-    @test length(all_relations(; domain=:thermodynamic)) == 12
+    @test length(all_relations(; domain=:thermodynamic)) == 15
     @test length(all_relations(; domain=:fundamental)) == 6
     @test length(all_relations(; domain=:topology)) == 3
     @test length(all_relations(; domain=:spectral)) == 10
     @test length(all_relations(; domain=:transport)) == 20
-    @test length(all_relations(; domain=:quantum)) == 6
+    @test length(all_relations(; domain=:quantum)) == 7
     @test length(all_relations(; domain=:ensemble)) == 2
     @test length(all_relations(; domain=:entanglement)) == 22
     @test length(all_relations(; domain=:wick)) == 2
-    @test length(all_relations(; domain=:cft)) == 2
+    @test length(all_relations(; domain=:cft)) == 4
     @test variables(Widom()) == (:β, :γ, :δ)
     @test variables(SpecificHeatFDT()) == (:C, :var_E, :β)   # N optional, not listed
     @test domain(Rushbrooke()) == :scaling

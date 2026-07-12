@@ -117,3 +117,20 @@ end
 @testset "argument validation" begin
     @test_throws ErrorException residual(SpecificHeatFDT(); C=1.0, var_E=1.0)  # no β, no T
 end
+
+@testset "thermodynamic stability inequalities (convexity)" begin
+    using AbstractQAtlas: check, slack, solve, AbstractInequality
+    # C_v ≥ 0, and it IS β²·Var(E)/N so a variance ⇒ non-negative (cross-check with SpecificHeatFDT)
+    @test SpecificHeatPositivity() isa AbstractInequality
+    varE, β, N = 2.5, 1.3, 4
+    Cv = solve(SpecificHeatFDT(), Val(:C); var_E=varE, β=β, N=N)
+    @test check(SpecificHeatPositivity(); Cv=Cv)
+    @test slack(SpecificHeatPositivity(); Cv=Cv) == Cv
+    @test !check(SpecificHeatPositivity(); Cv=-0.1, atol=1e-9)      # negative C_v is unphysical
+    # χ_T = β·Var(M)/N ≥ 0 (variance), cross-check with SusceptibilityFDT
+    χ = solve(SusceptibilityFDT(), Val(:χ); var_M=1.8, β=β, N=N)
+    @test check(SusceptibilityPositivity(); χT=χ)
+    # κ_T ≥ 0 (mechanical stability)
+    @test check(CompressibilityPositivity(); κT=0.7)
+    @test !check(CompressibilityPositivity(); κT=-0.2, atol=1e-9)
+end
