@@ -97,6 +97,11 @@ end
 function spectral_origin(::Type{NMRSpinRelaxationRate})
     return SpectralOrigin(DynamicalSusceptibility, :low_frequency_limit)
 end
+# the advanced propagator is the adjoint of the retarded one (a pointwise
+# identity, not a transform) — Keldysh RAK; see relations/keldysh.jl
+function spectral_origin(::Type{AdvancedGreensFunction})
+    return SpectralOrigin(RetardedGreensFunction, :adjoint)
+end
 export spectral_origin, SpectralOrigin
 
 """
@@ -120,6 +125,7 @@ point relation here.
 origin_relation(via::Symbol) = origin_relation(Val(via))
 origin_relation(::Val{:dyson}) = Dyson()
 origin_relation(::Val{:neg_im_over_pi}) = SpectralFromGreens()
+origin_relation(::Val{:adjoint}) = AdvancedRetardedConjugate()   # G^A = (G^R)† — pointwise
 origin_relation(::Val) = nothing
 export origin_relation
 

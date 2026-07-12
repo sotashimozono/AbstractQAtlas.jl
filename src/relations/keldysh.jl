@@ -1,0 +1,110 @@
+# relations/keldysh.jl — the Keldysh (real-time contour) Green's-function
+# structure and its equilibrium fluctuation–dissipation constraint.
+#
+# On the closed-time contour every two-point function is a 2×2 matrix; the
+# retarded–advanced–Keldysh (RAK / Larkin–Ovchinnikov) rotation makes its
+# content three independent components `(G^R, G^A, G^K)` built from the
+# greater/lesser correlators `G^≷`.  Two of the relations here are ALGEBRAIC
+# IDENTITIES that hold in AND out of equilibrium (definitions of the RAK
+# components); the third is the CAUSALITY/adjoint tie `G^A = (G^R)†`; and the
+# fourth is the physics: in thermal equilibrium the Keldysh component is not
+# independent but locked to the spectral part by the FLUCTUATION–DISSIPATION
+# theorem,
+#
+#     G^K(ω) = h(ω) · (G^R(ω) − G^A(ω)),   h(ω) = coth(βω/2) | tanh(βω/2),
+#
+# the distribution function `h` (bosonic | fermionic) supplied by
+# `keldysh_distribution` (structure/keldysh.jl).  The `G^≷` KMS relation
+# `G^<(ω) = ζ e^{−βω} G^>(ω)` is the detailed-balance root from which that `h`
+# follows (see the test): FDT is a CONSEQUENCE of KMS + the RAK identities,
+# not an extra axiom.  This is the real-time sibling of the Matsubara Dyson
+# layer in `spectral.jl`; the spectral function `A = −Im G^R/π` bridges them
+# ([`SpectralFromKeldysh`](@ref)).
+#
+# Reference: Keldysh, Sov. Phys. JETP 20, 1018 (1965); the FDT is
+# Callen–Welton, Phys. Rev. 83, 34 (1951) (already cited).
+
+"""
+    KeldyshComponent <: AbstractRelation
+
+Definition of the Keldysh component from the greater/lesser correlators,
+`G^K = G^> + G^<` — an identity on the whole contour (equilibrium or not).
+
+Variables: `GK`, `Ggtr` (`G^>`), `Gles` (`G^<`).
+"""
+@relation :keldysh KeldyshComponent(GK, Ggtr, Gles) = GK - (Ggtr + Gles)
+
+"""
+    KeldyshCausality <: AbstractRelation
+
+The retarded–advanced difference equals the greater–lesser difference,
+`G^R − G^A = G^> − G^<` — the (un-normalized) spectral weight, an identity
+independent of the state.
+
+Variables: `GR`, `GA`, `Ggtr`, `Gles`.
+"""
+@relation :keldysh KeldyshCausality(GR, GA, Ggtr, Gles) = (GR - GA) - (Ggtr - Gles)
+
+"""
+    AdvancedRetardedConjugate <: AbstractRelation
+
+The advanced propagator is the adjoint of the retarded one,
+`G^A(ω) = conj(G^R(ω))` (scalar; `(G^R)†` in orbital space).  So
+`G^R − G^A = 2i Im G^R` and the spectral weight is real.
+
+Variables: `GA`, `GR`.  (Complex-valued residual.)
+"""
+@relation :keldysh AdvancedRetardedConjugate(GA, GR) = GA - conj(GR)
+
+"""
+    KeldyshFDT <: AbstractRelation
+
+The fluctuation–dissipation theorem in Keldysh form: in equilibrium the
+Keldysh component is fixed by the spectral part through the distribution
+function `h`,
+
+`G^K(ω) = h(ω) · (G^R(ω) − G^A(ω))`,
+
+with `h = coth(βω/2)` (bosons) or `tanh(βω/2)` (fermions), supplied by
+[`keldysh_distribution`](@ref).  Fluctuation (`G^K`) on the left,
+dissipation (`G^R − G^A ∝ Im G^R`) on the right — the two are not
+independent in thermal equilibrium.
+
+Variables: `GK`, `h`, `GR`, `GA`.
+"""
+@relation :keldysh KeldyshFDT(GK, h, GR, GA) = GK - h * (GR - GA)
+
+"""
+    KMSGreaterLesser <: AbstractRelation
+
+The Kubo–Martin–Schwinger / detailed-balance relation between the
+equilibrium greater and lesser correlators,
+
+`G^<(ω) = ζ e^{−βω} G^>(ω)`,   `ζ = +1` (bosons), `ζ = −1` (fermions).
+
+This is the root of the Keldysh FDT: with the RAK identities it forces
+`G^K/(G^R − G^A) = (1 + ζe^{−βω})/(1 − ζe^{−βω})`, which is exactly
+`coth(βω/2)` (`ζ=+1`) or `tanh(βω/2)` (`ζ=−1`) — see
+[`keldysh_distribution`](@ref) and [`KeldyshFDT`](@ref).  Mirrors the
+structure-factor [`DetailedBalance`](@ref) `S(−ω) = e^{−βω} S(ω)` on the
+propagator side.
+
+Variables: `Gles`, `Ggtr`, `ζ`, `ω`, and `β` (or `T`).
+"""
+@relation :keldysh KMSGreaterLesser(Gles, Ggtr, ζ, ω, β) = Gles - ζ * exp(-β * ω) * Ggtr
+
+"""
+    SpectralFromKeldysh <: AbstractRelation
+
+The bridge between the Keldysh RAK components and the normalized spectral
+function `A = −Im G^R/π` (`∫A dω = 1`):
+
+`A(ω) = i (G^R(ω) − G^A(ω)) / (2π)`.
+
+Reduces to [`SpectralFromGreens`](@ref) `A = −Im G^R/π` once
+`G^A = conj(G^R)` ([`AdvancedRetardedConjugate`](@ref)) is imposed, so the
+real-time and Matsubara spectral definitions agree.
+
+Variables: `A`, `GR`, `GA`.  (Complex-valued residual off equilibrium.)
+"""
+@relation :keldysh SpectralFromKeldysh(A, GR, GA) = A - im * (GR - GA) / (2 * π)
