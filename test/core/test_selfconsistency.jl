@@ -21,7 +21,7 @@ using AbstractQAtlas:
         end
     end
     # at least a substantial fraction is annotated (the web is populated)
-    @test count(r -> !isempty(quantities(r)), all_relations()) >= 40
+    @test count(r -> !isempty(quantities(r)), all_relations()) >= 60
 end
 
 @testset "reverse index `relations_constraining` matches `quantities`" begin
@@ -82,6 +82,46 @@ end
     # SpecificHeat's fluctuation (β²Var(E)) and its ≥ 0 stability agree on the quantity
     @test SpecificHeat in quantities(SpecificHeatFDT())
     @test SpecificHeat in quantities(SpecificHeatPositivity())
+end
+
+@testset "coverage: most quantity leaves reach a universal law (soft gate)" begin
+    # A SOFT coverage metric, not a per-quantity hard test: some leaves are
+    # only ever constrained through generic relations that name no subject
+    # (Maxwell relations constrain derivatives; scaling laws constrain
+    # exponents; the uncertainty relation constrains generic operators) — so
+    # 100% is neither expected nor desired.  What we DO guard is regression:
+    # the annotated web must keep a healthy fraction of the quantity zoo
+    # reachable from its defining laws, so a future rename/removal that
+    # silently orphans a whole physics area trips the gate.
+    using InteractiveUtils: subtypes
+    _leaves(T, acc=Type[]) = (
+        foreach(S -> isabstracttype(S) ? _leaves(S, acc) : push!(acc, S), subtypes(T));
+        acc
+    )
+    _rep(T) = begin
+        for args in ((), (:x,), (:x, :y))
+            try
+                return T(args...)
+            catch
+            end
+        end
+        nothing
+    end
+    leaves = _leaves(AbstractQuantity)
+    reps = filter(!isnothing, map(_rep, leaves))
+    reachable = count(q -> !isempty(relations_constraining(q)), reps)
+    # ≥ 60% of the constructible quantity zoo is directly constrained by a law
+    @test reachable >= 0.6 * length(reps)
+    # and the anchor observables of each populated area are individually reachable
+    for q in (
+        Susceptibility(:z, :z),         # statistical mechanics
+        VonNeumannEntropy(),            # quantum information
+        Conductivity(:x, :y),           # transport
+        RetardedGreensFunction(),       # correlations
+        MassGap(),                      # criticality
+    )
+        @test !isempty(relations_constraining(q))
+    end
 end
 
 @testset "quantity-graph edges have no dangling nodes" begin
