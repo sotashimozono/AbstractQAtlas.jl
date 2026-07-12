@@ -167,3 +167,26 @@ end
     @test tensor_rank(MagneticFluxDensity()) == 0
     @test tensor_rank(FillingFactor()) == 0
 end
+
+@testset "thermoelectric figure of merit, power factor, Nernst, Ioffe–Regel" begin
+    using AbstractQAtlas: slack, AbstractInequality
+    S, σ, T, κ = 0.2, 3.0, 1.5, 0.9
+    # ZT = S²σT/κ, PF = S²σ, and ZT = PF·T/κ (cross-consistency)
+    PF = S^2 * σ
+    ZT = S^2 * σ * T / κ
+    @test check(PowerFactor(); PF=PF, S=S, σ=σ, atol=1e-12)
+    @test check(ThermoelectricFigureOfMerit(); ZT=ZT, S=S, σ=σ, T=T, κ=κ, atol=1e-12)
+    @test ZT ≈ PF * T / κ atol = 1e-12                 # ZT = (power factor)·T/κ
+    @test solve(PowerFactor(), Val(:PF); S=S, σ=σ) ≈ PF
+    @test solve(ThermoelectricFigureOfMerit(), Val(:ZT); S=S, σ=σ, T=T, κ=κ) ≈ ZT
+
+    # Nernst coefficient ν_N = S_xy / B
+    @test check(NernstCoefficient(); νN=0.15 / 0.5, S_xy=0.15, B=0.5, atol=1e-12)
+    @test solve(NernstCoefficient(), Val(:S_xy); νN=0.3, B=0.5) ≈ 0.15
+
+    # Mott–Ioffe–Regel inequality k_F ℓ ≥ 1 (coherence criterion)
+    @test IoffeRegel() isa AbstractInequality
+    @test check(IoffeRegel(); kFℓ=5.0)                 # good metal
+    @test slack(IoffeRegel(); kFℓ=1.0) == 0.0          # at the MIR limit (saturated)
+    @test !check(IoffeRegel(); kFℓ=0.4, atol=1e-9)     # bad metal — criterion violated
+end
