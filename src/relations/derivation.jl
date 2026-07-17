@@ -303,12 +303,28 @@ function typed_derivation_steps()
     return steps
 end
 
+# Is a type available in `known` — aliasing InverseTemperature ⇄ Temperature (so a
+# derived T is recognized as "known" when β was supplied, and vice versa, and neither
+# is ever re-derived as a duplicate literal key that would trip `_slot_value`'s
+# "both present" guard mid-chain).
+_known(@nospecialize(ty::Type), known::Bag) = _slot_value(ty, known) !== nothing
+
+# Reject a bag that supplies BOTH β and T up front (mirrors the bag verbs' guard),
+# so the aliasing-aware checks below never encounter both literal keys at once.
+function _check_one_temperature(bag::Bag)
+    haskey(bag, VariableKey(InverseTemperature)) &&
+        haskey(bag, VariableKey(Temperature)) &&
+        error("bag has both InverseTemperature and Temperature — pass exactly one")
+    return nothing
+end
+
 # Fire a typed step against the known bag + `extras`; the solved value or `nothing`
 # (an input type is missing, or the relation is non-affine in the output / a
-# supplied slot is absent — the real `solve` decides, so nothing is faked).
+# supplied slot is absent — the real `solve` decides, so nothing is faked).  The
+# whole attempt is guarded, so an unexpectedly-erroring step is skipped, never fatal.
 function _try_typed_step(step::TypedStep, known::Bag, extras)
-    all(k -> _slot_value(k.type, known) !== nothing, step.inputs) || return nothing
     try
+        all(k -> _known(k.type, known), step.inputs) || return nothing
         return solve(step.relation, step.output.type, known; extras...)
     catch
         return nothing
@@ -316,19 +332,21 @@ function _try_typed_step(step::TypedStep, known::Bag, extras)
 end
 
 # Forward-chaining closure over VariableKey nodes: fire any step whose inputs are all
-# known until nothing new is produced (stopping early once `stop` is known).
+# known until nothing new is produced (stopping early once `stop` is known).  All
+# "known" tests are aliasing-aware, so `known` never accumulates both β and T.
 function _typed_chain!(known::Bag, extras, stop::Union{VariableKey,Nothing})
     used = TypedStep[]
     progress = true
-    while progress && !(stop !== nothing && haskey(known, stop))
+    while progress && !(stop !== nothing && _known(stop.type, known))
         progress = false
         for step in typed_derivation_steps()
-            haskey(known, step.output) && continue
+            _known(step.output.type, known) && continue
             v = _try_typed_step(step, known, extras)
             v === nothing && continue
             known[step.output] = v
             push!(used, step)
             progress = true
+            stop !== nothing && _known(stop.type, known) && break
         end
     end
     return used
@@ -344,6 +362,7 @@ Type-keyed [`derivable`](@ref): the quantity/field TYPES computable from the bag
 """
 function derivable(bag::Bag; extras...)
     known = copy(bag)
+    _check_one_temperature(known)
     _typed_chain!(known, values(extras), nothing)
     return Set(keys(known))
 end
@@ -364,14 +383,16 @@ derive(PeltierCoefficient, bag(ThermalEntropy => s, Temperature => t))  # ERROR:
 """
 function derive(@nospecialize(Q::Type), bag::Bag; extras...)
     known = copy(bag)
-    target = VariableKey(Q)
-    haskey(known, target) && return known[target]
-    _typed_chain!(known, values(extras), target)
-    haskey(known, target) || error(
+    _check_one_temperature(known)
+    v = _slot_value(Q, known)                         # aliasing-aware "already known"
+    v === nothing || return something(v)
+    _typed_chain!(known, values(extras), VariableKey(Q))
+    v = _slot_value(Q, known)
+    v === nothing && error(
         "derive: $(nameof(Q)) is not reachable from the bag by type-keyed relations " *
         "(a needed quantity type or supplied slot is absent).",
     )
-    return known[target]
+    return something(v)
 end
 
 """

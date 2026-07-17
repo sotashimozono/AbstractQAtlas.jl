@@ -41,6 +41,29 @@ end
     @test_throws ErrorException derive(SelfEnergy, bag(SpectralFunction => 1.0))
 end
 
+@testset "β/T aliasing in the chain (review #85 regression)" begin
+    Sxx = Thermopower{(:x, :x)}
+    Pxx = PeltierCoefficient{(:x, :x)}
+    # the chain can DERIVE Temperature = Π/S (KelvinRelation) while InverseTemperature
+    # was supplied directly — this must NOT crash on a self-made β/T "both present"
+    b = bag(InverseTemperature => 2.0, Sxx => 3.0, Pxx => 6.0)
+    d = derivable(b)                                   # must not throw
+    @test VariableKey(InverseTemperature) in d
+    @test !(VariableKey(Temperature) in d)             # aliased, not re-derived as a literal key
+    # a target reachable from unrelated data is not killed by a β/T mixture elsewhere
+    @test derive(
+        FreeEnergy,
+        bag(InverseTemperature => 2.0, PartitionFunction => 5.0, Sxx => 3.0, Pxx => 6.0),
+    ) isa Number
+    # aliasing: derive Temperature when only InverseTemperature is present
+    @test derive(Temperature, bag(InverseTemperature => 4.0)) == 0.25
+    # supplying BOTH β and T is a loud, up-front error (matches the bag verbs)
+    bt = AQ.Bag()
+    bt[VariableKey(InverseTemperature)] = 2.0
+    bt[VariableKey(Temperature)] = 0.5
+    @test_throws ErrorException derivable(bt)
+end
+
 @testset "typed_derivation_graph structure" begin
     steps = typed_derivation_steps()
     @test !isempty(steps)
