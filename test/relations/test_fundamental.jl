@@ -97,3 +97,47 @@ end
     )
     @test check(FreeEnergyLegendre(); F=F, U=U, S=S, β=β, atol=1e-6)
 end
+
+@testset "type-keyed: fundamental response web" begin
+    # quantities() preserved exactly — the F-derivative edges are kept via
+    # also_constrains (EntropyResponse/GibbsHelmholtz reach FreeEnergy through dF/dT, dβF/dβ)
+    @test quantities(MagnetizationResponse()) == (Magnetization,)
+    @test quantities(SusceptibilityResponse()) == (Susceptibility,)
+    @test Set(quantities(EntropyResponse())) == Set((ThermalEntropy, FreeEnergy))
+    @test Set(quantities(GibbsHelmholtz())) == Set((Energy, FreeEnergy))
+    @test Set(quantities(FreeEnergyFromZ())) == Set((FreeEnergy, PartitionFunction))
+    @test Set(quantities(FreeEnergyLegendre())) == Set((FreeEnergy, Energy, ThermalEntropy))
+    # M = −∂F/∂h via bag (Magnetization{:z} keyed by type; dF_dh supplied)
+    @test check(
+        MagnetizationResponse(), bag(Magnetization{:z} => 0.7); dF_dh=-0.7, atol=1e-12
+    )
+    # χ = ∂M/∂h via bag (Susceptibility{(:z,:z)})
+    @test check(
+        SusceptibilityResponse(),
+        bag(Susceptibility{(:z, :z)} => 0.4);
+        dM_dh=0.4,
+        atol=1e-12,
+    )
+    # F = U − TS via bag: FreeEnergy, Energy{:natural}, ThermalEntropy + β field (all typed)
+    U, S, β = 1.5, 0.8, 1.3
+    F = U - S / β
+    @test check(
+        FreeEnergyLegendre(),
+        bag(
+            FreeEnergy => F,
+            Energy{:natural} => U,
+            ThermalEntropy => S,
+            InverseTemperature => β,
+        );
+        atol=1e-12,
+    )
+    # f = −ln Z/(βN) via bag with optional N ≠ 1 (unconsumed-extras forwarding)
+    Zval, Nsites = 4.0, 2
+    fval = -log(Zval) / (β * Nsites)
+    @test check(
+        FreeEnergyFromZ(),
+        bag(FreeEnergy => fval, PartitionFunction => Zval, InverseTemperature => β);
+        N=Nsites,
+        atol=1e-12,
+    )
+end
