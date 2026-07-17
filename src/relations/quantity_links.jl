@@ -10,24 +10,17 @@
 # exponents rather than named quantities (scaling laws, Maxwell relations,
 # the uncertainty relation) keep the default `quantities(rel) == ()`.
 
-# ── Statistical mechanics / fundamental / ensemble (symbol-keyed, awaiting
-#    migration) ──
-quantities(::MagnetizationResponse) = (Magnetization,)
-quantities(::SusceptibilityResponse) = (Susceptibility,)
-quantities(::EntropyResponse) = (ThermalEntropy, FreeEnergy)
-quantities(::GibbsHelmholtz) = (Energy, FreeEnergy)
-quantities(::FreeEnergyFromZ) = (FreeEnergy, PartitionFunction)
-quantities(::FreeEnergyLegendre) = (FreeEnergy, Energy, ThermalEntropy)
-# Type-keyed relations (thermodynamic.jl, ensembles.jl, transport.jl): `quantities`
-# is auto-derived from the typed slots, UNIONED with the `also_constrains` hints
-# below. Those relations constrain a quantity through a SUPPLIED variance/derivative
-# (not a typed subject), so the association is declared here to keep the physics
-# graph complete (e.g. Var(M) → Magnetization in the susceptibility FDT):
+# `also_constrains` hints — for TYPE-KEYED relations, a quantity that a relation
+# constrains through a SUPPLIED variance/derivative (not a typed subject) is invisible
+# to auto-derivation; declared here so `quantities` (= typed subjects ∪ these) keeps
+# the physics graph complete (e.g. Var(M) → Magnetization in the susceptibility FDT):
 also_constrains(::SusceptibilityFDT) = (Magnetization,)
 also_constrains(::SpecificHeatFDT) = (Energy,)
 also_constrains(::SpecificHeatFromEntropy) = (ThermalEntropy,)
 also_constrains(::MottFormula) = (Conductivity,)   # transport: dlnσ/dε → Conductivity
 also_constrains(::MicrocanonicalTemperature) = (ThermalEntropy, Energy)  # β = ∂S/∂E
+also_constrains(::EntropyResponse) = (FreeEnergy,)     # fundamental: S = −∂F/∂T
+also_constrains(::GibbsHelmholtz) = (FreeEnergy,)      # fundamental: U = ∂(βF)/∂β
 # HeatCapacityDifference GAINS ThermalExpansionCoefficient + IsothermalCompressibility
 # (α, κT are now typed subjects → auto). LinearResponseFDT + the 4 Maxwell relations
 # stay symbol-keyed (generic / pure-derivative — no named quantity subject).
