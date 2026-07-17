@@ -140,19 +140,22 @@ end
 @testset "multipartite region helpers: CMI, tripartite info, KP topological EE" begin
     ee = entanglement_entropy
     A, B, C = Region(1), Region(2), Region(3)
+    # pairwise-DISTINCT singles and pairs so a positional swap among {S_A,S_B,S_C} or
+    # {S_AB,S_AC,S_BC} — the failure mode of the generator destructuring — cannot hide
     b = bag(
         ee(1) => 0.5,
-        ee(2) => 0.5,
-        ee(3) => 0.5,
+        ee(2) => 0.6,
+        ee(3) => 0.7,
         ee(1, 2) => 1.0,
-        ee(1, 3) => 1.0,
-        ee(2, 3) => 1.0,
+        ee(1, 3) => 1.1,
+        ee(2, 3) => 1.2,
         ee(1, 2, 3) => 1.2,
     )
-    # I(A:C|B) = S(A∪B)+S(B∪C)−S(A∪B∪C)−S(B)   (the SSA slack)
+    # I(A:C|B) = S(A∪B)+S(B∪C)−S(A∪B∪C)−S(B) = 1.0+1.2−1.2−0.6   (the SSA slack; S(B)=S₂
+    # is distinct from S₁/S₃, so picking the wrong middle region would change the answer)
     cmi = conditional_mutual_information(b, A, B, C)
-    @test cmi ≈ 0.3
-    # I₃ = S_A+S_B+S_C−S_AB−S_AC−S_BC+S_ABC ; Kitaev–Preskill γ = −I₃
+    @test cmi ≈ 0.4
+    # I₃ = S_A+S_B+S_C−S_AB−S_AC−S_BC+S_ABC = 1.8−3.3+1.2 ; Kitaev–Preskill γ = −I₃
     @test tripartite_information(b, A, B, C) ≈ -0.3
     @test topological_entanglement_entropy(b, A, B, C) ≈ 0.3
     @test topological_entanglement_entropy(b, A, B, C) ≈ -tripartite_information(b, A, B, C)
@@ -164,4 +167,10 @@ end
         bag(ee(1, 2) => 1.0), A, B, C
     )
     @test_throws ErrorException topological_entanglement_entropy(bag(ee(1) => 0.5), A, B, C)
+    # overlapping regions are NOT a tripartition (unions collapse ⇒ a physical-looking
+    # but meaningless number) — caught by the disjointness guard, on a bag where every
+    # needed entropy IS present so only the guard can be firing
+    @test_throws ErrorException conditional_mutual_information(b, A, B, A)   # C == A
+    @test_throws ErrorException tripartite_information(b, A, B, A)
+    @test_throws ErrorException topological_entanglement_entropy(b, A, B, A)
 end
