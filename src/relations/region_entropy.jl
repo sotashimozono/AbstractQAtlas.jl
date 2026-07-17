@@ -15,8 +15,8 @@
 
 One row of a [`region_report`](@ref): the `relation` (an entropy inequality), the
 pairwise-disjoint `regions` it was auto-instantiated on (`(A, B)` for the bipartite
-inequalities, `(A, B, C)` for strong subadditivity), the `slack` (its
-[`residual`](@ref); `≥ 0` ⇔ satisfied), and `pass`.
+inequalities, `(A, B, C)` for the triple ones — strong subadditivity and weak
+monotonicity), the `slack` (its [`residual`](@ref); `≥ 0` ⇔ satisfied), and `pass`.
 """
 struct RegionReportRow
     relation::AbstractRelation
@@ -91,11 +91,10 @@ function region_report(b::Bag; atol=0)
             sw = residual(wm; S_AB=ents[AB], S_BC=ents[BC], S_A=ents[A], S_C=ents[C])
             push!(out, RegionReportRow(wm, (A, B, C), sw, _passes(wm, sw, atol)))
             # strong subadditivity additionally needs the full-system entropy S(A∪B∪C)
-            haskey(ents, A ∪ B ∪ C) || continue
+            ABC = A ∪ B ∪ C
+            haskey(ents, ABC) || continue
             ssa = StrongSubadditivity()
-            s = residual(
-                ssa; S_AB=ents[AB], S_BC=ents[BC], S_ABC=ents[A ∪ B ∪ C], S_B=ents[B]
-            )
+            s = residual(ssa; S_AB=ents[AB], S_BC=ents[BC], S_ABC=ents[ABC], S_B=ents[B])
             push!(out, RegionReportRow(ssa, (A, B, C), s, _passes(ssa, s, atol)))
         end
     end
