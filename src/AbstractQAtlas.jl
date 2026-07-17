@@ -48,6 +48,7 @@ include("core/universality.jl")
 include("core/distributions.jl")
 include("core/fields.jl")
 include("core/relation_variables.jl")   # the RelationVariable layer (type-keyed variables)
+include("core/region.jl")                # the Region set layer (entanglement support, §5)
 
 # structure — model-independent definitional correspondences between the
 # core quantities: transition classification, the critical
@@ -149,6 +150,10 @@ end
 # top level, so it goes AFTER the re-export) — makes the registry queryable
 # via `quantities` / `relations_constraining`.
 include("relations/quantity_links.jl")
+
+# region-keyed entanglement-entropy auto-discovery (needs the re-exported
+# Subadditivity / ArakiLieb + the Region set layer): region_report / region_check_all.
+include("relations/region_entropy.jl")
 
 # the abstract typed-graph PARENT: one KnowledgeGraph{N} kernel (nodes, typed
 # edges, traversal, reachability, shortest-path, JSONL export) that every
