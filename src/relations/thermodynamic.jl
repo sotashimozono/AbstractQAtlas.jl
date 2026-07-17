@@ -264,4 +264,7 @@ field is non-negative,
 
 Variables: `χT`.
 """
-@inequality :thermodynamic SusceptibilityPositivity(χT::Susceptibility{(:z, :z)}) = χT
+# Family-generic (§8a): keyed on the bare `Susceptibility` family, so the verify-
+# engine auto-checks EVERY susceptibility component present in a bag (χ_xx, χ_zz, …)
+# — a bag with a negative component is caught, whichever component it is.
+@inequality :thermodynamic SusceptibilityPositivity(χT::Susceptibility) = χT

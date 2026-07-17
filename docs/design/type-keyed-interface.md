@@ -291,6 +291,51 @@ relation is simply component-specific, which is physically what HallAngle *is*.
 The load guard is the safety net between the phases: until Phase 2 lands, a
 bare-family declaration fails at load rather than silently matching nothing.
 
+### Phase-2 mechanism (concrete) — family-generic slots + auto-discovery
+
+Worked out for implementation; two sub-capabilities, sequenced.
+
+**8a — single-family-slot auto-discovery (no cross-slot constraint).** A slot
+keyed on a bare family (`χT::Susceptibility`) matches EVERY concrete component of
+that family present in the bag; the verify-engine reports one row per component:
+
+```julia
+relation_report(bag(Susceptibility{(:x,:x)} => 1.0, Susceptibility{(:z,:z)} => -0.5))
+#  → SusceptibilityPositivity holds for χ_xx, VIOLATED for χ_zz  (two rows)
+```
+
+Pieces: (i) the load guard accepts a slot whose key `isa UnionAll` (a family), not
+just `isconcretetype` — still rejecting a plain abstract DataType; (ii) a matcher
+`_bag_components(family, bag) = [k for k in keys(bag) if k.type <: family]`
+enumerates the components; (iii) `relation_report` / `check_all` auto-instantiate —
+for a generic relation, one report row per component, each carrying the resolved
+concrete `VariableKey` so the row is unambiguous. **Design decision (the real
+fork): the report row schema gains a `subject::Union{Nothing,VariableKey}` field**
+(`nothing` for a non-generic relation) rather than a separate `family_report`, so
+one call sweeps concrete and family-generic relations uniformly. `residual`/`check`
+on a family-generic relation require an explicit component (`check(rel, bag;
+subject = Susceptibility{(:z,:z)})`), since the bare `bag`-form is ambiguous.
+`derive`/`solve` stay concrete-only (a family target is ambiguous). `quantities`
+already family-erases, so it is unchanged.
+
+**8b — cross-slot index unification (`where`-var).** For relations whose components
+must agree across slots — `WiedemannFranz(κ::ThermalConductivity{I},
+σ::Conductivity{I}, T, L0) where {I}` (κ_ii = L₀ σ_ii T) — the matcher unifies the
+type-var `I` across the generic slots against the bag: candidate bindings from each
+slot's present components, kept only where consistent (same `I` everywhere). Each
+consistent binding is one auto-discovered instance. Pieces beyond 8a: (i) the macro
+unwraps `Name(...) where {I} = body` and records, per generic slot, which family +
+which where-var fills its parameter (`GenericKey(family, :I)`); (ii) `_family_bindings(rel, bag)`
+does the unification (start with the single-tuple-parameter case `Family{I}`; defer
+tuple-destructuring `Susceptibility{(A,B)}`). This is the tensor twin of the
+entanglement `Region` auto-discovery (§5) — the region case is "unify a `Region`
+support across entropy slots," structurally the same quantified-relation matcher, so
+8b and the Region epic share it and should land together.
+
+Recommended order: **8a first** (self-contained, immediately useful for the
+positivity / single-tensor-quantity relations, no `where` machinery), then 8b + the
+Region epic together.
+
 ## 9. Status of the in-flight symbol-based work
 
 PR #78 (the symbol-based D1: complex `SpectralFromGreens`, `Dyson` `:G → :GR`
