@@ -417,17 +417,31 @@ end
 #   * the identity types must be DISTINCT — two slots of one type bind the SAME bag
 #     value, giving an always-passing, physically meaningless check (issue C3; the
 #     `support`/region layer is the escape valve for multi-instance-of-one-type).
+# a bare parametric FAMILY slot (`Susceptibility`, a `UnionAll`) — matched by
+# auto-discovery against every concrete component of that family in the bag (§8a).
+_is_family(@nospecialize(T)) = T isa UnionAll
+
 function _validate_relation(rel::AbstractRelation)
     ts = variable_types(rel)
     isempty(ts) && return nothing
     nm = nameof(typeof(rel))
     for T in ts
-        isconcretetype(T) || error(
-            "@relation $nm: identity variable type `$T` is not concrete — a parametric " *
-            "family cannot match a concrete bag key. Declare the concrete type, or wait " *
-            "for the support / family-matching layer.",
-        )
+        # concrete component (Conductivity{(:x,:x)}) OR a family (Susceptibility, a
+        # UnionAll matched by auto-discovery); a plain ABSTRACT DataType is still
+        # rejected (it can neither `===`-match nor family-enumerate).
+        isconcretetype(T) ||
+            _is_family(T) ||
+            error(
+                "@relation $nm: identity variable type `$T` is neither a concrete " *
+                "component nor a parametric family — it cannot match a bag key.",
+            )
     end
+    # single-family-slot only (§8a): cross-slot index unification (two `Family{I}`
+    # sharing an index) is §8b, and lands with the Region epic.
+    count(_is_family, ts) <= 1 || error(
+        "@relation $nm: more than one family-generic slot needs cross-slot index " *
+        "unification (design §8b) — not yet supported; key the components concretely.",
+    )
     allunique(ts) || error(
         "@relation $nm: repeats an identity variable type in $ts — two slots of one type " *
         "share a bag key and the check would always pass. Distinguish them via `support` " *
@@ -487,6 +501,17 @@ function _normalize_data(data::NamedTuple)
     return haskey(data, :T) && !haskey(data, :β) ? merge(data, (β=1 / data.T,)) : data
 end
 
+# One row of a [`relation_report`](@ref).  `subject` is the concrete component a
+# family-generic relation was auto-instantiated on (a `VariableKey`, §8a), or
+# `nothing` for an ordinary relation — so one report uniformly covers concrete and
+# family-generic relations.
+const _ReportRow = @NamedTuple{
+    relation::AbstractRelation,
+    subject::Union{Nothing,VariableKey},
+    residual::Number,
+    pass::Bool,
+}
+
 """
     applicable_relations(data::NamedTuple; domain=nothing) -> Vector{AbstractRelation}
 
@@ -508,10 +533,13 @@ export applicable_relations
 
 """
     relation_report(data::NamedTuple; atol=0, domain=nothing)
-        -> Vector{@NamedTuple{relation::AbstractRelation, residual::Number, pass::Bool}}
+        -> Vector{@NamedTuple{relation, subject, residual, pass}}
 
 Evaluate every applicable relation against `data` and report per-relation
-residuals.  The one-call integration point for downstream packages:
+residuals.  Each row also carries `subject` (`nothing` here — the type-keyed
+`relation_report(::Bag)` fills it with the auto-discovered component of a
+family-generic relation, §8a).  The one-call integration point for downstream
+packages:
 
 ```julia
 # gate an exponent table (an atlas registry, MC-extracted exponents, …):
@@ -523,10 +551,10 @@ relation_report((; C=c, var_E=v, β=β, N=N); atol=tol)
 """
 function relation_report(data::NamedTuple; atol=0, domain::Union{Nothing,Symbol}=nothing)
     d = _normalize_data(data)
-    out = @NamedTuple{relation::AbstractRelation, residual::Number, pass::Bool}[]
+    out = _ReportRow[]
     for rel in applicable_relations(d; domain=domain)
         r = _residual(rel; d...)
-        push!(out, (relation=rel, residual=r, pass=_passes(rel, r, atol)))
+        push!(out, (relation=rel, subject=nothing, residual=r, pass=_passes(rel, r, atol)))
     end
     return out
 end
@@ -646,25 +674,60 @@ function _symbol_for(rel::AbstractRelation, @nospecialize(ty::Type))
     return nothing
 end
 
-# Every required variable available? — identity slots from `b` by type, supplied
-# slots from `extras` by symbol.  A legacy symbol-only relation is never a match.
+# Every CONCRETE component of a parametric family present in the bag, as
+# `VariableKey`s (§8a auto-discovery) — e.g. Susceptibility → its χ_xx, χ_zz keys.
+# `isconcretetype` excludes a bag entry keyed on the bare family itself (`family <:
+# family` is trivially true), so a `subject` is always a genuine component.
+function _bag_components(@nospecialize(family), b::Bag)
+    return [k for k in keys(b) if k.type <: family && isconcretetype(k.type)]
+end
+
+# The (single, §8a) family-generic slot's key, or `nothing` if the relation is
+# fully concrete.
+function _family_slot(rel::AbstractRelation)
+    for (_, key) in variable_slots(rel)
+        key !== nothing && _is_family(key) && return key
+    end
+    return nothing
+end
+
+# Every required variable available? — identity slots from `b` by type (a family
+# slot matches if ANY of its components is present), supplied slots from `extras`.
+# A legacy symbol-only relation is never a match.
 function _bag_applicable(rel::AbstractRelation, b::Bag, extras)
     isempty(variable_types(rel)) && return false
     return all(variable_slots(rel)) do (sym, key)
+        if key !== nothing && _is_family(key)
+            return !isempty(_bag_components(key, b))
+        end
         return _resolve_slot(sym, key, b, extras) !== nothing
     end
 end
 
 # Build the private-symbol kwargs the kernel expects from `b` (identity slots) +
-# `extras` (supplied slots); `skip` leaves one variable out (for `solve`).  Missing
-# required values throw with a message naming the FULL type (so two components of
-# one parametric family are never confused — issue I4).
+# `extras` (supplied slots); `skip` leaves one variable out (for `solve`), and
+# `subject` (a concrete component `VariableKey`) resolves a family-generic slot.
+# Missing required values throw with a message naming the FULL type (issue I4).
 function _bag_kwargs(
-    rel::AbstractRelation, b::Bag, extras; skip::Union{Symbol,Nothing}=nothing
+    rel::AbstractRelation,
+    b::Bag,
+    extras;
+    skip::Union{Symbol,Nothing}=nothing,
+    subject::Union{Nothing,VariableKey}=nothing,
 )
     out = Pair{Symbol,Any}[]
     for (sym, key) in variable_slots(rel)
         sym === skip && continue
+        if key !== nothing && _is_family(key)
+            subject === nothing &&
+                error("$(nameof(typeof(rel))) is family-generic in :$sym — pass `subject`")
+            (subject.type <: key && haskey(b, subject)) || error(
+                "$(nameof(typeof(rel))) needs the $(nameof(key)) component " *
+                "$(subject.type) in the bag",
+            )
+            push!(out, sym => b[subject])
+            continue
+        end
         v = _resolve_slot(sym, key, b, extras)
         if v === nothing
             if key === nothing
@@ -699,9 +762,17 @@ the collision-proof front door.
 residual(SpectralFromGreens(), bag(SpectralFunction => A, RetardedGreensFunction => G))
 ```
 """
-function residual(rel::AbstractRelation, b::Bag; extras...)
+function residual(
+    rel::AbstractRelation, b::Bag; subject::Union{Nothing,Type}=nothing, extras...
+)
+    subject !== nothing &&
+        _family_slot(rel) === nothing &&
+        error("$(nameof(typeof(rel))) is not family-generic — drop the `subject` keyword")
     ex = values(extras)
-    return _residual(rel; _bag_kwargs(rel, b, ex)..., _unconsumed_extras(rel, ex)...)
+    sk = subject === nothing ? nothing : VariableKey(subject)
+    return _residual(
+        rel; _bag_kwargs(rel, b, ex; subject=sk)..., _unconsumed_extras(rel, ex)...
+    )
 end
 
 """
@@ -710,8 +781,10 @@ end
 Type-keyed [`check`](@ref): `residual(rel, b; extras...)` within `atol`
 (equalities `|·| ≤ atol`, inequalities `· ≥ −atol`).
 """
-function check(rel::AbstractRelation, b::Bag; atol=0, extras...)
-    return _passes(rel, residual(rel, b; extras...), atol)
+function check(
+    rel::AbstractRelation, b::Bag; atol=0, subject::Union{Nothing,Type}=nothing, extras...
+)
+    return _passes(rel, residual(rel, b; subject=subject, extras...), atol)
 end
 
 """
@@ -728,6 +801,15 @@ solve(KeldyshComponent(), KeldyshGreensFunction,
 ```
 """
 function solve(rel::AbstractRelation, @nospecialize(Q::Type), b::Bag; extras...)
+    # `derive`/`solve` are concrete-only: a bare family (`Susceptibility`) as the
+    # target is ambiguous over its components.  Reject it before `_symbol_for` can
+    # "match" the family slot and skip it (which would return a component-blind value);
+    # this also keeps the typed derivation graph honest — `_try_typed_step` catches
+    # the throw and treats such a step as non-firing.
+    _is_family(Q) && error(
+        "solve: $(nameof(Q)) is a parametric family, not a concrete component — " *
+        "pass e.g. $(nameof(Q)){(:x, :x)}",
+    )
     sym = _symbol_for(rel, Q)
     sym === nothing && error("$(nameof(typeof(rel))) has no variable of type $(nameof(Q))")
     ex = values(extras)
@@ -759,10 +841,24 @@ per-relation residuals.  The collision-proof verify-engine front door.
 """
 function relation_report(b::Bag; atol=0, domain::Union{Nothing,Symbol}=nothing, extras...)
     ex = values(extras)
-    out = @NamedTuple{relation::AbstractRelation, residual::Number, pass::Bool}[]
+    out = _ReportRow[]
     for rel in applicable_relations(b; domain=domain, extras...)
-        r = residual(rel, b; ex...)
-        push!(out, (relation=rel, residual=r, pass=_passes(rel, r, atol)))
+        fam = _family_slot(rel)
+        if fam === nothing
+            r = residual(rel, b; ex...)
+            push!(
+                out, (relation=rel, subject=nothing, residual=r, pass=_passes(rel, r, atol))
+            )
+        else
+            # §8a auto-discovery: one row per concrete component of the family slot
+            for comp in _bag_components(fam, b)
+                r = residual(rel, b; subject=comp.type, ex...)
+                push!(
+                    out,
+                    (relation=rel, subject=comp, residual=r, pass=_passes(rel, r, atol)),
+                )
+            end
+        end
     end
     return out
 end
