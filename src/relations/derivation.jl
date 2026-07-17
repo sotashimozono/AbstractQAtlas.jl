@@ -249,5 +249,156 @@ function derivation_graph()
     return KnowledgeGraph(edges)
 end
 
+# ─── Type-keyed derivation (collision-proof) ────────────────────────────
+#
+# The symbol-keyed derivation above keys on private formula LETTERS, which COLLIDE
+# across relations (`:S` = thermal entropy / thermopower / structure factor / vN
+# entropy): `derive(:Π; S = entropy, T)` silently fires `KelvinRelation`, reusing an
+# entropy as a Seebeck coefficient (the demonstrated bug the whole type-keyed
+# redesign exists to kill).  Keying the graph on quantity TYPES ([`VariableKey`])
+# makes that structurally impossible — `ThermalEntropy` is not `Thermopower`, so the
+# step never fires.  Operates over the type-keyed relations (those with identity
+# slots); the supplied (untyped) slots are provided as `extras`, exactly as for the
+# bag verbs.  See docs/design/type-keyed-interface.md §6.
+
+"""
+    TypedStep(relation, output::VariableKey, inputs::Vector{VariableKey})
+
+One directed edge of the TYPE-keyed derivation graph: `relation` computes the
+identity variable `output` (a [`VariableKey`](@ref)) from its other identity slots
+`inputs` (plus its supplied slots, provided as `extras`), via the type-keyed
+[`solve`](@ref).
+"""
+struct TypedStep
+    relation::AbstractRelation
+    output::VariableKey
+    inputs::Vector{VariableKey}
+end
+
+const _TYPED_DERIV_STEPS = Ref{Union{Nothing,Vector{TypedStep}}}(nothing)
+
+"""
+    typed_derivation_steps() -> Vector{TypedStep}
+
+Every candidate directed edge of the type-keyed derivation graph: for each
+type-keyed relation and each of its identity slots, the edge computing that slot's
+TYPE from the other identity slots.  Inequalities and symbol-only relations are
+skipped (an inequality gives a saturation bound, not a derivation; a symbol-only
+relation has no typed slots).  Built once and cached.
+"""
+function typed_derivation_steps()
+    cached = _TYPED_DERIV_STEPS[]
+    cached === nothing || return cached
+    steps = TypedStep[]
+    for rel in all_relations()
+        rel isa AbstractInequality && continue
+        idslots = [(s, k) for (s, k) in variable_slots(rel) if k !== nothing]
+        isempty(idslots) && continue
+        for (osym, okey) in idslots
+            ins = [VariableKey(k) for (s, k) in idslots if s !== osym]
+            push!(steps, TypedStep(rel, VariableKey(okey), ins))
+        end
+    end
+    _TYPED_DERIV_STEPS[] = steps
+    return steps
+end
+
+# Fire a typed step against the known bag + `extras`; the solved value or `nothing`
+# (an input type is missing, or the relation is non-affine in the output / a
+# supplied slot is absent — the real `solve` decides, so nothing is faked).
+function _try_typed_step(step::TypedStep, known::Bag, extras)
+    all(k -> _slot_value(k.type, known) !== nothing, step.inputs) || return nothing
+    try
+        return solve(step.relation, step.output.type, known; extras...)
+    catch
+        return nothing
+    end
+end
+
+# Forward-chaining closure over VariableKey nodes: fire any step whose inputs are all
+# known until nothing new is produced (stopping early once `stop` is known).
+function _typed_chain!(known::Bag, extras, stop::Union{VariableKey,Nothing})
+    used = TypedStep[]
+    progress = true
+    while progress && !(stop !== nothing && haskey(known, stop))
+        progress = false
+        for step in typed_derivation_steps()
+            haskey(known, step.output) && continue
+            v = _try_typed_step(step, known, extras)
+            v === nothing && continue
+            known[step.output] = v
+            push!(used, step)
+            progress = true
+        end
+    end
+    return used
+end
+
+"""
+    derivable(bag::Bag; extras...) -> Set{VariableKey}
+
+Type-keyed [`derivable`](@ref): the quantity/field TYPES computable from the bag
+`bag` (plus `extras` for supplied slots), through chains of the type-keyed
+[`solve`](@ref).  Matched by TYPE, so no formula-symbol collision — a
+`ThermalEntropy` in the bag can never pose as a `Thermopower`.
+"""
+function derivable(bag::Bag; extras...)
+    known = copy(bag)
+    _typed_chain!(known, values(extras), nothing)
+    return Set(keys(known))
+end
+
+"""
+    derive(Q::Type, bag::Bag; extras...) -> value
+
+Type-keyed [`derive`](@ref): the value of quantity/field TYPE `Q` computed from
+`bag` (+ `extras`), or an error if unreachable.  Collision-proof — a relation fires
+only when the ACTUAL quantity types it needs are present:
+
+```julia
+derive(PeltierCoefficient, bag(Thermopower => s, Temperature => t))     # t·s (Kelvin)
+derive(PeltierCoefficient, bag(ThermalEntropy => s, Temperature => t))  # ERROR: unreachable
+#   — KelvinRelation needs a Thermopower, not the entropy; the silent
+#   entropy-as-Seebeck derivation the symbol-keyed graph allowed is impossible here.
+```
+"""
+function derive(@nospecialize(Q::Type), bag::Bag; extras...)
+    known = copy(bag)
+    target = VariableKey(Q)
+    haskey(known, target) && return known[target]
+    _typed_chain!(known, values(extras), target)
+    haskey(known, target) || error(
+        "derive: $(nameof(Q)) is not reachable from the bag by type-keyed relations " *
+        "(a needed quantity type or supplied slot is absent).",
+    )
+    return known[target]
+end
+
+"""
+    typed_derivation_graph() -> KnowledgeGraph{VariableKey}
+
+The type-keyed derivation graph: one directed edge `input →[relation] output` per
+(typed step, input), nodes are [`VariableKey`](@ref)s — the collision-proof
+counterpart of [`derivation_graph`](@ref).  Structural (over-approximates, like its
+symbol sibling; use [`derive`](@ref)`(Q, bag)` for honest reachability).
+"""
+function typed_derivation_graph()
+    edges = TypedEdge{VariableKey}[]
+    for step in typed_derivation_steps()
+        rname = Symbol(nameof(typeof(step.relation)))
+        for inp in step.inputs
+            push!(edges, TypedEdge(rname, inp, step.output, string(rname), true))
+        end
+    end
+    return KnowledgeGraph(edges)
+end
+
 export DerivationStep,
-    DerivationTrace, derivation_steps, derivation_graph, derivable, derive
+    DerivationTrace,
+    derivation_steps,
+    derivation_graph,
+    derivable,
+    derive,
+    TypedStep,
+    typed_derivation_steps,
+    typed_derivation_graph
