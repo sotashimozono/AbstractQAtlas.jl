@@ -43,8 +43,7 @@ const QuantityEdge = TypedEdge{Type}
 # The index-erased FAMILY of a quantity type: `Susceptibility{(:z,:z)}` and the
 # bare `Susceptibility` both normalize to the `Susceptibility` UnionAll, so the
 # structural graph has one node per quantity kind.
-_family(::Type{T}) where {T} = Base.typename(T).wrapper
-_family(q::AbstractQuantity) = _family(typeof(q))
+# `_family` (quantity-family erasure) is defined once in core/relation_variables.jl.
 
 # A short human label for a field type in a derivative edge.
 _field_label(::Type{F}) where {F} = string(nameof(F))

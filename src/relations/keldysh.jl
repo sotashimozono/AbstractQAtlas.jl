@@ -32,7 +32,9 @@ Definition of the Keldysh component from the greater/lesser correlators,
 
 Variables: `GK`, `Ggtr` (`G^>`), `Gles` (`G^<`).
 """
-@relation :keldysh KeldyshComponent(GK, Ggtr, Gles) = GK - (Ggtr + Gles)
+@relation :keldysh KeldyshComponent(
+    GK::KeldyshGreensFunction, Ggtr::GreaterGreensFunction, Gles::LesserGreensFunction
+) = GK - (Ggtr + Gles)
 
 """
     KeldyshCausality <: AbstractRelation
@@ -43,7 +45,12 @@ independent of the state.
 
 Variables: `GR`, `GA`, `Ggtr`, `Gles`.
 """
-@relation :keldysh KeldyshCausality(GR, GA, Ggtr, Gles) = (GR - GA) - (Ggtr - Gles)
+@relation :keldysh KeldyshCausality(
+    GR::RetardedGreensFunction,
+    GA::AdvancedGreensFunction,
+    Ggtr::GreaterGreensFunction,
+    Gles::LesserGreensFunction,
+) = (GR - GA) - (Ggtr - Gles)
 
 """
     AdvancedRetardedConjugate <: AbstractRelation
@@ -54,7 +61,9 @@ The advanced propagator is the adjoint of the retarded one,
 
 Variables: `GA`, `GR`.  (Complex-valued residual.)
 """
-@relation :keldysh AdvancedRetardedConjugate(GA, GR) = GA - conj(GR)
+@relation :keldysh AdvancedRetardedConjugate(
+    GA::AdvancedGreensFunction, GR::RetardedGreensFunction
+) = GA - conj(GR)
 
 """
     KeldyshFDT <: AbstractRelation
@@ -72,7 +81,9 @@ independent in thermal equilibrium.
 
 Variables: `GK`, `h`, `GR`, `GA`.
 """
-@relation :keldysh KeldyshFDT(GK, h, GR, GA) = GK - h * (GR - GA)
+@relation :keldysh KeldyshFDT(
+    GK::KeldyshGreensFunction, h, GR::RetardedGreensFunction, GA::AdvancedGreensFunction
+) = GK - h * (GR - GA)
 
 """
     KMSGreaterLesser <: AbstractRelation
@@ -91,7 +102,9 @@ propagator side.
 
 Variables: `Gles`, `Ggtr`, `ζ`, `ω`, and `β` (or `T`).
 """
-@relation :keldysh KMSGreaterLesser(Gles, Ggtr, ζ, ω, β) = Gles - ζ * exp(-β * ω) * Ggtr
+@relation :keldysh KMSGreaterLesser(
+    Gles::LesserGreensFunction, Ggtr::GreaterGreensFunction, ζ, ω, β::InverseTemperature
+) = Gles - ζ * exp(-β * ω) * Ggtr
 
 """
     SpectralFromKeldysh <: AbstractRelation
@@ -107,4 +120,6 @@ real-time and Matsubara spectral definitions agree.
 
 Variables: `A`, `GR`, `GA`.  (Complex-valued residual off equilibrium.)
 """
-@relation :keldysh SpectralFromKeldysh(A, GR, GA) = A - im * (GR - GA) / (2 * π)
+@relation :keldysh SpectralFromKeldysh(
+    A::SpectralFunction, GR::RetardedGreensFunction, GA::AdvancedGreensFunction
+) = A - im * (GR - GA) / (2 * π)

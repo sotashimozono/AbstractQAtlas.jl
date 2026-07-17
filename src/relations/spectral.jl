@@ -27,7 +27,8 @@ verbatim for scalar (single-band) `G, G0, Σ` AND for matrix-valued
 matrix, whose norm should vanish.  (`check`/`solve` are scalar; matrix
 inputs use `residual` + a norm.)  Complex-valued.
 """
-@relation :spectral Dyson(G, G0, Σ) = inv(G) - (inv(G0) - Σ)
+@relation :spectral Dyson(G::RetardedGreensFunction, G0, Σ::SelfEnergy) =
+    inv(G) - (inv(G0) - Σ)
 
 """
     SpectralFromGreens <: AbstractRelation
@@ -36,10 +37,13 @@ The spectral representation of the retarded Green's function at `(q, ω)`:
 
 `A = −(1/π) Im G^R`   ⟺   `A + Im(G^R)/π = 0`.
 
-Pass `ImGR = Im G^R(q, ω)` (a real number) and the real spectral weight
-`A`.
+Pass the full (complex) retarded Green's function `G = G^R(q, ω)` and the real
+spectral weight `A`; the imaginary part is taken in the kernel.  Keyed on the
+`RetardedGreensFunction` TYPE — the same `G` as [`Dyson`](@ref) and the Keldysh
+relations, never a separate `ImGR`/`GR` symbol.
 """
-@relation :spectral SpectralFromGreens(A, ImGR) = A + ImGR / π
+@relation :spectral SpectralFromGreens(A::SpectralFunction, G::RetardedGreensFunction) =
+    A + imag(G) / π
 
 """
     SpectralSumRule <: AbstractRelation

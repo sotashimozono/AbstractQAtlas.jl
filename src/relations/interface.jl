@@ -80,6 +80,38 @@ quantities (scaling laws, Maxwell relations).  The reverse index is
 quantities(::AbstractRelation) = ()
 export quantities
 
+"""
+    variable_slots(rel::AbstractRelation) -> Tuple{Vararg{Tuple{Symbol,Any}}}
+
+For each *required* variable, its `(private-symbol, key)` pair, in declaration
+order.  `key` is the variable's identity TYPE for an identity-bearing variable
+(a quantity / field / coordinate / exponent, written `name::Type` in the
+[`@relation`](@ref)) or `nothing` for a *supplied slot* (an untyped value — an
+evaluation coordinate, a supplied integral; design note R3).  The private symbol
+is the formula letter used in the residual body; the key is what the type-keyed
+front door matches on.  Filled in by [`@relation`](@ref); `()`-ish for legacy
+symbol-only relations (every slot `nothing`).
+"""
+variable_slots(::AbstractRelation) = ()
+export variable_slots
+
+"""
+    variable_types(rel::AbstractRelation) -> Tuple{Vararg{Type}}
+
+The identity TYPES of a relation's identity-bearing variables, in declaration
+order (the non-`nothing` keys of [`variable_slots`](@ref)).  Empty for a legacy
+symbol-only relation.  `quantities(rel)` is the `AbstractQuantity` subset of
+this, auto-derived — so a type-keyed relation never needs a hand-written entry
+in `quantity_links.jl`.
+"""
+variable_types(::AbstractRelation) = ()
+export variable_types
+
+# The AbstractQuantity subset of a variable-type tuple, family-erased via
+# `_family` (`Susceptibility{I}` → `Susceptibility`; core/relation_variables.jl),
+# for the auto-derived `quantities`.
+_auto_quantities(types::Tuple) = Tuple(_family(T) for T in types if T <: AbstractQuantity)
+
 # ─── Registry ───────────────────────────────────────────────────────────
 
 const _RELATION_REGISTRY = AbstractRelation[]
@@ -258,13 +290,28 @@ function _build_relation(dom, defn, super::Symbol, what::String)
     name = call.args[1]
     name isa Symbol || error("$what: relation name must be a Symbol")
     required = Symbol[]
+    slotkeys = Any[]        # per required var: a Type expr (identity) or `nothing` (supplied slot)
     kwargsig = Any[]
     for p in call.args[2:end]
         if p isa Symbol
+            # required, untyped SUPPLIED slot (an evaluation coordinate, a supplied integral)
             push!(required, p)
+            push!(slotkeys, nothing)
             push!(kwargsig, esc(p))
+        elseif Meta.isexpr(p, :(::), 2)
+            # required, IDENTITY-bearing slot:  name::Type.  The type is bag-key
+            # METADATA, not a value constraint — the kernel kwarg is untyped, so
+            # a matrix-valued propagator still flows through unchanged.
+            nm, ty = p.args[1], p.args[2]
+            nm isa Symbol || error("$what: variable name must be a Symbol, got $nm")
+            push!(required, nm)
+            push!(slotkeys, ty)
+            push!(kwargsig, esc(nm))
         elseif Meta.isexpr(p, :(=), 2) || Meta.isexpr(p, :kw, 2)
-            push!(kwargsig, Expr(:kw, esc(p.args[1]), esc(p.args[2])))
+            lhs, dflt = p.args[1], p.args[2]
+            nm = lhs isa Symbol ? lhs : (Meta.isexpr(lhs, :(::), 2) ? lhs.args[1] : nothing)
+            nm isa Symbol || error("$what: cannot parse optional parameter $p")
+            push!(kwargsig, Expr(:kw, esc(nm), esc(dflt)))
         else
             error("$what: cannot parse parameter $p")
         end
@@ -282,13 +329,35 @@ function _build_relation(dom, defn, super::Symbol, what::String)
     )
     kernel = Expr(:function, kernel_sig, esc(body))
     reqtuple = Expr(:tuple, (QuoteNode(s) for s in required)...)
+    # variable_slots = ((:sym, KeyType | nothing), …); variable_types = the typed keys
+    slotpairs = [
+        Expr(:tuple, QuoteNode(s), k === nothing ? :nothing : esc(k)) for
+        (s, k) in zip(required, slotkeys)
+    ]
+    slots_tuple = Expr(:tuple, slotpairs...)
+    types_tuple = Expr(:tuple, (esc(k) for k in slotkeys if k !== nothing)...)
+    has_typed = any(k -> k !== nothing, slotkeys)
+    # a type-keyed relation auto-derives `quantities` from its typed slots — so it
+    # needs no hand entry in quantity_links.jl; a legacy symbol-only relation keeps
+    # the default / its quantity_links override.
+    quantities_method = if has_typed
+        :(
+            AbstractQAtlas.quantities(r::$ename) =
+                AbstractQAtlas._auto_quantities(AbstractQAtlas.variable_types(r))
+        )
+    else
+        nothing
+    end
     domval = QuoteNode(dom isa QuoteNode ? dom.value : dom)
     supertype = :(AbstractQAtlas.$super)
     return quote
         Core.@__doc__ struct $ename <: $supertype end
         $kernel
         AbstractQAtlas.variables(::$ename) = $reqtuple
+        AbstractQAtlas.variable_slots(::$ename) = $slots_tuple
+        AbstractQAtlas.variable_types(::$ename) = $types_tuple
         AbstractQAtlas.domain(::$ename) = $domval
+        $quantities_method
         push!(AbstractQAtlas._RELATION_REGISTRY, $ename())
         $(Expr(:export, name))
         $ename
@@ -402,3 +471,188 @@ function check_all(data::NamedTuple; atol=0, domain::Union{Nothing,Symbol}=nothi
     return !isempty(report) && all(row -> row.pass, report)
 end
 export check_all
+
+# ─── Type-keyed front door: the bag ─────────────────────────────────────
+#
+# The collision-proof surface (docs/design/type-keyed-interface.md): variables
+# are read from a `bag` by their quantity / field TYPE, never by a formula-letter
+# symbol, so the `:S`-means-four-things and `:G`-vs-`:GR` failures are
+# structurally impossible.  Undecorated (`Global`) support only for now.  The
+# residual math kernels are UNTOUCHED — this layer only translates
+# `(type, support) → value` into the private-symbol kwargs the kernel already
+# expects, so the exact-arithmetic contract carries over verbatim.
+
+"""
+    Bag
+
+A type-keyed data bag: `Dict{VariableKey,Any}` mapping a variable's
+[`VariableKey`](@ref) to its value.  Build one with [`bag`](@ref).
+"""
+const Bag = Dict{VariableKey,Any}
+export Bag
+
+_as_key(k::VariableKey) = k
+_as_key(@nospecialize(k::Type)) = VariableKey(k)
+
+"""
+    bag(pairs...) -> Bag
+
+Build a type-keyed [`Bag`](@ref):
+`bag(SpectralFunction => a, RetardedGreensFunction => g)`.  A bare `Type` key
+becomes `VariableKey(Type)` (global support); a `VariableKey` key is used as-is.
+The bag is matched by TYPE, never by a string — two distinct quantities can never
+share a key.
+
+```julia
+b = bag(KeldyshGreensFunction => gk, GreaterGreensFunction => gg, LesserGreensFunction => gl)
+residual(KeldyshComponent(), b)      # G^K − (G^> + G^<)
+```
+"""
+function bag(pairs::Pair...)
+    b = Bag()
+    for (k, v) in pairs
+        b[_as_key(k)] = v
+    end
+    return b
+end
+export bag
+
+# Resolve one identity slot's value from a bag, honoring the typed β-or-T
+# conversion (InverseTemperature ⇄ Temperature).  `nothing` if absent.
+function _slot_value(@nospecialize(ty::Type), b::Bag)
+    haskey(b, VariableKey(ty)) && return b[VariableKey(ty)]
+    if ty === InverseTemperature
+        haskey(b, VariableKey(Temperature)) && return 1 / b[VariableKey(Temperature)]
+    elseif ty === Temperature
+        haskey(b, VariableKey(InverseTemperature)) &&
+            return 1 / b[VariableKey(InverseTemperature)]
+    end
+    return nothing
+end
+
+# The private symbol `rel` keys under the identity type `ty` (`nothing` if none).
+function _symbol_for(rel::AbstractRelation, @nospecialize(ty::Type))
+    for (sym, key) in variable_slots(rel)
+        key === ty && return sym
+    end
+    return nothing
+end
+
+# Every required variable available? — identity slots from `b` by type, supplied
+# slots from `extras` by symbol.  A legacy symbol-only relation is never a match.
+function _bag_applicable(rel::AbstractRelation, b::Bag, extras)
+    isempty(variable_types(rel)) && return false
+    return all(variable_slots(rel)) do (sym, key)
+        return key === nothing ? haskey(extras, sym) : _slot_value(key, b) !== nothing
+    end
+end
+
+# Build the private-symbol kwargs the kernel expects from `b` (identity slots) +
+# `extras` (supplied slots); `skip` leaves one variable out (for `solve`).
+# Missing required values throw with a TYPE-named message.
+function _bag_kwargs(
+    rel::AbstractRelation, b::Bag, extras; skip::Union{Symbol,Nothing}=nothing
+)
+    out = Pair{Symbol,Any}[]
+    for (sym, key) in variable_slots(rel)
+        sym === skip && continue
+        if key === nothing
+            haskey(extras, sym) || error(
+                "$(nameof(typeof(rel))) needs the supplied value :$sym (untyped slot)"
+            )
+            push!(out, sym => extras[sym])
+        else
+            v = _slot_value(key, b)
+            v === nothing && error("$(nameof(typeof(rel))) needs $(nameof(key)) in the bag")
+            push!(out, sym => v)
+        end
+    end
+    return out
+end
+
+"""
+    residual(rel::AbstractRelation, b::Bag; extras...) -> Number
+
+Type-keyed [`residual`](@ref): read each identity-bearing variable from the bag
+`b` by its quantity / field TYPE, each supplied (untyped) slot from `extras`, and
+evaluate.  Same value and exact-arithmetic contract as the symbol-keyed method —
+the collision-proof front door.
+
+```julia
+residual(SpectralFromGreens(), bag(SpectralFunction => A, RetardedGreensFunction => G))
+```
+"""
+function residual(rel::AbstractRelation, b::Bag; extras...)
+    return _residual(rel; _bag_kwargs(rel, b, values(extras))...)
+end
+
+"""
+    check(rel::AbstractRelation, b::Bag; atol=0, extras...) -> Bool
+
+Type-keyed [`check`](@ref): `residual(rel, b; extras...)` within `atol`
+(equalities `|·| ≤ atol`, inequalities `· ≥ −atol`).
+"""
+function check(rel::AbstractRelation, b::Bag; atol=0, extras...)
+    return _passes(rel, residual(rel, b; extras...), atol)
+end
+
+"""
+    solve(rel::AbstractRelation, Q::Type, b::Bag; extras...) -> Number
+
+Type-keyed [`solve`](@ref): the value of the variable whose identity type is `Q`,
+implied by the relation and the others (read from `b` / `extras`).  Translates
+`Q` to its private slot and defers to the affine symbol-keyed solver, so exact
+arithmetic is preserved.
+
+```julia
+solve(KeldyshComponent(), KeldyshGreensFunction,
+      bag(GreaterGreensFunction => 2, LesserGreensFunction => 3))    # 5
+```
+"""
+function solve(rel::AbstractRelation, @nospecialize(Q::Type), b::Bag; extras...)
+    sym = _symbol_for(rel, Q)
+    sym === nothing && error("$(nameof(typeof(rel))) has no variable of type $(nameof(Q))")
+    return solve(rel, Val(sym); _bag_kwargs(rel, b, values(extras); skip=sym)...)
+end
+
+"""
+    applicable_relations(b::Bag; domain=nothing, extras...) -> Vector{AbstractRelation}
+
+The type-keyed analogue of [`applicable_relations`](@ref): every registered
+type-keyed relation whose identity variables' TYPES are all present in `b` (with
+`Temperature ⇄ InverseTemperature` accepted) and whose supplied slots are all in
+`extras`.  No string matching, hence no cross-quantity collision — `domain` is
+only for scoping, never disambiguation.
+"""
+function applicable_relations(b::Bag; domain::Union{Nothing,Symbol}=nothing, extras...)
+    ex = values(extras)
+    return filter(r -> _bag_applicable(r, b, ex), all_relations(; domain=domain))
+end
+
+"""
+    relation_report(b::Bag; atol=0, domain=nothing, extras...)
+
+Type-keyed [`relation_report`](@ref): evaluate every applicable type-keyed
+relation against the bag `b` (plus `extras` for supplied slots) and report
+per-relation residuals.  The collision-proof verify-engine front door.
+"""
+function relation_report(b::Bag; atol=0, domain::Union{Nothing,Symbol}=nothing, extras...)
+    ex = values(extras)
+    out = @NamedTuple{relation::AbstractRelation, residual::Number, pass::Bool}[]
+    for rel in applicable_relations(b; domain=domain, extras...)
+        r = residual(rel, b; ex...)
+        push!(out, (relation=rel, residual=r, pass=_passes(rel, r, atol)))
+    end
+    return out
+end
+
+"""
+    check_all(b::Bag; atol=0, domain=nothing, extras...) -> Bool
+
+`true` iff every applicable type-keyed relation passes on the bag `b` — and at
+least one applies (an empty match is `false`).
+"""
+function check_all(b::Bag; atol=0, domain::Union{Nothing,Symbol}=nothing, extras...)
+    report = relation_report(b; atol=atol, domain=domain, extras...)
+    return !isempty(report) && all(row -> row.pass, report)
+end

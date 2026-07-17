@@ -47,6 +47,7 @@ include("core/quantities.jl")
 include("core/universality.jl")
 include("core/distributions.jl")
 include("core/fields.jl")
+include("core/relation_variables.jl")   # the RelationVariable layer (type-keyed variables)
 
 # structure — model-independent definitional correspondences between the
 # core quantities: transition classification, the critical
