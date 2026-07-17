@@ -31,8 +31,10 @@ quantities(::MicrocanonicalTemperature) = (ThermalEntropy, Energy)
 quantities(::CanonicalTPQ) = (PartitionFunction,)
 
 # ── Correlations / Green's functions ──
-quantities(::Dyson) = (RetardedGreensFunction, SelfEnergy)
-quantities(::SpectralFromGreens) = (SpectralFunction, RetardedGreensFunction)
+# NB: Dyson, SpectralFromGreens and the whole Keldysh block below are now
+# TYPE-KEYED (`Name(x::Quantity, …)` in spectral.jl / keldysh.jl), so their
+# `quantities` is auto-derived from the declaration — no hand-link here.  The
+# remaining entries are legacy symbol-keyed relations awaiting migration.
 quantities(::SpectralSumRule) = (SpectralFunction,)
 quantities(::DetailedBalance) = (DynamicalStructureFactor,)
 quantities(::DynamicalFDT) = (DynamicalStructureFactor, DynamicalSusceptibility)
@@ -43,26 +45,8 @@ function quantities(::StaticFromDynamicalStructureFactor)
     return (StaticStructureFactor, DynamicalStructureFactor)
 end
 
-# ── Keldysh RAK structure & fluctuation–dissipation ──
-function quantities(::KeldyshComponent)
-    return (KeldyshGreensFunction, GreaterGreensFunction, LesserGreensFunction)
-end
-function quantities(::KeldyshCausality)
-    return (
-        RetardedGreensFunction,
-        AdvancedGreensFunction,
-        GreaterGreensFunction,
-        LesserGreensFunction,
-    )
-end
-quantities(::AdvancedRetardedConjugate) = (AdvancedGreensFunction, RetardedGreensFunction)
-function quantities(::KeldyshFDT)
-    return (KeldyshGreensFunction, RetardedGreensFunction, AdvancedGreensFunction)
-end
-quantities(::KMSGreaterLesser) = (LesserGreensFunction, GreaterGreensFunction)
-function quantities(::SpectralFromKeldysh)
-    return (SpectralFunction, RetardedGreensFunction, AdvancedGreensFunction)
-end
+# ── Keldysh RAK structure & fluctuation–dissipation: now type-keyed (keldysh.jl),
+#    `quantities` auto-derived — see the note above. ──
 
 # ── Transport ──
 quantities(::WiedemannFranz) = (ThermalConductivity, Conductivity)
