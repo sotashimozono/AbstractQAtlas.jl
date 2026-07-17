@@ -15,7 +15,7 @@ A subsystem: a set of lattice sites, dimension-agnostic — a site is any hashab
 label (`Int` in 1D, `NTuple{D,Int}` in ND, a named block, …).  Supports `∪`, `∩`,
 `⊆`, [`disjoint`](@ref), `isempty`, `length`.  The `support` a
 [`VonNeumannEntropy`](@ref) is evaluated on; build a region-entropy bag key with
-[`entropy`](@ref).
+[`entanglement_entropy`](@ref).
 
 ```julia
 A, B = Region(1, 2), Region(3, 4)
@@ -68,18 +68,22 @@ Base.show(io::IO, s::RegionSupport) = print(io, s.region)
 export RegionSupport
 
 """
-    entropy(region::Region) -> VariableKey
-    entropy(sites...) -> VariableKey
+    entanglement_entropy(region::Region) -> VariableKey
+    entanglement_entropy(sites...) -> VariableKey
 
 The bag key for the von Neumann entanglement entropy `S(region)` —
 `VariableKey(VonNeumannEntropy, RegionSupport(region))`.  Build a region-entropy bag
 and auto-discover its inequalities:
 
 ```julia
-b = bag(entropy(1) => 0.7, entropy(2) => 0.7, entropy(1, 2) => 1.0)   # S(A), S(B), S(A∪B)
-region_report(b)                                                       # subadditivity, Araki–Lieb
+b = bag(entanglement_entropy(1) => 0.7, entanglement_entropy(2) => 0.7,
+        entanglement_entropy(1, 2) => 1.0)          # S(A), S(B), S(A∪B)
+region_report(b)                                    # subadditivity, Araki–Lieb
 ```
+
+(Spelled out rather than `entropy` to avoid the very common `StatsBase`/`Distributions`
+`entropy` export collision.)
 """
-entropy(r::Region) = VariableKey(VonNeumannEntropy, RegionSupport(r))
-entropy(sites...) = entropy(Region(sites...))
-export entropy
+entanglement_entropy(r::Region) = VariableKey(VonNeumannEntropy, RegionSupport(r))
+entanglement_entropy(sites...) = entanglement_entropy(Region(sites...))
+export entanglement_entropy

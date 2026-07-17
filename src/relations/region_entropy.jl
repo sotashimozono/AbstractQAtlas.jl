@@ -37,7 +37,7 @@ end
     region_report(b::Bag; atol=0) -> Vector{RegionReportRow}
 
 Auto-discover the bipartite entanglement-entropy inequalities over the REGIONS in a
-bag of region-keyed entropies (`bag(entropy(A) => s_A, …)`): for every disjoint pair
+bag of region-keyed entropies (`bag(entanglement_entropy(A) => s_A, …)`): for every disjoint pair
 (A, B) whose `S(A)`, `S(B)`, `S(A∪B)` are all present, check **subadditivity**
 `I(A:B) = S(A) + S(B) − S(A∪B) ≥ 0` and the **Araki–Lieb** bound
 `S(A∪B) ≥ |S(A) − S(B)|` — one row per (relation, unordered region pair).  The
@@ -46,8 +46,9 @@ MPS/ED entanglement calculation) is caught for whichever regions expose it, with
 A/B/AB hand-labeling.
 
 ```julia
-b = bag(entropy(1) => 0.7, entropy(2) => 0.7, entropy(1, 2) => 1.0)   # S(A), S(B), S(A∪B)
-all(row -> row.pass, region_report(b))     # true — S is subadditive here
+b = bag(entanglement_entropy(1) => 0.7, entanglement_entropy(2) => 0.7,
+        entanglement_entropy(1, 2) => 1.0)      # S(A), S(B), S(A∪B)
+all(row -> row.pass, region_report(b))          # true — S is subadditive here
 ```
 """
 function region_report(b::Bag; atol=0)
@@ -76,7 +77,7 @@ export region_report
 (an empty match is `false`, never a silent green).
 """
 function region_check_all(b::Bag; atol=0)
-    rep = region_report(b; atol=atol)
-    return !isempty(rep) && all(row -> row.pass, rep)
+    # reuse the shared "≥1 match, all pass" rule (interface.jl) so it can't drift
+    return _all_passed(region_report(b; atol=atol))
 end
 export region_check_all
