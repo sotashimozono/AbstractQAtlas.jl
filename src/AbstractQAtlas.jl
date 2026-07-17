@@ -82,6 +82,7 @@ module StatisticalMechanics
     import ..AbstractQAtlas: _solve        # extended for a non-affine variable (FreeEnergyFromZ:Z)
     include("relations/thermodynamic.jl")
     include("relations/ensembles.jl")
+    include("relations/fluctuation.jl")
     include("relations/statistics.jl")
     include("relations/fundamental.jl")
 end
