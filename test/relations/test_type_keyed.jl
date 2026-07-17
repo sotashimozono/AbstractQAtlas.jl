@@ -11,6 +11,7 @@
 
 using AbstractQAtlas
 using Test
+using LinearAlgebra: opnorm
 const AQ = AbstractQAtlas
 
 @testset "VariableKey + bag basics" begin
@@ -152,17 +153,29 @@ end
 end
 
 @testset "type-keyed solve preserves exact arithmetic" begin
-    @test solve(
+    gk = solve(
         KeldyshComponent(),
         KeldyshGreensFunction,
         bag(GreaterGreensFunction => 2 // 1, LesserGreensFunction => 3 // 1),
-    ) == 5 // 1
+    )
+    @test gk == 5 // 1
+    @test gk isa Rational                 # NOT merely `== 5//1` (a Float64 5.0 would pass that)
     # solve for a summand
     @test solve(
         KeldyshComponent(),
         GreaterGreensFunction,
         bag(KeldyshGreensFunction => 5 // 1, LesserGreensFunction => 3 // 1),
     ) == 2 // 1
+    # the RESIDUAL path is exact too (Rational in ⇒ Rational out)
+    r = residual(
+        KeldyshComponent(),
+        bag(
+            KeldyshGreensFunction => 5 // 1,
+            GreaterGreensFunction => 2 // 1,
+            LesserGreensFunction => 3 // 1,
+        ),
+    )
+    @test r == 0 // 1 && r isa Rational
     # asking for a type the relation does not carry is a loud error
     @test_throws ErrorException solve(
         KeldyshComponent(), SelfEnergy, bag(GreaterGreensFunction => 1)
@@ -239,4 +252,86 @@ end
     # so a Green's bag can't accidentally trigger, say, a thermoelectric relation
     @test isempty(variable_types(KelvinRelation()))              # not migrated
     @test !(KelvinRelation() in applicable_relations(good))
+end
+
+# ── Review-hardening (PR #79 review): empty/violated reports, matrix inputs,
+#    supplied-slot applicability, the β/T guards, and the declaration guards. ──
+
+@testset "bag report: empty match ⇒ false, violated ⇒ caught" begin
+    # empty match (no type-keyed relation applies) is `false`, never a silent green
+    lonely = bag(SelfEnergy => 0.3 + 0.1im)
+    @test isempty(relation_report(lonely))
+    @test !check_all(lonely)
+    # a violated (present-but-wrong) bag is caught, not passed
+    GR = 1 / (0.2 + im * 0.1)
+    GA = conj(GR)
+    bad = bag(
+        RetardedGreensFunction => GR,
+        AdvancedGreensFunction => GA,
+        SpectralFunction => 999.0,
+    )
+    @test !check_all(bad; atol=1e-12)
+    @test any(row -> !row.pass, relation_report(bad; atol=1e-12))
+end
+
+@testset "matrix-valued Dyson through the bag (::Type is metadata, not a constraint)" begin
+    # 2×2 orbital propagators: the identity holds verbatim, residual is a matrix
+    G0 = [1.0+0.1im 0.2+0.0im; 0.0+0.0im 0.8-0.1im]
+    Σ = [0.1+0.0im 0.0+0.0im; 0.05im 0.2+0.0im]
+    G = inv(inv(G0) - Σ)
+    res = residual(Dyson(), bag(RetardedGreensFunction => G, SelfEnergy => Σ); G0=G0)
+    @test res isa Matrix
+    @test opnorm(res) < 1e-10
+end
+
+@testset "applicable_relations excludes a missing SUPPLIED slot" begin
+    G0, Σ = 1 / (0.5 + im * 0.1), 0.2 + 0.05im
+    G = inv(inv(G0) - Σ)
+    # Dyson's typed slots (G, Σ) are present but its supplied G₀ is not → excluded
+    @test !(
+        Dyson() in applicable_relations(bag(RetardedGreensFunction => G, SelfEnergy => Σ))
+    )
+    @test Dyson() in
+        applicable_relations(bag(RetardedGreensFunction => G, SelfEnergy => Σ); G0=G0)
+end
+
+@testset "β/T guards (C1) and nothing-rejection (C2)" begin
+    Ggtr, ζ, ω, β = 2.0, -1, 1.0, 0.5
+    Gles = ζ * exp(-β * ω) * Ggtr
+    base = (LesserGreensFunction => Gles, GreaterGreensFunction => Ggtr)
+    # a bag with BOTH InverseTemperature and Temperature is a loud error, matching
+    # the symbol path's "pass either β or T, not both" (not a silent first-match win)
+    @test_throws ErrorException residual(
+        KMSGreaterLesser(),
+        bag(base..., InverseTemperature => β, Temperature => 1 / β);
+        ζ=ζ,
+        ω=ω,
+    )
+    # `nothing` is rejected at construction — never confused with "absent"
+    @test_throws ErrorException bag(SelfEnergy => nothing)
+    # solving for a temperature the relation doesn't carry is a clear error, not a
+    # silent β/T coercion (the input-side β⇄T aliasing is deliberately one-way here)
+    @test_throws ErrorException solve(
+        KMSGreaterLesser(), Temperature, bag(base..., InverseTemperature => β); ζ=ζ, ω=ω
+    )
+end
+
+@testset "declaration guards: non-concrete (C4) and duplicate (C3) identity types" begin
+    # a bare parametric family can't match a concrete bag key → rejected at declaration
+    @test_throws Exception @eval @relation :test _AbstractSlot(x::AbstractPropagator) = x
+    # two slots of one type would bind the same value (always-passing) → rejected
+    @test_throws Exception @eval @relation :test _DupSlot(
+        a::RetardedGreensFunction, b::RetardedGreensFunction
+    ) = a - b
+end
+
+@testset "RelationVariable scaffolding smoke test" begin
+    @test Frequency() isa AbstractCoordinate
+    @test Momentum() isa AbstractCoordinate
+    @test Frequency() != Momentum()
+    @test Global() isa Support
+    # VariableKey's type field is constrained to identity kinds (I3): a non-
+    # RelationVariable type is rejected at construction (no `convert` method)
+    @test_throws Union{MethodError,TypeError} VariableKey(Int)
+    @test VariableKey(RetardedGreensFunction).type === RetardedGreensFunction
 end

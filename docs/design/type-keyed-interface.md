@@ -1,6 +1,11 @@
 # Design: the type-keyed relation interface
 
-Status: **approved, not yet implemented** (tracking issue #77).
+Status: **Phase 1 landed** — the interface + the undecorated Green's-function
+domain (Dyson, SpectralFromGreens, the six Keldysh relations) are migrated and
+green; the remaining domains are pending (tracking issue #77). The end-state code
+sketches below (e.g. §2's "`quantity_links.jl` is deleted") describe the *target*,
+not the post-Phase-1 tree — deletion is **incremental**, one domain at a time, so
+`quantity_links.jl` still holds the not-yet-migrated relations' entries.
 This document is the source of truth for the migration; it supersedes the
 scattered notes on #77 and folds in the review findings below.
 

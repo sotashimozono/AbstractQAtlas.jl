@@ -81,6 +81,14 @@ _family(q::AbstractQuantity) = _family(typeof(q))
 Where / on what a variable is evaluated.  [`Global`](@ref) — the whole system,
 no decoration — is the default and the only support the type-keyed prototype
 uses; region / point / pair supports arrive with the entanglement layer.
+
+!!! note "Equality contract"
+    A [`VariableKey`](@ref) is a `Dict` key, so it hashes and compares by its
+    `support`.  Every `Support` subtype MUST therefore implement value-based
+    `Base.==` and `Base.hash` (Julia's struct default is identity `===`).
+    [`Global`](@ref) satisfies this trivially as a zero-field singleton; a future
+    `Region = Set{AbstractSite}` must define them explicitly, or two
+    content-identical regions built separately would key distinct bag entries.
 """
 abstract type Support end
 export Support
@@ -107,7 +115,7 @@ derivation graph match on, so distinct types (and, later, distinct supports of
 one type) can never collide.
 """
 struct VariableKey
-    type::Type
+    type::Type{<:RelationVariable}   # constrained: a typo'd non-variable type errors here
     support::Support
 end
 VariableKey(t::Type) = VariableKey(t, Global())
@@ -115,7 +123,9 @@ VariableKey(t::Type) = VariableKey(t, Global())
 Base.:(==)(a::VariableKey, b::VariableKey) = a.type === b.type && a.support == b.support
 Base.hash(k::VariableKey, h::UInt) = hash(k.type, hash(k.support, hash(:VariableKey, h)))
 function Base.show(io::IO, k::VariableKey)
-    print(io, "VariableKey(", nameof(k.type))
+    # print the FULL type (with parameters) — `Susceptibility{(:z, :z)}`, never a
+    # parameter-dropping `Susceptibility`, so two components are never confused.
+    print(io, "VariableKey(", k.type)
     k.support isa Global || print(io, ", ", k.support)
     return print(io, ")")
 end

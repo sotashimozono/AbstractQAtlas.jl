@@ -12,8 +12,10 @@
 #
 #   public verbs   residual / check / solve      (β-or-T normalization, one place)
 #   kernels        _residual (ONE per relation)  |  _solve (rare, non-affine only)
-#   traits         variables(rel), domain(rel)
+#   traits         variables / variable_slots / variable_types / quantities / domain
 #   registry       all_relations / applicable_relations / relation_report / check_all
+#   type-keyed     Bag / bag / VariableKey — residual/check/solve/report over a
+#                  bag matched by quantity TYPE, not formula symbol (the front door)
 
 """
     AbstractRelation
@@ -25,6 +27,11 @@ declared with [`@relation`](@ref) and implement the three verbs:
 - [`check`](@ref)`(rel; atol=0, vars...)` — `|residual| ≤ atol`.
 - [`solve`](@ref)`(rel, Val(:x); vars...)` — the value of `x` implied by
   the remaining variables.
+
+The three verbs also have a **type-keyed** form — `residual(rel, b::Bag)`,
+`check(rel, b)`, `solve(rel, Q::Type, b)` — that reads variables from a
+[`bag`](@ref) by their quantity/field TYPE instead of a formula symbol; see
+[`Bag`](@ref).
 
 **Exact-arithmetic contract**: `residual` and `solve` must not promote
 their inputs — `Rational` in ⇒ `Rational` out, so exactly-known values
@@ -309,9 +316,17 @@ function _build_relation(dom, defn, super::Symbol, what::String)
             push!(kwargsig, esc(nm))
         elseif Meta.isexpr(p, :(=), 2) || Meta.isexpr(p, :kw, 2)
             lhs, dflt = p.args[1], p.args[2]
-            nm = lhs isa Symbol ? lhs : (Meta.isexpr(lhs, :(::), 2) ? lhs.args[1] : nothing)
+            nm = if lhs isa Symbol
+                lhs
+            elseif Meta.isexpr(lhs, :(::), 2)
+                lhs.args[1]
+            else
+                nothing
+            end
             nm isa Symbol || error("$what: cannot parse optional parameter $p")
-            push!(kwargsig, Expr(:kw, esc(nm), esc(dflt)))
+            # keep `lhs` (WITH any `::Type`), not just the bare name — an optional
+            # `N::Int = 1` must stay type-constrained in the generated kernel.
+            push!(kwargsig, Expr(:kw, esc(lhs), esc(dflt)))
         else
             error("$what: cannot parse parameter $p")
         end
@@ -358,10 +373,40 @@ function _build_relation(dom, defn, super::Symbol, what::String)
         AbstractQAtlas.variable_types(::$ename) = $types_tuple
         AbstractQAtlas.domain(::$ename) = $domval
         $quantities_method
+        AbstractQAtlas._validate_relation($ename())   # load-time: concrete + distinct slots
         push!(AbstractQAtlas._RELATION_REGISTRY, $ename())
         $(Expr(:export, name))
         $ename
     end
+end
+
+# Load-time validation of a type-keyed relation's identity slots (runs when the
+# `@relation` line is evaluated, so a mistake is loud at package load, never a
+# silent degradation at use):
+#   * every identity type must be CONCRETE — a bare parametric family (e.g.
+#     `Susceptibility`) can never `===`-match a concrete bag key, so it would be a
+#     permanently-dead relation (issue C4; real family-aware matching is a future
+#     `support`-layer decision);
+#   * the identity types must be DISTINCT — two slots of one type bind the SAME bag
+#     value, giving an always-passing, physically meaningless check (issue C3; the
+#     `support`/region layer is the escape valve for multi-instance-of-one-type).
+function _validate_relation(rel::AbstractRelation)
+    ts = variable_types(rel)
+    isempty(ts) && return nothing
+    nm = nameof(typeof(rel))
+    for T in ts
+        isconcretetype(T) || error(
+            "@relation $nm: identity variable type `$T` is not concrete — a parametric " *
+            "family cannot match a concrete bag key. Declare the concrete type, or wait " *
+            "for the support / family-matching layer.",
+        )
+    end
+    allunique(ts) || error(
+        "@relation $nm: repeats an identity variable type in $ts — two slots of one type " *
+        "share a bag key and the check would always pass. Distinguish them via `support` " *
+        "(the region/point layer) or use different types.",
+    )
+    return nothing
 end
 
 """
@@ -466,9 +511,12 @@ export relation_report
 `true` iff every applicable relation passes on `data` — and at least one
 relation applies: an empty match is `false`, never a silent green.
 """
+# the shared "all applicable relations passed, and at least one applied" rule — one
+# place, so the NamedTuple and Bag `check_all` methods can't drift on "empty ⇒ false".
+_all_passed(report) = !isempty(report) && all(row -> row.pass, report)
+
 function check_all(data::NamedTuple; atol=0, domain::Union{Nothing,Symbol}=nothing)
-    report = relation_report(data; atol=atol, domain=domain)
-    return !isempty(report) && all(row -> row.pass, report)
+    return _all_passed(relation_report(data; atol=atol, domain=domain))
 end
 export check_all
 
@@ -481,6 +529,11 @@ export check_all
 # residual math kernels are UNTOUCHED — this layer only translates
 # `(type, support) → value` into the private-symbol kwargs the kernel already
 # expects, so the exact-arithmetic contract carries over verbatim.
+#
+# Scope of "collision-proof": type keys prevent KEY collisions (two quantities
+# sharing a slot).  A wrong VALUE stored under the RIGHT key is a separate class,
+# caught by the numeric residual, not by the type system — the kernel keyword is
+# deliberately untyped so matrix-valued inputs flow through.
 
 """
     Bag
@@ -493,15 +546,21 @@ export Bag
 
 _as_key(k::VariableKey) = k
 _as_key(@nospecialize(k::Type)) = VariableKey(k)
+# a quantity / field / coordinate INSTANCE (e.g. `Susceptibility(:z, :z)`, the
+# documented natural spelling) keys under its own type.
+_as_key(v::RelationVariable) = VariableKey(typeof(v))
 
 """
     bag(pairs...) -> Bag
 
 Build a type-keyed [`Bag`](@ref):
-`bag(SpectralFunction => a, RetardedGreensFunction => g)`.  A bare `Type` key
-becomes `VariableKey(Type)` (global support); a `VariableKey` key is used as-is.
-The bag is matched by TYPE, never by a string — two distinct quantities can never
-share a key.
+`bag(SpectralFunction => a, RetardedGreensFunction => g)`.  A `Type` key (or a
+quantity/field INSTANCE, e.g. `Susceptibility(:z, :z)`) becomes
+`VariableKey(Type)` (global support); a `VariableKey` key is used as-is.  The bag
+is matched by TYPE, never by a string — two distinct quantities can never share a
+key.  A `nothing` value is rejected: a bag holds concrete measured values, and an
+absent variable must be *omitted*, not stored as `nothing` (which would be
+indistinguishable from absent).
 
 ```julia
 b = bag(KeldyshGreensFunction => gk, GreaterGreensFunction => gg, LesserGreensFunction => gl)
@@ -511,23 +570,45 @@ residual(KeldyshComponent(), b)      # G^K − (G^> + G^<)
 function bag(pairs::Pair...)
     b = Bag()
     for (k, v) in pairs
+        v === nothing && error(
+            "bag: the value for $(_as_key(k)) is `nothing` — a bag holds concrete " *
+            "values; omit an absent variable rather than storing `nothing`.",
+        )
         b[_as_key(k)] = v
     end
     return b
 end
 export bag
 
-# Resolve one identity slot's value from a bag, honoring the typed β-or-T
-# conversion (InverseTemperature ⇄ Temperature).  `nothing` if absent.
+# Look up one identity slot in a bag, PRESENCE-aware: `Some(value)` if the key is
+# present (even when the stored value is itself `nothing`), else `nothing` — so a
+# truly absent key is never confused with a present-but-`nothing` one (issue C2).
+# Honors the typed β-or-T conversion (InverseTemperature ⇄ Temperature) and,
+# mirroring the symbol path's `_normalize_kwargs`, ERRORS if BOTH are supplied
+# (issue C1: silently preferring one over a contradictory other is the hazard the
+# type-keyed layer exists to remove).
 function _slot_value(@nospecialize(ty::Type), b::Bag)
-    haskey(b, VariableKey(ty)) && return b[VariableKey(ty)]
+    if ty === InverseTemperature || ty === Temperature
+        haskey(b, VariableKey(InverseTemperature)) &&
+            haskey(b, VariableKey(Temperature)) &&
+            error("bag has both InverseTemperature and Temperature — pass exactly one")
+    end
+    haskey(b, VariableKey(ty)) && return Some(b[VariableKey(ty)])
     if ty === InverseTemperature
-        haskey(b, VariableKey(Temperature)) && return 1 / b[VariableKey(Temperature)]
+        haskey(b, VariableKey(Temperature)) && return Some(1 / b[VariableKey(Temperature)])
     elseif ty === Temperature
         haskey(b, VariableKey(InverseTemperature)) &&
-            return 1 / b[VariableKey(InverseTemperature)]
+            return Some(1 / b[VariableKey(InverseTemperature)])
     end
     return nothing
+end
+
+# One slot's value, PRESENCE-aware (`Some`/`nothing`): identity slots from the bag
+# `b` by type (β-or-T aware), supplied slots from `extras` by symbol.  Shared by
+# the applicability check and the kwargs builder so the two can't drift.
+function _resolve_slot(sym::Symbol, @nospecialize(key), b::Bag, extras)
+    key === nothing || return _slot_value(key, b)
+    return haskey(extras, sym) ? Some(extras[sym]) : nothing
 end
 
 # The private symbol `rel` keys under the identity type `ty` (`nothing` if none).
@@ -543,29 +624,31 @@ end
 function _bag_applicable(rel::AbstractRelation, b::Bag, extras)
     isempty(variable_types(rel)) && return false
     return all(variable_slots(rel)) do (sym, key)
-        return key === nothing ? haskey(extras, sym) : _slot_value(key, b) !== nothing
+        return _resolve_slot(sym, key, b, extras) !== nothing
     end
 end
 
 # Build the private-symbol kwargs the kernel expects from `b` (identity slots) +
-# `extras` (supplied slots); `skip` leaves one variable out (for `solve`).
-# Missing required values throw with a TYPE-named message.
+# `extras` (supplied slots); `skip` leaves one variable out (for `solve`).  Missing
+# required values throw with a message naming the FULL type (so two components of
+# one parametric family are never confused — issue I4).
 function _bag_kwargs(
     rel::AbstractRelation, b::Bag, extras; skip::Union{Symbol,Nothing}=nothing
 )
     out = Pair{Symbol,Any}[]
     for (sym, key) in variable_slots(rel)
         sym === skip && continue
-        if key === nothing
-            haskey(extras, sym) || error(
-                "$(nameof(typeof(rel))) needs the supplied value :$sym (untyped slot)"
-            )
-            push!(out, sym => extras[sym])
-        else
-            v = _slot_value(key, b)
-            v === nothing && error("$(nameof(typeof(rel))) needs $(nameof(key)) in the bag")
-            push!(out, sym => v)
+        v = _resolve_slot(sym, key, b, extras)
+        if v === nothing
+            if key === nothing
+                error(
+                    "$(nameof(typeof(rel))) needs the supplied value :$sym (untyped slot)"
+                )
+            else
+                error("$(nameof(typeof(rel))) needs $(key) in the bag")
+            end
         end
+        push!(out, sym => something(v))
     end
     return out
 end
@@ -653,6 +736,5 @@ end
 least one applies (an empty match is `false`).
 """
 function check_all(b::Bag; atol=0, domain::Union{Nothing,Symbol}=nothing, extras...)
-    report = relation_report(b; atol=atol, domain=domain, extras...)
-    return !isempty(report) && all(row -> row.pass, report)
+    return _all_passed(relation_report(b; atol=atol, domain=domain, extras...))
 end
