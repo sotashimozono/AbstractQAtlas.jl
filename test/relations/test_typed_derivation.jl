@@ -80,3 +80,20 @@ end
     g = typed_derivation_graph()
     @test g isa AQ.KnowledgeGraph{VariableKey}
 end
+
+@testset "reachable_quantities: quantity-first navigation of the typed graph" begin
+    rqZ = reachable_quantities(PartitionFunction())
+    @test FreeEnergy in rqZ                              # physics: F = −β⁻¹ ln Z (FreeEnergyFromZ)
+    @test PartitionFunction in rqZ                       # includes itself (trivially reachable)
+    @test all(T -> T <: AbstractQuantity, rqZ)           # quantities only — fields/coords filtered out
+    @test reachable_quantities(PartitionFunction) == rqZ                      # instance ≡ type
+    @test Susceptibility in reachable_quantities(Susceptibility(:z, :z))      # family-erased result
+    @test Purity in reachable_quantities(Purity())       # self is always present (even if graph-isolated)
+    # INDEPENDENT re-derivation straight from the raw graph API (checks the filter/erase/sort, not itself)
+    raw = graph_reachable(typed_derivation_graph(), VariableKey(PartitionFunction))
+    expected = sort!(
+        unique(Type[AQ._family(k.type) for k in raw if k.type <: AbstractQuantity]);
+        by=T -> string(nameof(T)),
+    )
+    @test rqZ == expected
+end

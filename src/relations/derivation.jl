@@ -414,12 +414,50 @@ function typed_derivation_graph()
     return KnowledgeGraph(edges)
 end
 
+# ─── Quantity-first navigation (a veneer over the typed graph) ───────────
+
+"""
+    reachable_quantities(q) -> Vector{Type}
+
+The physical-quantity TYPES structurally reachable from `q` through the type-keyed
+derivation graph — the quantity-first navigation over [`typed_derivation_graph`](@ref).
+Accepts a quantity instance or its (concrete) type; the result is family-erased
+(`Susceptibility{I}` → `Susceptibility`), de-duplicated, name-sorted, and includes
+`q`'s own family (trivially reachable).
+
+```julia
+reachable_quantities(PartitionFunction())   # ⊇ [FreeEnergy, PartitionFunction] — F = −β⁻¹ ln Z
+```
+
+The dual of [`relations_constraining`](@ref) (a quantity → the laws it obeys); this
+is a quantity → the other quantities its laws connect it to.
+
+!!! warning "Structural, not computational"
+    Reachability over [`typed_derivation_graph`](@ref) OVER-approximates what is
+    actually computable (a hyperedge fans out to one edge per input, so a single
+    known input already "reaches" the output; non-affine outputs are edges too).
+    For the honest "can I compute it from these values" use [`derivable`](@ref)`(bag)`
+    / [`derive`](@ref)`(Q, bag)`, which require every input and call the real `solve`.
+"""
+reachable_quantities(q::AbstractQuantity) = reachable_quantities(typeof(q))
+function reachable_quantities(@nospecialize(Q::Type))
+    fam = _family(Q)
+    self = fam <: AbstractQuantity ? Type[fam] : Type[]
+    g = typed_derivation_graph()
+    start = VariableKey(Q)
+    start in graph_nodes(g) || return self          # not a node ⇒ only its own family
+    reached = graph_reachable(g, start)
+    qs = unique!(Type[_family(k.type) for k in reached if k.type <: AbstractQuantity])
+    return sort!(qs; by=T -> string(nameof(T)))
+end
+
 export DerivationStep,
     DerivationTrace,
     derivation_steps,
     derivation_graph,
     derivable,
     derive,
+    reachable_quantities,
     TypedStep,
     typed_derivation_steps,
     typed_derivation_graph
