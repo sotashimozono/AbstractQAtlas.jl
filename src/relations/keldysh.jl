@@ -123,3 +123,75 @@ Variables: `A`, `GR`, `GA`.  (Complex-valued residual off equilibrium.)
 @relation :keldysh SpectralFromKeldysh(
     A::SpectralFunction, GR::RetardedGreensFunction, GA::AdvancedGreensFunction
 ) = A - im * (GR - GA) / (2 * π)
+
+# ─── Non-equilibrium: the Langreth rules + the Keldysh kinetic (Dyson) form ───
+#
+# Out of equilibrium the RAK components of a CONTOUR PRODUCT `C = A·B` follow the
+# Langreth rules — exact algebraic identities among the components, equilibrium or
+# not, matrix-valued in orbital space (written with `*` so ONE identity holds for
+# scalar and matrix propagators alike, like [`Dyson`](@ref)):
+#
+#   C^R = A^R B^R,   C^A = A^A B^A,
+#   C^< = A^R B^< + A^< B^A,   C^> = A^R B^> + A^> B^A.
+#
+# They preserve the contour structure: a `C` built by these rules satisfies
+# [`KeldyshCausality`](@ref) (`C^R − C^A = C^> − C^<`) whenever `A`, `B` do — the
+# independent-expectation check in the test.  The steady-state Keldysh Dyson equation
+# then fixes the lesser propagator from the lesser self-energy, `G^< = G^R Σ^< G^A`
+# (the kinetic form; the equilibrium [`KeldyshFDT`](@ref)/[`KMSGreaterLesser`](@ref)
+# are its thermal special case).  The Wigner-transform / gradient-expansion route to
+# the Boltzmann equation (Kadanoff–Baym) is a transform → the functional sibling's
+# job (scope line, #14).  Reference: Langreth (1976).
+
+"""
+    LangrethProductRetarded <: AbstractRelation
+
+The retarded component of a contour product `C = A·B`: `C^R = A^R B^R` (Langreth).
+Matrix-valued in orbital space.  Variables: `Cret`, `Aret`, `Bret`.
+"""
+@relation :keldysh LangrethProductRetarded(Cret, Aret, Bret) = Cret - Aret * Bret
+
+"""
+    LangrethProductAdvanced <: AbstractRelation
+
+The advanced component of a contour product `C = A·B`: `C^A = A^A B^A` (Langreth).
+Variables: `Cadv`, `Aadv`, `Badv`.
+"""
+@relation :keldysh LangrethProductAdvanced(Cadv, Aadv, Badv) = Cadv - Aadv * Badv
+
+"""
+    LangrethProductLesser <: AbstractRelation
+
+The lesser component of a contour product `C = A·B`, `C^< = A^R B^< + A^< B^A`
+(Langreth) — the non-equilibrium generation term.  Matrix-valued.  Variables:
+`Cless`, `Aret`, `Bless`, `Aless`, `Badv`.
+"""
+@relation :keldysh LangrethProductLesser(Cless, Aret, Bless, Aless, Badv) =
+    Cless - (Aret * Bless + Aless * Badv)
+
+"""
+    LangrethProductGreater <: AbstractRelation
+
+The greater component of a contour product `C = A·B`, `C^> = A^R B^> + A^> B^A`
+(Langreth).  Variables: `Cgtr`, `Aret`, `Bgtr`, `Agtr`, `Badv`.
+"""
+@relation :keldysh LangrethProductGreater(Cgtr, Aret, Bgtr, Agtr, Badv) =
+    Cgtr - (Aret * Bgtr + Agtr * Badv)
+
+"""
+    KeldyshKineticLesser <: AbstractRelation
+
+The steady-state Keldysh Dyson (kinetic) equation for the lesser propagator,
+`G^<(ω) = G^R(ω) Σ^<(ω) G^A(ω)` — the lesser self-energy `Σ^<` drives `G^<` (the
+occupation), the non-equilibrium generalization of the FDT lock; in equilibrium it
+reduces to [`KeldyshFDT`](@ref)/[`KMSGreaterLesser`](@ref).  Matrix-valued (a triple
+product).  `Sless = Σ^<` is a supplied component (not a distinct named quantity).
+
+Variables: `Gless` (`G^<`), `GR` (`G^R`), `Sless` (`Σ^<`), `GA` (`G^A`).
+"""
+@relation :keldysh KeldyshKineticLesser(
+    Gless::LesserGreensFunction,
+    GR::RetardedGreensFunction,
+    Sless,
+    GA::AdvancedGreensFunction,
+) = Gless - GR * Sless * GA

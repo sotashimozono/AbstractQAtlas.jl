@@ -115,6 +115,68 @@ end
     @test operation_scope(:adjoint) === :definitional
 end
 
+@testset "Langreth rules: contour product component algebra" begin
+    # each rule's residual is zero on its defining values (exact)
+    @test residual(LangrethProductRetarded(); Cret=6, Aret=2, Bret=3) == 0            # C^R = A^R B^R
+    @test residual(LangrethProductAdvanced(); Cadv=6, Aadv=2, Badv=3) == 0
+    @test residual(LangrethProductLesser(); Cless=11, Aret=2, Bless=3, Aless=1, Badv=5) == 0  # A^R B^< + A^< B^A
+    @test residual(LangrethProductGreater(); Cgtr=11, Aret=2, Bgtr=3, Agtr=1, Badv=5) == 0
+    @test !check(LangrethProductRetarded(); Cret=5, Aret=2, Bret=3)                    # 5 ≠ 6
+    # solve for the produced component; Rational-exact
+    @test solve(LangrethProductLesser(), Val(:Cless); Aret=2, Bless=3, Aless=1, Badv=5) ==
+        11
+    @test residual(LangrethProductRetarded(); Cret=6 // 1, Aret=2 // 1, Bret=3 // 1) isa
+        Rational
+end
+
+@testset "Langreth product PRESERVES the contour causality (independent check)" begin
+    # RAK-consistent A,B (^> = ^< + ^R − ^A); build C by the Langreth rules; verify C
+    # ALSO obeys KeldyshCausality C^R−C^A = C^>−C^< — the four rules are mutually
+    # consistent and keep the contour structure (checked against a DIFFERENT relation).
+    for (AR, AA, Ale, BR, BA, Ble) in
+        ((0.3, 0.1, 0.05, 0.7, 0.2, 0.4), (2 // 1, 1 // 2, 1 // 3, 3 // 1, 1 // 1, 2 // 5))
+        Agt = Ale + (AR - AA)                        # A^> − A^< = A^R − A^A
+        Bgt = Ble + (BR - BA)
+        CR, CA = AR * BR, AA * BA
+        Cle = AR * Ble + Ale * BA
+        Cgt = AR * Bgt + Agt * BA
+        @test check(KeldyshCausality(); GR=CR, GA=CA, Ggtr=Cgt, Gles=Cle, atol=1e-12)
+    end
+    # matrix-valued: the lesser rule holds for 2×2 orbital propagators
+    AR = [1.0 0.2; 0.0 0.9]
+    Ale = [0.1 0.0; 0.3 0.2]
+    Ble = [0.0 0.1; 0.2 0.0]
+    Bad = [0.5 0.0; 0.2 0.6]
+    Cle = AR * Ble + Ale * Bad
+    r = residual(
+        LangrethProductLesser(); Cless=Cle, Aret=AR, Bless=Ble, Aless=Ale, Badv=Bad
+    )
+    @test maximum(abs, r) < 1e-14
+end
+
+@testset "KeldyshKineticLesser: G^< = G^R Σ^< G^A (steady-state Dyson)" begin
+    @test residual(KeldyshKineticLesser(); Gless=2 * 3 * 5, GR=2, Sless=3, GA=5) == 0
+    @test check(KeldyshKineticLesser(); Gless=30.0, GR=2.0, Sless=3.0, GA=5.0)
+    # type-keyed: links to the propagator quantities + collision-proof bag door
+    @test LesserGreensFunction in quantities(KeldyshKineticLesser())
+    @test KeldyshKineticLesser() in relations_constraining(LesserGreensFunction)
+    @test residual(
+        KeldyshKineticLesser(),
+        bag(
+            LesserGreensFunction => 30.0,
+            RetardedGreensFunction => 2.0,
+            AdvancedGreensFunction => 5.0,
+        );
+        Sless=3.0,
+    ) == 0.0
+    # matrix triple product
+    GR = [1.0 0.2; 0.0 0.9]
+    GA = collect(GR')
+    S = [0.4 0.1; 0.1 0.3]
+    r = residual(KeldyshKineticLesser(); Gless=GR * S * GA, GR=GR, Sless=S, GA=GA)
+    @test maximum(abs, r) < 1e-14
+end
+
 @testset "Keldysh relations register under :keldysh" begin
-    @test length(all_relations(; domain=:keldysh)) == 6
+    @test length(all_relations(; domain=:keldysh)) == 11   # +5: Langreth R/A/</> + KineticLesser
 end
