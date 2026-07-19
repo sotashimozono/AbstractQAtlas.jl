@@ -7,8 +7,8 @@
 # subadditivity + Araki–Lieb (disjoint PAIRS) and strong subadditivity (pairwise-
 # disjoint TRIPLES) — no hand-labeled A/B/AB/ABC.  The relations' scalar kernels
 # (Subadditivity, ArakiLieb, StrongSubadditivity) are reused verbatim; this is the
-# region-matching layer over them.  Multipartite (KP/LW TEE) + §8b index-unification
-# follow on this same matcher.
+# region-matching layer over them.  Kitaev–Preskill TEE auto-discovery (`region_tee_report`)
+# rides the same matcher; Levin–Wen TEE + §8b index-unification follow.
 
 """
     RegionReportRow
@@ -194,3 +194,67 @@ function topological_entanglement_entropy(b::Bag, A::Region, B::Region, C::Regio
     return -tripartite_information(b, A, B, C)
 end
 export topological_entanglement_entropy
+
+"""
+    RegionTEERow
+
+One row of a [`region_tee_report`](@ref): the pairwise-disjoint tripartition `regions`
+`(A, B, C)` it was auto-instantiated on, the tripartite information
+`tripartite_information` (`I₃`), and the Kitaev–Preskill topological entanglement entropy
+`topological_entanglement_entropy` (`γ = −I₃`).
+"""
+struct RegionTEERow
+    regions::NTuple{3,Region}
+    tripartite_information::Number
+    topological_entanglement_entropy::Number
+end
+export RegionTEERow
+
+"""
+    region_tee_report(b::Bag) -> Vector{RegionTEERow}
+
+Auto-discover the tripartite information `I₃` and the Kitaev–Preskill topological
+entanglement entropy `γ = −I₃` over the REGIONS in a bag of region-keyed entropies — the
+multipartite twin of [`region_report`](@ref) (which handles the entropy *inequalities*).
+One row is emitted per pairwise-disjoint triple `{A, B, C}` whose seven sub-entropies
+`S(A)`, `S(B)`, `S(C)`, `S(A∪B)`, `S(A∪C)`, `S(B∪C)`, `S(A∪B∪C)` are all present; `I₃` is
+symmetric in `A, B, C`, so each unordered triple gives exactly one row.
+
+`γ` is the [`KitaevPreskillTEE`](@ref) constant `ln 𝒟` — *provided the regions form a KP
+tripartition* (three sectors meeting so the boundary-law terms cancel). The set layer
+carries no geometry, so this reports the alternating sum for any admissible triple; whether
+it isolates the topological constant is the caller's (geometry-dependent) responsibility.
+
+```julia
+γ = log(2)
+b = bag(entanglement_entropy(1) => 1.0, entanglement_entropy(2) => 1.0,
+        entanglement_entropy(3) => 1.0, entanglement_entropy(1, 2) => 1.5,
+        entanglement_entropy(1, 3) => 1.5, entanglement_entropy(2, 3) => 1.5,
+        entanglement_entropy(1, 2, 3) => 1.5 - γ)   # area terms cancel, leaving −γ
+only(region_tee_report(b)).topological_entanglement_entropy ≈ γ   # ln 2 (toric code)
+```
+"""
+function region_tee_report(b::Bag)
+    ents = _region_entropies(b)
+    regions = collect(keys(ents))
+    out = RegionTEERow[]
+    for i in eachindex(regions),
+        j in (i + 1):lastindex(regions),
+        k in (j + 1):lastindex(regions)
+
+        A, B, C = regions[i], regions[j], regions[k]
+        (disjoint(A, B) && disjoint(A, C) && disjoint(B, C)) || continue
+        (
+            haskey(ents, A ∪ B) &&
+            haskey(ents, A ∪ C) &&
+            haskey(ents, B ∪ C) &&
+            haskey(ents, A ∪ B ∪ C)
+        ) || continue
+        # reuse the verified I₃ combination (single source of truth); the disjoint + haskey
+        # gates above guarantee the helper's own guards pass, so it never errors here.
+        I3 = tripartite_information(b, A, B, C)
+        push!(out, RegionTEERow((A, B, C), I3, -I3))
+    end
+    return out
+end
+export region_tee_report
