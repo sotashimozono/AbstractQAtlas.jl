@@ -174,6 +174,12 @@ include("structure/graph.jl")
 # debug trace naming the indirect path for safety.  Needs the full registry.
 include("relations/derivation.jl")
 
+# the ecosystem report/card contract: `report(model, quantity, bc; value, …)` packages
+# an oracle's computed value into a schema-v2 `Card` (the reporter-facing sibling of
+# `fetch`), streamable via `card_jsonl`.  Reporters depend on AbstractQAtlas only and
+# push DATA — cycle-free.  Needs the core type vocabulary + graph/kernel's `_json_str`.
+include("report/card.jl")
+
 # automatic-differentiation entry point (methods live in ext/, ForwardDiff)
 include("autodiff.jl")
 
