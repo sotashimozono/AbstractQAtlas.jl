@@ -9,8 +9,8 @@
 # Domain tag :quantum throughout.
 #
 # References (doiget-verified, docs/references.bib): Feynman, Phys. Rev.
-# 56, 340 (1939); Ehrenfest, Z. Phys. 45, 455 (1927); Robertson, Phys.
-# Rev. 34, 163 (1929); Margolus & Levitin, Physica D 120, 188 (1998).
+# 56, 340 (1939); Ehrenfest, [Ehrenfest1927](@cite); Robertson, Phys.
+# [Robertson1929](@cite); Margolus & Levitin, [MargolusLevitin1998](@cite).
 # (Mandelstam & Tamm, J. Phys. USSR 9, 249 (1945) predates DOIs — cited
 # inline only, no bib entry.)
 
@@ -32,7 +32,7 @@ Variables: `T` = `⟨T⟩`, `V` = `⟨V⟩`, `n`.
 """
     HellmannFeynman <: AbstractRelation
 
-The Hellmann–Feynman theorem (Feynman, Phys. Rev. 56, 340 (1939)): the
+The Hellmann–Feynman theorem (Feynman, [Feynman1939](@cite)): the
 derivative of an eigenenergy with respect to a parameter is the
 expectation of the derivative of the Hamiltonian,
 
@@ -46,7 +46,7 @@ Supplied-derivative convention: `dH_dλ` is the caller-computed expectation
 """
     EhrenfestPosition <: AbstractRelation
 
-The Ehrenfest theorem for position (Ehrenfest, Z. Phys. 45, 455 (1927)):
+The Ehrenfest theorem for position (Ehrenfest, [Ehrenfest1927](@cite)):
 the mean position moves with the mean velocity,
 
 `d⟨x⟩/dt = ⟨p⟩ / m`.
@@ -58,7 +58,7 @@ Variables: `dx_dt`, `p` = `⟨p⟩`, `m`.
 """
     EhrenfestMomentum <: AbstractRelation
 
-The Ehrenfest theorem for momentum (Ehrenfest, Z. Phys. 45, 455 (1927)):
+The Ehrenfest theorem for momentum (Ehrenfest, [Ehrenfest1927](@cite)):
 the mean momentum obeys the classical force law,
 
 `d⟨p⟩/dt = −⟨∂V/∂x⟩ = ⟨F⟩`,
@@ -86,8 +86,7 @@ Variables: `H2` = `⟨H²⟩`, `E` = `⟨H⟩`.
 """
     RobertsonUncertainty <: AbstractInequality
 
-The Robertson uncertainty relation (Robertson, Phys. Rev. 34, 163
-(1929)),
+The Robertson uncertainty relation (Robertson, [Robertson1929](@cite)),
 
 `ΔA · ΔB ≥ ½ |⟨[A, B]⟩|`
 
@@ -102,8 +101,7 @@ Variables: `ΔA`, `ΔB`, `comm` = `⟨[A, B]⟩`.
 """
     LiebRobinsonBound <: AbstractInequality
 
-The Lieb–Robinson bound (Lieb & Robinson, Commun. Math. Phys. 28, 251
-(1972)): information in a locally-interacting quantum system spreads no
+The Lieb–Robinson bound (Lieb & Robinson, [LiebRobinson1972](@cite)): information in a locally-interacting quantum system spreads no
 faster than an emergent velocity `v_LR` — the group velocity of
 correlations is bounded,
 
@@ -140,7 +138,7 @@ Variables: `τ` = orthogonalization time, `ΔE` = energy uncertainty.
 
 The Margolus–Levitin quantum speed limit: the orthogonalization time is *also*
 bounded below by the mean energy above the ground state (Margolus & Levitin,
-Physica D 120, 188 (1998); `ħ = 1`),
+[MargolusLevitin1998](@cite); `ħ = 1`),
 
 `τ⊥ ≥ π / (2 (E − E₀))`
 

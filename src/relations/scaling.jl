@@ -7,8 +7,8 @@
 # arithmetic; numerical sets (3D Ising bootstrap) within quoted errors.
 #
 # References (textbook standard): Rushbrooke, J. Chem. Phys. 39, 842
-# (1963); Widom, J. Chem. Phys. 43, 3898 (1965); Fisher, J. Math. Phys.
-# 5, 944 (1964); Josephson, Proc. Phys. Soc. 92, 269 (1967).
+# (1963); Widom, [Widom1965](@cite); Fisher, J. Math. Phys.
+# 5, 944 (1964); Josephson, [Josephson1967](@cite).
 
 """
     Rushbrooke <: AbstractRelation

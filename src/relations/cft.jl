@@ -14,8 +14,8 @@ charge,
 
 `e₀(L) = e_∞ − π c v / (6 L²)`
 
-(Blöte, Cardy & Nightingale, Phys. Rev. Lett. 56, 742 (1986); Affleck,
-Phys. Rev. Lett. 56, 746 (1986)).  Supplied-value convention:
+(Blöte, Cardy & Nightingale, [BloteCardyNightingale1986](@cite); Affleck,
+[Affleck1986](@cite)).  Supplied-value convention:
 `dE = e₀(L) − e_∞` is the caller-computed finite-size correction to the
 ground-state energy per site.
 
@@ -31,7 +31,7 @@ scaling dimension of the corresponding operator,
 
 `E_x(L) − E₀(L) = 2π v x / L`
 
-(Cardy, Nucl. Phys. B 270, 186 (1986)): each primary/descendant with
+(Cardy, [Cardy1986](@cite)): each primary/descendant with
 scaling dimension `x` appears as a level whose gap closes as `1/L` with a
 universal amplitude `2πvx`.  Reads `x` off the measured finite-size gap.
 
@@ -42,8 +42,7 @@ Variables: `gap` = `E_x(L) − E₀(L)`, `x`, `v`, `L`.
 """
     CardyDensityOfStates <: AbstractRelation
 
-Cardy's asymptotic density of states of a 2D CFT (Cardy, Nucl. Phys. B
-270, 186 (1986)): the number of states at large scaling dimension `Δ`
+Cardy's asymptotic density of states of a 2D CFT (Cardy, [Cardy1986](@cite)): the number of states at large scaling dimension `Δ`
 grows as
 
 `ln ρ(Δ) = 2π √(c Δ / 6)`

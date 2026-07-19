@@ -1,5 +1,6 @@
 using AbstractQAtlas
 using Documenter
+using DocumenterCitations
 using Downloads
 
 assets_dir = joinpath(@__DIR__, "src", "assets")
@@ -10,7 +11,10 @@ logo_path = joinpath(assets_dir, "logo.png")
 Downloads.download("https://github.com/sotashimozono.png", favicon_path)
 Downloads.download("https://github.com/sotashimozono.png", logo_path)
 
+bib = CitationBibliography(joinpath(@__DIR__, "references.bib"); style=:numeric)
+
 makedocs(;
+    plugins=[bib],
     sitename="AbstractQAtlas.jl",
     format=Documenter.HTML(;
         canonical="https://codes.sota-shimozono.com/AbstractQAtlas.jl/stable/",
@@ -32,7 +36,7 @@ makedocs(;
         size_threshold_warn=1_000_000,
     ),
     modules=[AbstractQAtlas],
-    pages=["Home" => "index.md"],
+    pages=["Home" => "index.md", "References" => "references.md"],
 )
 
 deploydocs(;

@@ -7,7 +7,7 @@
 # permutation of the (field-index, frequency) pairs
 # `{(β₁, ω₁), …, (βₙ, ωₙ)}` — a consequence of the fields being
 # interchangeable perturbations (Armstrong, Bloembergen, Ducuing &
-# Pershan, Phys. Rev. 127, 1918 (1962)).  This layer makes that symmetry
+# Pershan, [ArmstrongBloembergen1962](@cite)).  This layer makes that symmetry
 # explicit at the type level, so a consumer knows which components are
 # forced equal without re-deriving it.  Because the symmetry pairs each
 # field index with its frequency, `field_permutation` reports the

@@ -519,8 +519,7 @@ current-channel structure factor: the space-time Fourier transform of the
 [`CurrentCorrelation`](@ref) (mirroring
 [`DynamicalStructureFactor`](@ref) ↔ [`DynamicalCorrelation`](@ref)) and
 the **fluctuation** partner of the dissipative `Re σ_μν(ω)` via the
-Johnson–Nyquist fluctuation–dissipation theorem (Nyquist, Phys. Rev. 32,
-110 (1928); Callen & Welton, Phys. Rev. 83, 34 (1951)).  `frequency_arguments == 1`.
+Johnson–Nyquist fluctuation–dissipation theorem (Nyquist, [Nyquist1928](@cite); Callen & Welton, [CallenWelton1951](@cite)).  `frequency_arguments == 1`.
 """
 struct CurrentNoise{I} <: AbstractQuantity
     function CurrentNoise{I}() where {I}
@@ -578,8 +577,7 @@ index_spaces(::Type{HeatCurrent}) = (SpatialDirection(),)
 
 The Drude weight (charge stiffness) tensor `D_μν` — the coefficient of
 the zero-frequency delta in the real optical conductivity,
-`Re σ_μν(ω) = π D_μν δ(ω) + σ^reg_μν(ω)` (Scalapino, White & Zhang, Phys.
-Rev. B 47, 7995 (1993)).  A rank-2 tensor in [`SpatialDirection`](@ref)
+`Re σ_μν(ω) = π D_μν δ(ω) + σ^reg_μν(ω)` (Scalapino, White & Zhang, [ScalapinoWhiteZhang1993](@cite)).  A rank-2 tensor in [`SpatialDirection`](@ref)
 space; `D_μν > 0` signals a (perfect) conductor.  Fixed by the
 [`DynamicalConductivity`](@ref) via the optical sum rule.
 """
@@ -897,8 +895,7 @@ The `n`-th order term `DynamicalCorrelation(α, β₁, …, βₙ)` is the
 operators at `n` independent time differences, so it is intrinsically
 **n-time** (`frequency_arguments == n == response_order`).  Its `n`-fold
 nested-commutator (retarded) part is exactly the Kubo kernel of the
-order-`n` `DynamicalSusceptibility(α, β₁, …, βₙ)` (Kubo, J. Phys. Soc.
-Jpn. 12, 570 (1957)): an `n`-th order response is an `n`-time
+order-`n` `DynamicalSusceptibility(α, β₁, …, βₙ)` (Kubo, [Kubo1957](@cite)): an `n`-th order response is an `n`-time
 correlation.
 """
 struct DynamicalCorrelation{I} <: AbstractQuantity
@@ -943,7 +940,7 @@ frequency_arguments(::Type{DynamicalStructureFactor}) = 1
 
 The static (equal-time) structure factor `S(q)` — the frequency integral
 of the [`DynamicalStructureFactor`](@ref), `S(q) = ∫ S(q, ω) dω/(2π)`
-(Van Hove, Phys. Rev. 95, 249 (1954)).  Its `q → 0` limit fixes the
+(Van Hove, [VanHove1954](@cite)).  Its `q → 0` limit fixes the
 static susceptibility (`χ = β S(q→0)`, classical).  Rank-2 in spin space,
 one frequency integrated out (`frequency_arguments == 0`).
 """
@@ -968,9 +965,9 @@ The `n`-th order term `DynamicalSusceptibility(α, β₁, …, βₙ)` is
 so the response is intrinsically **multi-time** — `frequency_arguments
 == n` (`response_order`).  `DynamicalSusceptibility(:x, :y, :z)` is the
 second-order `χ⁽²⁾(ω₁, ω₂)` of two-dimensional coherent spectroscopy
-(Wan & Armitage, Phys. Rev. Lett. 122, 257401 (2019)).  Its microscopic
+(Wan & Armitage, [WanArmitage2019](@cite)).  Its microscopic
 Kubo expression is the `n`-fold nested-commutator response function
-(Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)); see `structure/spectral.jl`.
+(Kubo, [Kubo1957](@cite)); see `structure/spectral.jl`.
 
 The static `Susceptibility{I}` of the same order is the zero-frequency
 limit, `χ⁽ⁿ⁾(0, …, 0)`.
@@ -1106,8 +1103,7 @@ export TopologicalInvariant
 
 The von Neumann entanglement entropy `S = −Tr(ρ_A ln ρ_A)` of a
 subsystem — the `n → 1` limit of the [`RenyiEntropy`](@ref).  In a gapped
-phase it obeys an area law (Eisert, Cramer & Plenio, Rev. Mod. Phys. 82,
-277 (2010)); at a 1D critical point it grows logarithmically with the
+phase it obeys an area law (Eisert, Cramer & Plenio, [EisertCramerPlenio2010](@cite)); at a 1D critical point it grows logarithmically with the
 subsystem size, `S = (c/3) ln ℓ` (Calabrese & Cardy, J. Stat. Mech.
 (2004) P06002).
 """
@@ -1127,8 +1123,7 @@ export RenyiEntropy
 """
     TsallisEntropy() <: AbstractEntanglementMeasure
 
-The Tsallis entropy `S_q = (1 − Tr ρ_A^q)/(q − 1)` (Tsallis, J. Stat.
-Phys. 52, 479 (1988)) — the other one-parameter deformation of the
+The Tsallis entropy `S_q = (1 − Tr ρ_A^q)/(q − 1)` (Tsallis, [Tsallis1988](@cite)) — the other one-parameter deformation of the
 [`VonNeumannEntropy`](@ref) (`q → 1` limit), non-additive across
 independent subsystems.
 """
@@ -1160,8 +1155,8 @@ export ConditionalEntropy
 
 The quantum relative entropy `S(ρ‖σ) = Tr ρ(ln ρ − ln σ)` — the
 distinguishability of `ρ` from `σ`; non-negative (Klein's inequality) and
-monotone under CPTP maps (Lindblad, Commun. Math. Phys. 40, 147 (1975);
-Vedral, Rev. Mod. Phys. 74, 197 (2002)).
+monotone under CPTP maps (Lindblad, [Lindblad1975](@cite);
+Vedral, [Vedral2002](@cite)).
 """
 struct RelativeEntropy <: AbstractEntanglementMeasure end
 export RelativeEntropy
@@ -1173,8 +1168,7 @@ The post-measurement (dephasing) entropy `S(Δρ)`, where a projective
 measurement in a basis `{|i⟩}` maps `ρ → Δρ = Σ_i ⟨i|ρ|i⟩ |i⟩⟨i|`.  Never
 below the pre-measurement `S(ρ)` (measurement does not decrease entropy),
 and the increase is exactly the relative entropy to the dephased state,
-`S(Δρ) − S(ρ) = S(ρ‖Δρ)` (Ohya & Petz; Vedral, Rev. Mod. Phys. 74, 197
-(2002)).
+`S(Δρ) − S(ρ) = S(ρ‖Δρ)` (Ohya & Petz; Vedral, [Vedral2002](@cite)).
 """
 struct MeasurementEntropy <: AbstractEntanglementMeasure end
 export MeasurementEntropy
@@ -1186,7 +1180,7 @@ The conditional mutual information `I(A:C|B) = S(AB) + S(BC) − S(ABC) −
 S(B)` — the deviation of `ρ_ABC` from a **quantum Markov chain** `A–B–C`
 (zero iff Markov).  Non-negative by strong subadditivity
 ([`StrongSubadditivity`](@ref)); its vanishing is the structure theorem of
-Hayden, Jozsa, Petz & Winter, Commun. Math. Phys. 246, 359 (2004).
+Hayden, Jozsa, Petz & Winter, [HaydenJozsaPetzWinter2004](@cite).
 """
 struct MarkovEntropy <: AbstractEntanglementMeasure end
 export MarkovEntropy
@@ -1194,8 +1188,7 @@ export MarkovEntropy
 """
     Concurrence() <: AbstractEntanglementMeasure
 
-The two-qubit concurrence `C ∈ [0, 1]` (Wootters, Phys. Rev. Lett. 80,
-2245 (1998)) — an entanglement monotone; `C = 0` for separable, `C = 1`
+The two-qubit concurrence `C ∈ [0, 1]` (Wootters, [Wootters1998](@cite)) — an entanglement monotone; `C = 0` for separable, `C = 1`
 for a Bell pair.  Its square is the [`Tangle`](@ref).
 """
 struct Concurrence <: AbstractEntanglementMeasure end
@@ -1215,7 +1208,7 @@ export Tangle
     ThreeTangle() <: AbstractEntanglementMeasure
 
 The residual three-tangle `τ₃ = τ(A:BC) − τ(A:B) − τ(A:C)` (Coffman,
-Kundu & Wootters, Phys. Rev. A 61, 052306 (2000)) — the genuinely
+Kundu & Wootters, [CoffmanKunduWootters2000](@cite)) — the genuinely
 tripartite entanglement left over after the monogamy budget; `τ₃ = 1` for
 GHZ, `0` for W.
 """
@@ -1237,7 +1230,7 @@ export TripartiteInformation
 The topological entanglement entropy `γ = ln D` (`D` the total quantum
 dimension) — the universal constant subleading term of the area law
 `S(∂) = α|∂| − γ`, extracted from a tripartition by the Kitaev–Preskill
-combination (Kitaev & Preskill, Phys. Rev. Lett. 96, 110404 (2006);
+combination (Kitaev & Preskill, [KitaevPreskill2006](@cite);
 Levin & Wen 2006); nonzero signals topological order.
 """
 struct TopologicalEntanglementEntropy <: AbstractEntanglementMeasure end
@@ -1258,7 +1251,7 @@ export Purity
 
 The (first) Chern number `C ∈ ℤ` of a set of bands — the Brillouin-zone
 integral of the Berry curvature, `C = (1/2π) ∫_BZ Ω(k) d²k` (Thouless,
-Kohmoto, Nightingale & den Nijs, Phys. Rev. Lett. 49, 405 (1982)).  It
+Kohmoto, Nightingale & den Nijs, [TKNN1982](@cite)).  It
 sets the quantized Hall conductance ([`TKNN`](@ref)) and, via the
 bulk–boundary correspondence, the number of chiral edge modes.
 """
@@ -1269,10 +1262,9 @@ export ChernNumber
     BerryCurvature() <: AbstractQuantity
 
 The Berry curvature `Ω(k)` of a band — the momentum-space field strength
-`Ω = ∂_{k_x} A_y − ∂_{k_y} A_x` of the Berry connection (Berry, Proc. R.
-Soc. Lond. A 392, 45 (1984)).  Its Brillouin-zone integral is the
+`Ω = ∂_{k_x} A_y − ∂_{k_y} A_x` of the Berry connection (Berry, [Berry1984](@cite)).  Its Brillouin-zone integral is the
 [`ChernNumber`](@ref); it also drives the intrinsic anomalous Hall
-effect (Xiao, Chang & Niu, Rev. Mod. Phys. 82, 1959 (2010)).
+effect (Xiao, Chang & Niu, [XiaoChangNiu2010](@cite)).
 
 Note (scope): the Berry curvature is the *imaginary* part of the quantum
 geometric tensor; the real part (the quantum metric) and the mixed-state
@@ -1286,8 +1278,7 @@ export BerryCurvature
 
 The number of protected boundary (edge / surface) modes of a
 topological phase — fixed by the bulk topological invariant through the
-bulk–boundary correspondence, `n = |ν|` (Hasan & Kane, Rev. Mod. Phys.
-82, 3045 (2010)).  See [`BulkBoundary`](@ref).
+bulk–boundary correspondence, `n = |ν|` (Hasan & Kane, [HasanKane2010](@cite)).  See [`BulkBoundary`](@ref).
 """
 struct BoundaryModeCount <: AbstractQuantity end
 export BoundaryModeCount
