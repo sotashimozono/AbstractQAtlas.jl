@@ -22,7 +22,7 @@
 # ([`SpectralFromKeldysh`](@ref)).
 #
 # Reference: Keldysh, Sov. Phys. JETP 20, 1018 (1965); the FDT is
-# Callen–Welton, Phys. Rev. 83, 34 (1951) (already cited).
+# Callen–Welton, [CallenWelton1951](@cite) (already cited).
 
 """
     KeldyshComponent <: AbstractRelation

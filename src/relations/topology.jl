@@ -5,7 +5,7 @@
 # 1D two-band winding, lattice (Fukui–Hatsugai–Suzuki) Chern number, and
 # the TKNN quantization statement.
 #
-# References: Thouless–Kohmoto–Nightingale–den Nijs, PRL 49, 405 (1982);
+# References: Thouless–Kohmoto–Nightingale–den Nijs, [TKNN1982](@cite);
 # Fukui, Hatsugai & Suzuki, J. Phys. Soc. Jpn. 74, 1674 (2005).
 
 """
@@ -125,12 +125,12 @@ The Chern number as the Brillouin-zone integral of the Berry curvature,
 
 `C = (1/2π) ∫_BZ Ω(k) d²k`,
 
-(Berry, Proc. R. Soc. Lond. A 392, 45 (1984); Thouless, Kohmoto,
-Nightingale & den Nijs, Phys. Rev. Lett. 49, 405 (1982)).  Supplied-
+(Berry, [Berry1984](@cite); Thouless, Kohmoto,
+Nightingale & den Nijs, [TKNN1982](@cite)).  Supplied-
 integral convention: `berry_flux = ∫_BZ Ω d²k` is the caller-computed
 Berry-curvature flux over the Brillouin zone.  With [`TKNN`](@ref)
 (`σ_xy = C`) this fixes the intrinsic anomalous Hall conductivity from
-the Berry curvature (Xiao, Chang & Niu, Rev. Mod. Phys. 82, 1959 (2010)).
+the Berry curvature (Xiao, Chang & Niu, [XiaoChangNiu2010](@cite)).
 
 Variables: `C`, `berry_flux`.
 """
@@ -146,7 +146,7 @@ invariant,
 
 `n = |ν|`,
 
-(Hasan & Kane, Rev. Mod. Phys. 82, 3045 (2010)).  For a Chern insulator
+(Hasan & Kane, [HasanKane2010](@cite)).  For a Chern insulator
 `ν = C` and `n` counts the chiral edge modes; for a ℤ₂ insulator `ν` is
 the ℤ₂ index mod 2.
 

@@ -9,12 +9,12 @@
 # step — cf. the supplied-average conventions in ensembles.jl).
 #
 # References (doiget-verified, docs/references.bib): Jarzynski, Phys. Rev. Lett. 78,
-# 2690 (1997); Crooks, Phys. Rev. E 60, 2721 (1999).
+# 2690 (1997); Crooks, [Crooks1999](@cite).
 
 """
     JarzynskiEquality <: AbstractRelation
 
-Jarzynski's nonequilibrium equality (Jarzynski, Phys. Rev. Lett. 78, 2690 (1997)):
+Jarzynski's nonequilibrium equality (Jarzynski, [Jarzynski1997](@cite)):
 the exponential average of the work `W` over many realizations of ANY protocol driving
 the system between two equilibrium states equals the exponentiated equilibrium
 free-energy difference, however far from equilibrium the driving is,
@@ -47,7 +47,7 @@ Variables: `W_avg` = `⟨W⟩`, `ΔF`.
 """
     CrooksFluctuationTheorem <: AbstractRelation
 
-The Crooks fluctuation theorem (Crooks, Phys. Rev. E 60, 2721 (1999)): the forward and
+The Crooks fluctuation theorem (Crooks, [Crooks1999](@cite)): the forward and
 time-reversed work distributions of a driven process obey
 
 `P_F(W) / P_R(−W) = e^{β (W − ΔF)}`,

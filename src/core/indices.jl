@@ -127,7 +127,7 @@ the linear dynamical susceptibility `χ(ω)`).  For an `n`-th order
 **nonlinear dynamical** response the field is applied at `n` distinct
 times, so the response is intrinsically multi-time:
 `frequency_arguments == n`, e.g. `χ⁽²⁾(ω₁, ω₂)` in 2D coherent
-spectroscopy (Wan & Armitage, Phys. Rev. Lett. 122, 257401 (2019)).
+spectroscopy (Wan & Armitage, [WanArmitage2019](@cite)).
 
 The static `Susceptibility{I}` and the dynamical `DynamicalSusceptibility{I}`
 of the same order are the zero-frequency limit and the full multi-time

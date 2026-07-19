@@ -5,8 +5,8 @@
 # density matrix — ground state OR thermal — factorizes into a sum over
 # all pairings of two-point contractions:
 #   * number-conserving fermions → DETERMINANT of G_ij = ⟨c†_i c_j⟩
-#     (Wick, Phys. Rev. 80, 268 (1950); at finite T this is the
-#     Bloch–De Dominicis theorem, Nucl. Phys. 7, 459 (1958), with the
+#     (Wick, [Wick1950](@cite); at finite T this is the
+#     Bloch–De Dominicis theorem, [BlochDeDominicis1958](@cite), with the
 #     THERMAL contraction G_ij = δ_ij/(e^{βε_i}+1));
 #   * general (BdG / paired, ⟨cc⟩ ≠ 0) fermions → PFAFFIAN of the
 #     antisymmetric contraction matrix;
@@ -140,7 +140,7 @@ end
     FermiDiracContraction <: AbstractRelation
 
 The finite-temperature two-point contraction of the Bloch–De Dominicis
-theorem (Bloch & De Dominicis, Nucl. Phys. 7, 459 (1958)) for fermions —
+theorem (Bloch & De Dominicis, [BlochDeDominicis1958](@cite)) for fermions —
 the mode occupation that seeds the thermal Wick determinant/Pfaffian,
 
 `⟨c†_ε c_ε⟩ = n_F(ε) = 1/(e^{βε} + 1)`.

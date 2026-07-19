@@ -196,7 +196,7 @@ export tripartite_information
     topological_entanglement_entropy(b::Bag, A::Region, B::Region, C::Region) -> Number
 
 The Kitaev–Preskill topological entanglement entropy `γ = ln 𝒟` from a tripartition
-(Kitaev & Preskill, Phys. Rev. Lett. 96, 110404 (2006)),
+(Kitaev & Preskill, [KitaevPreskill2006](@cite)),
 `γ = −[S(A)+S(B)+S(C) − S(A∪B)−S(B∪C)−S(C∪A) + S(A∪B∪C)]` — the area-law-independent
 constant isolated by the alternating tripartite sum ([`KitaevPreskillTEE`](@ref);
 `γ > 0` ⇒ topological order).  Equals `−`[`tripartite_information`](@ref).

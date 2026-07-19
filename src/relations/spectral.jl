@@ -111,7 +111,7 @@ the dynamical one,
 
 `S(q) = ∫ S(q, ω) dω / (2π)`
 
-(Van Hove, Phys. Rev. 95, 249 (1954)).  Supplied-integral convention:
+(Van Hove, [VanHove1954](@cite)).  Supplied-integral convention:
 `sqw_integral = ∫ S(q, ω) dω/(2π)` is the caller-computed frequency
 integral at fixed `q`.
 
@@ -149,7 +149,7 @@ susceptibility,
 
 `S(q, ω) = χ''(q, ω) / [π (1 − e^{−βω})]`
 
-(Callen & Welton, Phys. Rev. 83, 34 (1951)).  Since `χ''` is odd in `ω`,
+(Callen & Welton, [CallenWelton1951](@cite)).  Since `χ''` is odd in `ω`,
 this convention reproduces detailed balance `S(q,−ω) = e^{−βω} S(q, ω)`
 ([`DetailedBalance`](@ref)) automatically.
 
@@ -182,8 +182,7 @@ Hilbert transform of its imaginary part,
 
 `χ'(ω) = (1/π) P ∫ χ''(ω') / (ω' − ω) dω'`,
 
-(Kronig, J. Opt. Soc. Am. 12, 547 (1926); Toll, Phys. Rev. 104, 1760
-(1956)).  Applies to any causal response — the optical conductivity
+(Kronig, [Kronig1926](@cite); Toll, [Toll1956](@cite)).  Applies to any causal response — the optical conductivity
 `σ(ω)`, the susceptibility `χ(ω)`, the retarded Green's function, the
 dielectric function `ε(ω)`.  Supplied-integral convention: `pv_imag` is
 the caller-computed principal-value Hilbert transform
@@ -201,8 +200,7 @@ response function from the Hilbert transform of its real part,
 
 `χ''(ω) = −(1/π) P ∫ χ'(ω') / (ω' − ω) dω'`,
 
-the companion of [`KramersKronigReal`](@ref) (Kronig, J. Opt. Soc. Am. 12,
-547 (1926); Toll, Phys. Rev. 104, 1760 (1956)).  Supplied-integral
+the companion of [`KramersKronigReal`](@ref) (Kronig, [Kronig1926](@cite); Toll, [Toll1956](@cite)).  Supplied-integral
 convention: `pv_real` is the caller-computed principal-value Hilbert
 transform `P ∫ χ'(ω')/(ω' − ω) dω'`.
 

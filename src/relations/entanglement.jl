@@ -39,7 +39,7 @@ of `S` against `ln ℓ`.  Variables: `dS_dlogℓ`, `c`.
 
 Page's average entanglement entropy of the smaller subsystem `A` for a
 Haar-random pure state of a bipartite system `A ⊗ B` with Hilbert-space
-dimensions `dA ≤ dB` (Page, Phys. Rev. Lett. 71, 1291 (1993)):
+dimensions `dA ≤ dB` (Page, [Page1993](@cite)):
 
 `⟨S_A⟩ = ( Σ_{k=dB+1}^{dA·dB} 1/k ) − (dA − 1)/(2 dB)`.
 
@@ -88,7 +88,7 @@ Variables: `S`, `log_d` = `ln d`.
 
 Subadditivity of the von Neumann entropy, `S(AB) ≤ S(A) + S(B)` (slack
 `S_A + S_B − S_AB` — the mutual information `I(A:B) ≥ 0`; Araki & Lieb,
-Commun. Math. Phys. 18, 160 (1970)).  Saturated by a product state
+[ArakiLieb1970](@cite)).  Saturated by a product state
 `ρ_AB = ρ_A ⊗ ρ_B`.
 
 Variables: `S_A`, `S_B`, `S_AB`.
@@ -99,7 +99,7 @@ Variables: `S_A`, `S_B`, `S_AB`.
     ArakiLieb <: AbstractInequality
 
 The Araki–Lieb triangle inequality, `S(AB) ≥ |S(A) − S(B)|` (slack
-`S_AB − |S_A − S_B|`; Araki & Lieb, Commun. Math. Phys. 18, 160 (1970)) —
+`S_AB − |S_A − S_B|`; Araki & Lieb, [ArakiLieb1970](@cite)) —
 the lower companion of [`Subadditivity`](@ref).  Saturated when one
 subsystem purifies the other.
 
@@ -112,7 +112,7 @@ Variables: `S_AB`, `S_A`, `S_B`.
 
 Strong subadditivity of the quantum entropy,
 `S(ABC) + S(B) ≤ S(AB) + S(BC)` (slack `S_AB + S_BC − S_ABC − S_B`; Lieb
-& Ruskai, J. Math. Phys. 14, 1938 (1973)) — equivalently the conditional
+& Ruskai, [LiebRuskai1973](@cite)) — equivalently the conditional
 mutual information `I(A:C|B) ≥ 0`.  The deepest entropy inequality; the
 monogamy backbone of quantum information.
 
@@ -169,8 +169,7 @@ Variables: `Sα`, `moment` = `Tr ρ^α`, `α`.
 """
     TsallisEntropyMoment <: AbstractRelation
 
-The Tsallis entropy from the moment `Tr ρ^q` (q ≠ 1; Tsallis, J. Stat.
-Phys. 52, 479 (1988)),
+The Tsallis entropy from the moment `Tr ρ^q` (q ≠ 1; Tsallis, [Tsallis1988](@cite)),
 
 `S_q = (1 − Tr ρ^q) / (q − 1)`.
 
@@ -214,8 +213,7 @@ Klein's inequality: the quantum relative entropy is non-negative,
 `S(ρ‖σ) ≥ 0`,
 
 (slack `S_rel`; zero iff `ρ = σ`).  The bedrock positivity behind
-subadditivity and the second law (Lindblad, Commun. Math. Phys. 40, 147
-(1975); Vedral, Rev. Mod. Phys. 74, 197 (2002)).
+subadditivity and the second law (Lindblad, [Lindblad1975](@cite); Vedral, [Vedral2002](@cite)).
 
 Variables: `S_rel` = `S(ρ‖σ)`.
 """
@@ -236,7 +234,7 @@ Concavity of the von Neumann entropy — mixing states cannot decrease the entro
 
 `S(Σᵢ pᵢ ρᵢ) ≥ Σᵢ pᵢ S(ρᵢ)`
 
-(slack `S_mix − S_avg`; Wehrl, Rev. Mod. Phys. 50, 221 (1978)).  Saturated when every
+(slack `S_mix − S_avg`; Wehrl, [Wehrl1978](@cite)).  Saturated when every
 `ρᵢ` with `pᵢ > 0` is the same state.
 
 Variables: `S_mix` = `S(Σᵢ pᵢ ρᵢ)`, `S_avg` = the caller-supplied `Σᵢ pᵢ S(ρᵢ)`.
@@ -251,7 +249,7 @@ exceeds the average component entropy by at most the classical mixing entropy,
 
 `S(Σᵢ pᵢ ρᵢ) ≤ Σᵢ pᵢ S(ρᵢ) + H(p)`,   `H(p) = −Σᵢ pᵢ ln pᵢ`
 
-(slack `S_avg + H_weights − S_mix`; Wehrl, Rev. Mod. Phys. 50, 221 (1978)).  Saturated
+(slack `S_avg + H_weights − S_mix`; Wehrl, [Wehrl1978](@cite)).  Saturated
 when the `ρᵢ` have mutually orthogonal support; the gap `S_mix − S_avg` is the Holevo
 `χ`, bounded in `[0, H(p)]`.
 
@@ -285,7 +283,7 @@ to the dephased state,
 `S(Δρ) − S(ρ) = S(ρ‖Δρ)`,
 
 tying the [`MeasurementEntropy`](@ref) to the [`RelativeEntropy`](@ref)
-(Vedral, Rev. Mod. Phys. 74, 197 (2002)).
+(Vedral, [Vedral2002](@cite)).
 
 Variables: `S_meas` = `S(Δρ)`, `S` = `S(ρ)`, `S_rel` = `S(ρ‖Δρ)`.
 """
@@ -300,7 +298,7 @@ The conditional mutual information (the [`MarkovEntropy`](@ref)),
 
 equal to the strong-subadditivity slack ([`StrongSubadditivity`](@ref));
 its vanishing marks a quantum Markov chain `A–B–C` (Hayden, Jozsa, Petz &
-Winter, Commun. Math. Phys. 246, 359 (2004)).
+Winter, [HaydenJozsaPetzWinter2004](@cite)).
 
 Variables: `I_cmi`, `S_AB`, `S_BC`, `S_ABC`, `S_B`.
 """
@@ -315,7 +313,7 @@ Variables: `I_cmi`, `S_AB`, `S_BC`, `S_ABC`, `S_B`.
 # every higher moment a determinant of C.  ρ_A = e^{−H_ent}/Z with a
 # QUADRATIC entanglement Hamiltonian, so the eigenvalues ζ_k ∈ [0,1] of
 # C_A give the whole entanglement spectrum (Peschel, J. Phys. A 36, L205
-# (2003); Chung & Peschel, Phys. Rev. B 64, 064412 (2001)).  This mapping
+# (2003); Chung & Peschel, [ChungPeschel2001](@cite)).  This mapping
 # holds for Gaussian states ONLY — an interacting ρ_A is not fixed by its
 # two-point function.
 
@@ -379,8 +377,7 @@ export free_fermion_renyi_entropy
 """
     ConcurrenceTangle <: AbstractRelation
 
-The tangle is the squared concurrence (Wootters, Phys. Rev. Lett. 80,
-2245 (1998)),
+The tangle is the squared concurrence (Wootters, [Wootters1998](@cite)),
 
 `τ = C²`,
 
@@ -394,7 +391,7 @@ Variables: `τ`, `C`.
     Monogamy <: AbstractInequality
 
 The Coffman–Kundu–Wootters monogamy of entanglement (Coffman, Kundu &
-Wootters, Phys. Rev. A 61, 052306 (2000)): the tangle of `A` with the rest
+Wootters, [CoffmanKunduWootters2000](@cite)): the tangle of `A` with the rest
 bounds the sum of its pairwise tangles,
 
 `τ(A:BC) ≥ τ(A:B) + τ(A:C)`
@@ -410,8 +407,7 @@ Variables: `τ_ABC`, `τ_AB`, `τ_AC`.
     ThreeTangleDefinition <: AbstractRelation
 
 The residual three-tangle — the genuinely tripartite entanglement beyond
-the pairwise budget (Coffman, Kundu & Wootters, Phys. Rev. A 61, 052306
-(2000)),
+the pairwise budget (Coffman, Kundu & Wootters, [CoffmanKunduWootters2000](@cite)),
 
 `τ₃ = τ(A:BC) − τ(A:B) − τ(A:C)`,
 
@@ -441,7 +437,7 @@ Variables: `I3`, `I_AB`, `I_AC`, `I_ABC`.
     KitaevPreskillTEE <: AbstractRelation
 
 The topological entanglement entropy from a tripartition (Kitaev &
-Preskill, Phys. Rev. Lett. 96, 110404 (2006)),
+Preskill, [KitaevPreskill2006](@cite)),
 
 `S_A + S_B + S_C − S_AB − S_BC − S_CA + S_ABC = −γ`,
 

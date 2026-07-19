@@ -14,8 +14,8 @@
 #
 # References (doiget-verified, docs/references.bib): Onsager, Phys. Rev.
 # 37, 405 (1931) and 38, 2265 (1931); Cutler & Mott, Phys. Rev. 181, 1336
-# (1969); Scalapino, White & Zhang, Phys. Rev. B 47, 7995 (1993); Einstein,
-# Ann. Phys. 322, 549 (1905).
+# (1969); Scalapino, White & Zhang, [ScalapinoWhiteZhang1993](@cite); Einstein,
+# [Einstein1905diffusion](@cite).
 #
 # NOTE: model-SPECIFIC transport relations (the Drude mobility μ=eτ/m, the
 # single-band Hall coefficient R_H=1/ne) are deliberately NOT here — they
@@ -44,8 +44,7 @@ Variables: `κ`, `σ`, `T`, `L0`.
 """
     MottFormula <: AbstractRelation
 
-The Mott formula for the diffusive thermopower (Cutler & Mott, Phys. Rev.
-181, 1336 (1969)),
+The Mott formula for the diffusive thermopower (Cutler & Mott, [CutlerMott1969](@cite)),
 
 `S = −(π²/3) · T · d ln σ(ε)/dε |_{ε_F}`,
 
@@ -62,7 +61,7 @@ Variables: `S`, `dlnσ_dε` = `d ln σ/dε |_{ε_F}`, `T`.
     KelvinRelation <: AbstractRelation
 
 The Kelvin (second Thomson) relation — a consequence of Onsager
-reciprocity (Onsager, Phys. Rev. 37, 405 (1931)) — tying the Peltier
+reciprocity (Onsager, [Onsager1931a](@cite)) — tying the Peltier
 coefficient to the thermopower,
 
 `Π = T · S`.
@@ -76,7 +75,7 @@ Variables: `Π`, `S`, `T`.
 """
     OnsagerReciprocity <: AbstractRelation
 
-Onsager reciprocity (Onsager, Phys. Rev. 37, 405 (1931); 38, 2265
+Onsager reciprocity (Onsager, [Onsager1931a](@cite); 38, 2265
 (1931)): in the absence of a magnetic field the linear-transport matrix is
 symmetric,
 
@@ -100,7 +99,7 @@ conductivity into its Drude and regular parts,
 
 with `D` the [`DrudeWeight`](@ref) (the `δ(ω)` coefficient,
 `Re σ = π D δ(ω) + σ^reg`) and `W_reg = ∫ σ^reg(ω) dω` the regular
-spectral weight (Scalapino, White & Zhang, Phys. Rev. B 47, 7995 (1993)).
+spectral weight (Scalapino, White & Zhang, [ScalapinoWhiteZhang1993](@cite)).
 The total `sigma_integral` is the caller-supplied f-sum weight (e.g.
 `π n e²/m`, or `−π e²⟨T_kin⟩` on a lattice).
 
@@ -120,8 +119,8 @@ conductivity,
 
 `S^j(ω) = ω · coth(βω/2) · Re σ(ω)`,
 
-(natural units `ℏ = k_B = 1`; Nyquist, Phys. Rev. 32, 110 (1928); Callen &
-Welton, Phys. Rev. 83, 34 (1951)).  The classical limit `βω ≪ 1` gives
+(natural units `ℏ = k_B = 1`; Nyquist, [Nyquist1928](@cite); Callen &
+Welton, [CallenWelton1951](@cite)).  The classical limit `βω ≪ 1` gives
 the white Nyquist noise `S^j = 2 T Re σ` (`ω coth(βω/2) → 2/β`).
 
 Variables: `S_j` = `S^j(ω)`, `Reσ` = `Re σ(ω)`, `ω`, `β` (or `T`).
@@ -150,7 +149,7 @@ Variables: `σ`, `n`, `e`, `μ`.
     EinsteinRelation <: AbstractRelation
 
 The Einstein (Einstein–Smoluchowski) relation between mobility and the
-diffusion constant (Einstein, Ann. Phys. 322, 549 (1905)),
+diffusion constant (Einstein, [Einstein1905diffusion](@cite)),
 
 `μ = e D / k_B T = e D β`,
 
@@ -247,7 +246,7 @@ Variables: `κxy`, `L0`, `T`, `σxy`.
     VonKlitzing <: AbstractRelation
 
 The quantized Hall resistance of the integer quantum Hall effect (von
-Klitzing, Dorda & Pepper, Phys. Rev. Lett. 45, 494 (1980)),
+Klitzing, Dorda & Pepper, [Klitzing1980](@cite)),
 
 `R_xy = h / (ν e²) = R_K / ν`,
 

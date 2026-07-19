@@ -68,7 +68,7 @@ function spectral_origin(::Type{DynamicalStructureFactor})
 end
 # Kubo formula: the dynamical susceptibility is the retarded (commutator)
 # response function of the correlation.  Linear χ(ω) = FT of
-# (i/ħ)θ(t)⟨[A(t),B(0)]⟩ (Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)); the
+# (i/ħ)θ(t)⟨[A(t),B(0)]⟩ (Kubo, [Kubo1957](@cite)); the
 # n-th order χ⁽ⁿ⁾(ω₁…ωₙ) is the multi-time n-fold nested-commutator
 # response (2D coherent spectroscopy — Wan & Armitage, PRL 122, 257401
 # (2019)).  An n-th order response is an n-TIME correlation: order-n
@@ -84,7 +84,7 @@ function spectral_origin(::Type{DynamicalSusceptibility})
 end
 # Kubo edge for the AC conductivity: σ⁽ⁿ⁾{I} is the retarded part of the
 # same-order n-time current–current correlation (order-faithful, like the
-# susceptibility) — Kubo, J. Phys. Soc. Jpn. 12, 570 (1957).
+# susceptibility) — Kubo, [Kubo1957](@cite).
 function spectral_origin(::Type{DynamicalConductivity{I}}) where {I}
     return SpectralOrigin(CurrentCorrelation{I}, :kubo)
 end
@@ -127,7 +127,7 @@ sibling, issue #14):
   single-point form; evaluation is the functional sibling's job).
 
 The Kubo edge (`:kubo`) is a transform of a multi-time correlation
-(Kubo, J. Phys. Soc. Jpn. 12, 570 (1957)), so it has no single-`(q,ω)`-
+(Kubo, [Kubo1957](@cite)), so it has no single-`(q,ω)`-
 point relation here.
 """
 origin_relation(via::Symbol) = origin_relation(Val(via))

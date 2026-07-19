@@ -13,8 +13,8 @@
 #          the two ensembles agreeing at E = U(β) in the thermodynamic
 #          limit (ensemble equivalence).
 #   canonical Z(β) from a random state          (CanonicalTPQ)
-#     Sugiura & Shimizu, Phys. Rev. Lett. 108, 240401 (2012) [micro];
-#                        Phys. Rev. Lett. 111, 010401 (2013) [canonical].
+#     Sugiura & Shimizu, [SugiuraShimizu2012](@cite) [micro];
+#                        [SugiuraShimizu2013](@cite) [canonical].
 
 """
     MicrocanonicalTemperature <: AbstractRelation
@@ -38,7 +38,7 @@ Variables: `β`, `dS_dE`.
     CanonicalTPQ <: AbstractRelation
 
 The canonical thermal-pure-quantum estimator of the partition function
-(Sugiura & Shimizu, Phys. Rev. Lett. 111, 010401 (2013)),
+(Sugiura & Shimizu, [SugiuraShimizu2013](@cite)),
 
 `Z(β) = D · ⟨ψ₀| e^{−βĤ} |ψ₀⟩`,
 
