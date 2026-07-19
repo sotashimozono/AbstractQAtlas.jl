@@ -855,6 +855,53 @@ tensor_rank(::Type{LesserGreensFunction}) = 2
 index_spaces(::Type{LesserGreensFunction}) = (OrbitalIndex(), OrbitalIndex())
 frequency_arguments(::Type{LesserGreensFunction}) = 1
 
+# ─── the self-energy in the retarded–advanced–Keldysh (RAK) rotation ───
+# The driving analogue of the Green's-function RAK triple: `(Σ^R, Σ^A, Σ^K)`
+# carry the same 2×2 contour structure and satisfy the same identities
+# (`Σ^K = Σ^> + Σ^<`, `Σ^R − Σ^A = Σ^> − Σ^<`) and, in equilibrium, the same
+# fluctuation–dissipation tie `Σ^K = h(ω)(Σ^R − Σ^A)` — see
+# `relations/keldysh.jl`.  `Σ^R` is the self-energy the retarded [`Dyson`](@ref)
+# equation already uses; these split it into its non-equilibrium components.
+
+"""
+    RetardedSelfEnergy() <: AbstractPropagator
+
+The retarded self-energy `Σ^R(q, ω)` — the `Σ` of the retarded [`Dyson`](@ref)
+equation, and the retarded member of the Keldysh RAK triple `(Σ^R, Σ^A, Σ^K)`.
+Its anti-Hermitian part `Σ^R − Σ^A` is (minus) the level broadening.
+"""
+struct RetardedSelfEnergy <: AbstractPropagator end
+export RetardedSelfEnergy
+tensor_rank(::Type{RetardedSelfEnergy}) = 2
+index_spaces(::Type{RetardedSelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{RetardedSelfEnergy}) = 1
+
+"""
+    AdvancedSelfEnergy() <: AbstractPropagator
+
+The advanced self-energy `Σ^A(q, ω) = (Σ^R)†` — the advanced member of the
+Keldysh RAK triple; the self-energy counterpart of [`AdvancedGreensFunction`](@ref).
+"""
+struct AdvancedSelfEnergy <: AbstractPropagator end
+export AdvancedSelfEnergy
+tensor_rank(::Type{AdvancedSelfEnergy}) = 2
+index_spaces(::Type{AdvancedSelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{AdvancedSelfEnergy}) = 1
+
+"""
+    KeldyshSelfEnergy() <: AbstractPropagator
+
+The Keldysh component of the self-energy `Σ^K(q, ω) = Σ^> + Σ^<` — the
+statistical (distribution-carrying) member of the RAK triple; the self-energy
+counterpart of [`KeldyshGreensFunction`](@ref).  In equilibrium it is locked to
+the broadening by the fluctuation–dissipation tie `Σ^K = h(ω)(Σ^R − Σ^A)`.
+"""
+struct KeldyshSelfEnergy <: AbstractPropagator end
+export KeldyshSelfEnergy
+tensor_rank(::Type{KeldyshSelfEnergy}) = 2
+index_spaces(::Type{KeldyshSelfEnergy}) = (OrbitalIndex(), OrbitalIndex())
+frequency_arguments(::Type{KeldyshSelfEnergy}) = 1
+
 """
     SpectralFunction() <: AbstractQuantity
 
