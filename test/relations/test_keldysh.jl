@@ -177,6 +177,102 @@ end
     @test maximum(abs, r) < 1e-14
 end
 
+# ─── non-equilibrium: self-energy RAK + distribution (#64) ───
+
+@testset "self-energy RAK + FDT tie Σ^K = h(Σ^R − Σ^A)" begin
+    Γ, ω, β = 0.3, 0.7, 2.0
+    h = keldysh_distribution(Fermionic(), ω; β=β)          # tanh(βω/2)
+    f = 1 / (exp(β * ω) + 1)                                # Fermi–Dirac, μ = 0
+    @test h ≈ 1 - 2f                                        # h = 1 − 2 n_F
+    # retarded/advanced from a broadening Γ; Keldysh built the OTHER way, from the
+    # greater/lesser self-energies Σ^< = iΓf, Σ^> = −iΓ(1−f) (in/out scattering)
+    SigmaR = 0.1 - im * Γ / 2
+    SigmaA = conj(SigmaR)
+    Sig_les = im * Γ * f
+    Sig_gtr = -im * Γ * (1 - f)
+    SigmaK = Sig_gtr + Sig_les                             # Σ^K = Σ^> + Σ^<
+    @test SigmaK ≈ -im * Γ * h                             # ⇒ −iΓ(1−2f) = −iΓ h
+    @test (SigmaR - SigmaA) ≈ (Sig_gtr - Sig_les)          # RAK causality on the self-energy
+    @test check(
+        SelfEnergyKeldyshFDT(); SigmaK=SigmaK, h=h, SigmaR=SigmaR, SigmaA=SigmaA, atol=1e-12
+    )
+    # type-keyed: fires from a bag of self-energy components + the supplied h
+    @test RetardedSelfEnergy in quantities(SelfEnergyKeldyshFDT())
+    @test SelfEnergyKeldyshFDT() in relations_constraining(KeldyshSelfEnergy)
+    @test check(
+        SelfEnergyKeldyshFDT(),
+        bag(
+            KeldyshSelfEnergy => SigmaK,
+            RetardedSelfEnergy => SigmaR,
+            AdvancedSelfEnergy => SigmaA,
+        );
+        h=h,
+        atol=1e-12,
+    )
+end
+
+@testset "KeldyshKineticGreater: G^> = G^R Σ^> G^A" begin
+    ε, Γ, ω, β = 0.2, 0.4, 0.5, 2.0
+    f = 1 / (exp(β * ω) + 1)
+    GR = 1 / (ω - ε + im * Γ / 2)
+    GA = conj(GR)
+    Sig_gtr = -im * Γ * (1 - f)                            # Σ^> = −iΓ(1−f)
+    Ggtr = GR * Sig_gtr * GA
+    @test check(KeldyshKineticGreater(); Ggtr=Ggtr, GR=GR, Sgtr=Sig_gtr, GA=GA, atol=1e-12)
+    # independent cross-check: G^> = −i A (1−f) with A = −2 Im G^R (spectral × emptiness)
+    A = -2 * imag(GR)
+    @test Ggtr ≈ -im * A * (1 - f)
+    # matrix triple product
+    GRm = [1.0 0.2; 0.0 0.9]
+    GAm = collect(GRm')
+    Sm = [0.4 0.1; 0.1 0.3]
+    r = residual(KeldyshKineticGreater(); Ggtr=GRm * Sm * GAm, GR=GRm, Sgtr=Sm, GA=GAm)
+    @test maximum(abs, r) < 1e-14
+end
+
+@testset "NonequilibriumDistribution: G^K = G^R F − F G^A (reduces to KeldyshFDT)" begin
+    GR = 1 / (0.5 - 0.3 + im * 0.2)
+    GA = conj(GR)
+    h = 0.6
+    # equilibrium F = h scalar ⇒ G^K = h(G^R − G^A) — SAME number as KeldyshFDT
+    GK_eq = GR * h - h * GA
+    @test GK_eq ≈ h * (GR - GA)
+    @test check(NonequilibriumDistribution(); GK=GK_eq, GR=GR, Fdist=h, GA=GA, atol=1e-12)
+    @test check(KeldyshFDT(); GK=GK_eq, h=h, GR=GR, GA=GA, atol=1e-12)
+    # a non-thermal F still fires, with a DIFFERENT G^K (a driven occupation)
+    F = 0.9
+    GK_neq = GR * F - F * GA
+    @test check(NonequilibriumDistribution(); GK=GK_neq, GR=GR, Fdist=F, GA=GA, atol=1e-12)
+    @test !isapprox(GK_neq, GK_eq)
+    # matrix F that does NOT commute with G^{R,A}: the ORDERING must be honored
+    GRm = [0.5+0.1im 0.2; 0.0 0.3+0.2im]
+    GAm = collect(GRm')
+    Fm = [0.6 0.4; 0.1 0.7]
+    r = residual(
+        NonequilibriumDistribution(); GK=GRm * Fm - Fm * GAm, GR=GRm, Fdist=Fm, GA=GAm
+    )
+    @test maximum(abs, r) < 1e-14
+    @test !isapprox(GRm * Fm, Fm * GAm)
+end
+
+@testset "TwoTerminalDistribution: broadening-weighted bath average" begin
+    ΓL, ΓR, fL, fR = 0.7, 0.3, 0.9, 0.1
+    fss = (ΓL * fL + ΓR * fR) / (ΓL + ΓR)
+    @test check(
+        TwoTerminalDistribution(); fdist=fss, ΓL=ΓL, fL=fL, ΓR=ΓR, fR=fR, atol=1e-12
+    )
+    @test solve(TwoTerminalDistribution(), Val(:fdist); ΓL=ΓL, fL=fL, ΓR=ΓR, fR=fR) ≈ fss
+    @test min(fL, fR) ≤ fss ≤ max(fL, fR)                  # a weighted average is bracketed
+    # equal baths (no bias) ⇒ common occupation; symmetric coupling ⇒ arithmetic mean
+    @test check(
+        TwoTerminalDistribution(); fdist=0.5, ΓL=ΓL, fL=0.5, ΓR=ΓR, fR=0.5, atol=1e-12
+    )
+    @test solve(TwoTerminalDistribution(), Val(:fdist); ΓL=1.0, fL=fL, ΓR=1.0, fR=fR) ≈
+        (fL + fR) / 2
+end
+
 @testset "Keldysh relations register under :keldysh" begin
-    @test length(all_relations(; domain=:keldysh)) == 11   # +5: Langreth R/A/</> + KineticLesser
+    # 6 equilibrium RAK + 4 Langreth + KineticLesser (#101) + 4 non-equilibrium (#64):
+    # SelfEnergyKeldyshFDT, KeldyshKineticGreater, NonequilibriumDistribution, TwoTerminalDistribution
+    @test length(all_relations(; domain=:keldysh)) == 15
 end

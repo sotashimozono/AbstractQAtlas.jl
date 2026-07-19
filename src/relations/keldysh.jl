@@ -195,3 +195,91 @@ Variables: `Gless` (`G^<`), `GR` (`G^R`), `Sless` (`Σ^<`), `GA` (`G^A`).
     Sless,
     GA::AdvancedGreensFunction,
 ) = Gless - GR * Sless * GA
+
+"""
+    KeldyshKineticGreater <: AbstractRelation
+
+The steady-state Keldysh Dyson (kinetic) equation for the greater propagator,
+`G^>(ω) = G^R(ω) Σ^>(ω) G^A(ω)` — the greater partner of
+[`KeldyshKineticLesser`](@ref); together `G^≷` fix the occupation and the
+in/out-scattering rates.  Matrix-valued.  `Sgtr = Σ^>` is a supplied component.
+
+Variables: `Ggtr` (`G^>`), `GR` (`G^R`), `Sgtr` (`Σ^>`), `GA` (`G^A`).
+"""
+@relation :keldysh KeldyshKineticGreater(
+    Ggtr::GreaterGreensFunction,
+    GR::RetardedGreensFunction,
+    Sgtr,
+    GA::AdvancedGreensFunction,
+) = Ggtr - GR * Sgtr * GA
+
+# ─── the self-energy RAK triple + the non-equilibrium distribution ───
+#
+# The self-energy carries the same RAK structure as the propagator; its
+# equilibrium fluctuation–dissipation tie `Σ^K = h(ω)(Σ^R − Σ^A)` mirrors
+# [`KeldyshFDT`](@ref) (`Σ^R` is the self-energy of the retarded [`Dyson`](@ref)).
+# Off equilibrium the Keldysh propagator is parametrized by a DISTRIBUTION matrix
+# `F` (generally non-thermal), `G^K = G^R F − F G^A`, reducing to `KeldyshFDT`
+# when `F = h(ω)·I`; for a system between two reservoirs the steady-state `F`
+# is the broadening-weighted average of the bath occupations.  Reference:
+# Rammer & Smith, [RammerSmith1986](@cite); the two-terminal steady state
+# is Haug & Jauho, *Quantum Kinetics in Transport and Optics of Semiconductors*.
+
+"""
+    SelfEnergyKeldyshFDT <: AbstractRelation
+
+The self-energy fluctuation–dissipation tie: in equilibrium the Keldysh
+self-energy is fixed by the retarded/advanced pair through the distribution
+function `h`,
+
+`Σ^K(ω) = h(ω) (Σ^R(ω) − Σ^A(ω))`,
+
+with `h = coth(βω/2)` (bosons) or `tanh(βω/2)` (fermions), supplied by
+[`keldysh_distribution`](@ref).  The self-energy mirror of [`KeldyshFDT`](@ref)
+(Rammer & Smith, [RammerSmith1986](@cite)).
+
+Variables: `SigmaK` (`Σ^K`), `h`, `SigmaR` (`Σ^R`), `SigmaA` (`Σ^A`).
+"""
+@relation :keldysh SelfEnergyKeldyshFDT(
+    SigmaK::KeldyshSelfEnergy, h, SigmaR::RetardedSelfEnergy, SigmaA::AdvancedSelfEnergy
+) = SigmaK - h * (SigmaR - SigmaA)
+
+"""
+    NonequilibriumDistribution <: AbstractRelation
+
+The non-equilibrium parametrization of the Keldysh propagator by a DISTRIBUTION
+matrix `F` (the generalized, generally non-thermal, occupation),
+
+`G^K(ω) = G^R(ω) F(ω) − F(ω) G^A(ω)`.
+
+This separates the spectral content (`G^R`, `G^A`) from the occupation (`F`); it
+reduces to the equilibrium [`KeldyshFDT`](@ref) `G^K = h(G^R − G^A)` when
+`F = h(ω)·I` is the thermal scalar distribution.  Matrix-valued in orbital space
+(the ordering of the products is kept — `F` need not commute with `G^{R,A}`).
+`F = Fdist` is a supplied component.  (Rammer & Smith, [RammerSmith1986](@cite).)
+
+Variables: `GK` (`G^K`), `GR` (`G^R`), `Fdist` (`F`), `GA` (`G^A`).
+"""
+@relation :keldysh NonequilibriumDistribution(
+    GK::KeldyshGreensFunction, GR::RetardedGreensFunction, Fdist, GA::AdvancedGreensFunction
+) = GK - (GR * Fdist - Fdist * GA)
+
+"""
+    TwoTerminalDistribution <: AbstractRelation
+
+The steady-state non-equilibrium distribution of a region coupled to two
+reservoirs `L`, `R` with level-broadenings `Γ_L`, `Γ_R` and occupations `f_L`,
+`f_R`,
+
+`f(ω) = [Γ_L(ω) f_L(ω) + Γ_R(ω) f_R(ω)] / [Γ_L(ω) + Γ_R(ω)]`,
+
+the broadening-weighted average of the bath distributions — the non-thermal
+occupation that drives a current when `f_L ≠ f_R` (a bias), and the concrete
+`F` of [`NonequilibriumDistribution`](@ref).  Reduces to the common equilibrium
+occupation when `f_L = f_R`.  (Haug & Jauho, *Quantum Kinetics in Transport and
+Optics of Semiconductors*.)
+
+Variables: `fdist` (`f`), `ΓL`, `fL`, `ΓR`, `fR`.
+"""
+@relation :keldysh TwoTerminalDistribution(fdist, ΓL, fL, ΓR, fR) =
+    fdist - (ΓL * fL + ΓR * fR) / (ΓL + ΓR)
