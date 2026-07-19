@@ -131,3 +131,31 @@ end
     @test occursin("\"subject\":null", lines[2])
     @test occursin("\"status\":\"divergent\"", lines[2])
 end
+
+@testset "Card show + stdout card_jsonl" begin
+    ok = report(
+        _DemoModel(),
+        VonNeumannEntropy(),
+        PBC(64);
+        value=0.5,
+        err=0.01,
+        route=:monte_carlo,
+        provenance="mc",
+    )
+    div = report(
+        _DemoModel(),
+        VonNeumannEntropy(),
+        Infinite();
+        value=NaN,
+        route=:dmrg,
+        provenance="d",
+    )
+    s_ok = sprint(show, ok)
+    @test occursin("Card(", s_ok) && occursin("± 0.01", s_ok)     # value + error_bar branch
+    @test occursin("divergent", sprint(show, div))                # the divergent branch
+    # the stdout convenience method (redirected so it does not pollute test output)
+    redirect_stdout(devnull) do
+        card_jsonl([ok])
+    end
+    @test true
+end
