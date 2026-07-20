@@ -7,6 +7,11 @@
 #   S = −∂F/∂T               (entropy as a free-energy response)
 #   U = ∂(βF)/∂β             (Gibbs–Helmholtz, β form)
 #
+# References (textbook standard — these are the definitional equations of
+# equilibrium thermodynamics, with no single originating paper): Callen,
+# *Thermodynamics and an Introduction to Thermostatistics*, 2nd ed. (Wiley,
+# 1985); Landau & Lifshitz, *Statistical Physics* Part 1, 3rd ed. (1980).
+#
 # One @relation declaration each.  The derivative forms follow the
 # supplied-derivative convention (cf. `LinearResponseFDT`): the caller
 # provides the derivative value however obtained — closed form, AD,

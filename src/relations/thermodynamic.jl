@@ -1,8 +1,14 @@
 # relations/thermodynamic.jl — fluctuation–dissipation identities.
 #
-# The static fluctuation–dissipation theorem (Callen & Welton, Phys. Rev.
-# 83, 34 (1951)) in its thermodynamic form: a response equals β times the
-# fluctuation (variance) of its conjugate observable.
+# The static fluctuation–dissipation theorem (Callen & Welton,
+# [CallenWelton1951](@cite)) in its thermodynamic form: a response equals β
+# times the fluctuation (variance) of its conjugate observable.  The file also
+# collects the neighbouring equilibrium-thermodynamics identities — the four
+# Maxwell relations and the heat-capacity / thermodynamic-stability results
+# (Callen, *Thermodynamics and an Introduction to Thermostatistics*, 2nd ed.,
+# 1985), the Clausius–Clapeyron relation (Clapeyron 1834; Clausius 1850), and
+# the Gibbs–Duhem relation (Gibbs, *On the Equilibrium of Heterogeneous
+# Substances*, 1876).
 #
 # One @relation declaration each; the β-or-T keyword convention and all
 # solves come from the interface layer (every variable here is affine —
