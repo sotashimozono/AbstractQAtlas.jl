@@ -116,3 +116,38 @@ derivative convention: `dM_dh` is the caller-computed `∂⟨M⟩/∂h`.
 """
 @relation :fundamental SusceptibilityResponse(χ::Susceptibility{(:z, :z)}, dM_dh) =
     χ - dM_dh
+
+"""
+    GrandPotentialLegendre <: AbstractRelation
+
+The grand potential as the Legendre transform of the free energy that trades the
+particle number for the chemical potential,
+
+`Ω = F − μN`.
+
+The grand-canonical companion of [`FreeEnergyLegendre`](@ref) (`F = U − TS`): it
+opens the second root of the response genealogy ([`GrandPotential`](@ref)), from
+which `N = −∂Ω/∂μ` follows ([`ParticleNumberResponse`](@ref)).
+
+Variables: `Ω`, `F`, `μ`, `N`.
+"""
+@relation :fundamental GrandPotentialLegendre(
+    Ω::GrandPotential, F::FreeEnergy, μ, N::ParticleNumber
+) = Ω - (F - μ * N)
+
+"""
+    ParticleNumberResponse <: AbstractRelation
+
+The particle number as the chemical-potential-derivative of the grand potential,
+
+`N = −∂Ω/∂μ`.
+
+The grand-canonical analogue of [`MagnetizationResponse`](@ref) (`M = −∂F/∂h`) —
+the first edge of the grand potential's genealogy
+([`derivative_edge`](@ref)`(ParticleNumber)`), stated exactly.  Supplied-
+derivative convention: `dΩ_dμ` is the caller-computed `∂Ω/∂μ` at the working
+point.
+
+Variables: `N`, `dΩ_dμ`.
+"""
+@relation :fundamental ParticleNumberResponse(N::ParticleNumber, dΩ_dμ) = N - (-dΩ_dμ)

@@ -68,4 +68,5 @@ quantities that are not first field-derivatives of the free energy.
 conjugate_field(q::AbstractQuantity) = conjugate_field(typeof(q))
 conjugate_field(::Type{<:AbstractMagnetization}) = MagneticField()
 conjugate_field(::Type{ThermalEntropy}) = Temperature()
+conjugate_field(::Type{ParticleNumber}) = ChemicalPotential()   # N ⟷ μ (grand canonical)
 export conjugate_field

@@ -14,11 +14,11 @@ AbstractQAtlas.domain(::_NonAffineDemo) = :test_only
 
 @testset "registry + traits" begin
     rels = all_relations()
-    @test length(rels) == 121        # universal-only: model-specific (spin glass, Drude mobility, single-band Hall) moved to QAtlas
+    @test length(rels) == 123        # universal-only: model-specific (spin glass, Drude mobility, single-band Hall) moved to QAtlas
     @test allunique(typeof.(rels))
     @test length(all_relations(; domain=:scaling)) == 5
     @test length(all_relations(; domain=:thermodynamic)) == 15
-    @test length(all_relations(; domain=:fundamental)) == 6
+    @test length(all_relations(; domain=:fundamental)) == 8   # +GrandPotentialLegendre, ParticleNumberResponse (grand-canonical)
     @test length(all_relations(; domain=:topology)) == 3
     @test length(all_relations(; domain=:spectral)) == 14
     @test length(all_relations(; domain=:keldysh)) == 15

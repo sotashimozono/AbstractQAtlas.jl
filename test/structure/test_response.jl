@@ -104,3 +104,19 @@ end
     χ_stat = solve(SusceptibilityFDT(), Val(:χ); var_M=var_M, β=β, N=1)
     @test χ_def ≈ χ_stat
 end
+
+@testset "grand-canonical branch: N roots at the GrandPotential (second root)" begin
+    # N = −∂Ω/∂μ is the grand-canonical analogue of M = −∂F/∂h — a first
+    # single-field derivative, but of the GRAND potential, not the free energy.
+    @test derivative_edge(ParticleNumber()) ==
+        DerivativeEdge(GrandPotential, ChemicalPotential)
+    @test potential_root(ParticleNumber()) === GrandPotential
+    @test differentiation_chain(ParticleNumber()) == [ParticleNumber, GrandPotential]
+    @test is_response(ParticleNumber())
+    @test derivative_order(ParticleNumber(), ChemicalPotential()) == 1
+    @test conjugate_field(ParticleNumber()) === ChemicalPotential()
+    # GrandPotential is itself a root (no edge); the canonical branch is untouched
+    @test derivative_edge(GrandPotential()) === nothing
+    @test differentiation_chain(GrandPotential()) == [GrandPotential]
+    @test potential_root(Magnetization(:z)) === FreeEnergy
+end

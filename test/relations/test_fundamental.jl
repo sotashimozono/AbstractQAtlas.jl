@@ -141,3 +141,26 @@ end
         atol=1e-12,
     )
 end
+
+@testset "grand-canonical: Ω = F − μN and N = −∂Ω/∂μ (single fermionic level)" begin
+    # a single level ε in the grand canonical: Ξ = 1 + e^{−β(ε−μ)}, so N is the
+    # Fermi function and −∂Ω/∂μ reproduces it — an INDEPENDENT construction.
+    β, ε, μ = 1.2, 0.7, 0.3
+    Ω(m) = -log(1 + exp(-β * (ε - m))) / β
+    Nf = 1 / (exp(β * (ε - μ)) + 1)                 # Fermi function
+    Fhelm = Ω(μ) + μ * Nf                            # F = Ω + μN (invert the Legendre)
+    # Ω = F − μN (algebraic, exact)
+    @test check(GrandPotentialLegendre(); Ω=Ω(μ), F=Fhelm, μ=μ, N=Nf, atol=1e-12)
+    @test solve(GrandPotentialLegendre(), Val(:Ω); F=Fhelm, μ=μ, N=Nf) ≈ Ω(μ)
+    # N = −∂Ω/∂μ, with ∂Ω/∂μ from an INDEPENDENT central difference
+    dΩ_dμ = (Ω(μ + 1e-6) - Ω(μ - 1e-6)) / 2e-6
+    @test dΩ_dμ ≈ -Nf atol = 1e-6
+    @test check(ParticleNumberResponse(); N=Nf, dΩ_dμ=dΩ_dμ, atol=1e-6)
+    # type-keyed bag: the grand-canonical measurement fires the Legendre relation
+    @test check(
+        GrandPotentialLegendre(),
+        bag(GrandPotential => Ω(μ), FreeEnergy => Fhelm, ParticleNumber => Nf);
+        μ=μ,
+        atol=1e-12,
+    )
+end

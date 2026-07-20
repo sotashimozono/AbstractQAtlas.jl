@@ -18,6 +18,7 @@ using AbstractQAtlas:
     derivative_order,
     potential_root,
     FreeEnergy,
+    GrandPotential,
     Susceptibility,
     SpecificHeat,
     Energy
@@ -46,10 +47,11 @@ function thermal_derivative(q::AbstractQuantity, F, x::Number)
         "thermal_derivative: $(typeof(q)) is not a response function " *
         "(no derivative_edge) — nothing to differentiate.",
     )
-    potential_root(q) === FreeEnergy || error(
-        "thermal_derivative: the generic genealogy path handles FreeEnergy-rooted " *
-        "single-field responses; $(typeof(q)) roots at $(potential_root(q)) — use " *
-        "its explicit method (e.g. Energy/SpecificHeat).",
+    root = potential_root(q)
+    (root === FreeEnergy || root === GrandPotential) || error(
+        "thermal_derivative: the generic genealogy path handles the standard response " *
+        "potentials (FreeEnergy `M=−∂F/∂h`, GrandPotential `N=−∂Ω/∂μ`); $(typeof(q)) " *
+        "roots at $root — use its explicit method (e.g. Energy/SpecificHeat).",
     )
     return -_nth(F, x, derivative_order(q, e.field()))   # e.field is a TYPE → instantiate
 end
