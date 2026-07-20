@@ -14,9 +14,11 @@ import AbstractQAtlas: thermal_derivative        # extended below → must impor
 using AbstractQAtlas:
     response_order,
     indices,
-    Magnetization,
+    derivative_edge,
+    derivative_order,
+    potential_root,
+    FreeEnergy,
     Susceptibility,
-    ThermalEntropy,
     SpecificHeat,
     Energy
 using ForwardDiff: derivative
@@ -25,8 +27,32 @@ using ForwardDiff: derivative
 # response orders are 1–3).
 _nth(f, x, n::Integer) = n == 0 ? f(x) : _nth(y -> derivative(f, y), x, n - 1)
 
-# M_α = −∂F/∂h  (first field-derivative of the free energy)
-thermal_derivative(::Magnetization, F, h) = -derivative(F, h)
+# ── generic, genealogy-driven response ────────────────────────────────────
+# For a FreeEnergy-rooted response that is a pure single-field derivative of
+# the free energy — the extensive-variable tree `M = −∂F/∂h`, `S = −∂F/∂T`, and
+# any higher single-field response — read the derivative ORDER and FIELD from
+# the genealogy (`derivative_edge` / `derivative_order`) instead of hand-coding
+# each quantity.  A new such quantity is AD-covered the moment it declares its
+# edge — the map is not hand-maintained (core-functions.md, pillar 4).  The net
+# sign is −1 across this tree (the `F → response` edge is `−∂/∂field`, the
+# intra-response edges are `+∂/∂field`).  Irregular members of the genealogy
+# (`Energy`, whose potential is `βF`, and `SpecificHeat`, reached through `U`)
+# keep the explicit methods below; `Susceptibility` keeps its own method for the
+# off-diagonal guard.  `x::Number` on every point argument keeps this generic
+# method and the concrete ones unambiguous.
+function thermal_derivative(q::AbstractQuantity, F, x::Number)
+    e = derivative_edge(q)
+    e === nothing && error(
+        "thermal_derivative: $(typeof(q)) is not a response function " *
+        "(no derivative_edge) — nothing to differentiate.",
+    )
+    potential_root(q) === FreeEnergy || error(
+        "thermal_derivative: the generic genealogy path handles FreeEnergy-rooted " *
+        "single-field responses; $(typeof(q)) roots at $(potential_root(q)) — use " *
+        "its explicit method (e.g. Energy/SpecificHeat).",
+    )
+    return -_nth(F, x, derivative_order(q, e.field()))   # e.field is a TYPE → instantiate
+end
 
 # χ⁽ⁿ⁾_{α;β₁…βₙ} = −∂ⁿ⁺¹F/∂h_α∂h_{β₁}…∂h_{βₙ}.  With a SINGLE-field function
 # F(h) only the DIAGONAL component (all indices equal) is defined — an
@@ -70,13 +96,14 @@ function thermal_derivative(χ::Susceptibility, F, h⃗::AbstractVector, compone
     return -_partial(F, h⃗, slots)
 end
 
-# S = −∂F/∂T
-thermal_derivative(::ThermalEntropy, F, T) = -derivative(F, T)
+# S = −∂F/∂T is handled by the generic genealogy method above (order-1 single-
+# field response of the free energy w.r.t. Temperature).
 
-# C = ∂U/∂T
-thermal_derivative(::SpecificHeat, U, T) = derivative(U, T)
+# ── irregular members: not a pure single-field power of F ──────────────────
+# C = ∂U/∂T  (reached through U, not F directly)
+thermal_derivative(::SpecificHeat, U, T::Number) = derivative(U, T)
 
-# U = ∂(βF)/∂β  (Gibbs–Helmholtz; pass the βF function of β)
-thermal_derivative(::Energy, βF, β) = derivative(βF, β)
+# U = ∂(βF)/∂β  (Gibbs–Helmholtz; the potential is βF, not F — pass βF(β))
+thermal_derivative(::Energy, βF, β::Number) = derivative(βF, β)
 
 end # module AbstractQAtlasForwardDiffExt
