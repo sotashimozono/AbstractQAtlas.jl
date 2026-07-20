@@ -79,8 +79,23 @@ end
     @test U_ad ≈ exp(-β0) / (1 + exp(-β0)) atol = 1e-12    # ⟨E⟩ of the two-level system
 end
 
-@testset "unsupported quantity falls through to the informative stub" begin
-    # FreeEnergy has no AD genealogy edge ⇒ the generic stub still errors
+@testset "M and S are computed by the generic genealogy path (not hand-coded)" begin
+    # The magnetization / entropy responses have no bespoke method any more — the
+    # generic method reads the order and field from `derivative_edge`, so the AD
+    # coverage cannot drift out of sync with the genealogy.  Re-check the values.
+    β = 1.1
+    F(h) = -log(2 * cosh(β * h)) / β
+    @test thermal_derivative(Magnetization(:z), F, 0.25) ≈ tanh(β * 0.25) atol = 1e-12
+    Φ(T) = -T * log(2 * cosh(1.0 / T))
+    @test thermal_derivative(ThermalEntropy(), Φ, 2.0) ≈ -ForwardDiff.derivative(Φ, 2.0) atol =
+        1e-12
+end
+
+@testset "a non-response quantity errors informatively" begin
+    # FreeEnergy is the genealogy ROOT — no `derivative_edge`, nothing to
+    # differentiate.  With the backend loaded, the generic method says so
+    # precisely (the "run `using ForwardDiff`" stub is only for when the AD
+    # extension is absent, not for a quantity that is simply not a response).
     err = try
         thermal_derivative(FreeEnergy(), sin, 0.3)
         nothing
@@ -88,5 +103,5 @@ end
         e
     end
     @test err isa ErrorException
-    @test occursin("automatic-differentiation", err.msg)
+    @test occursin("not a response function", err.msg)
 end
