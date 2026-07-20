@@ -1,6 +1,6 @@
 name = "AbstractQAtlas"
 uuid = "dcea2817-62f8-4a75-b498-1b50a9ed1e4d"
-version = "0.3.23"
+version = "0.3.24"
 authors = ["sota shimozono <shimozono-sota631@g.ecc.u-tokyo.ac.jp>"]
 
 [deps]
@@ -9,9 +9,11 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [weakdeps]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
 AbstractQAtlasForwardDiffExt = "ForwardDiff"
+AbstractQAtlasZygoteExt = "Zygote"
 
 [compat]
 Aqua = "0.8"
@@ -20,6 +22,7 @@ InteractiveUtils = "1"
 LinearAlgebra = "1"
 Random = "1"
 Test = "1"
+Zygote = "0.6, 0.7"
 julia = "1.10"
 
 [extras]
@@ -27,6 +30,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [targets]
-test = ["Test", "Aqua", "Random", "ForwardDiff"]
+test = ["Test", "Aqua", "Random", "ForwardDiff", "Zygote"]

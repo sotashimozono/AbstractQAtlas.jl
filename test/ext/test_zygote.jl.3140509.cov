@@ -1,0 +1,48 @@
+        - # The Zygote reverse-mode extension: thermal_gradient computes the full
+        - # first-order response vector −∇F in one pass, cross-checked against the closed
+        - # form AND against the per-component forward-mode thermal_derivative.
+        - 
+        - using AbstractQAtlas
+        - using AbstractQAtlas: thermal_gradient, thermal_derivative
+        - using Zygote   # activates AbstractQAtlasZygoteExt
+        - 
+        - # slice a vector free energy to a single-field function of component i (for the
+        - # forward-mode per-component cross-check)
+       15 _slice(F, v, i) = t -> F([j == i ? t : v[j] for j in eachindex(v)])
+        - 
+        - @testset "thermal_gradient = −∇F: the whole first-order response in one reverse pass" begin
+        -     β = 1.3
+        -     # independent spins: F(h⃗) = −Σ log(2cosh βhᵢ)/β ⇒ M_i = −∂F/∂h_i = tanh(βh_i)
+        5     F(h⃗) = -sum(log(2 * cosh(β * hi)) for hi in h⃗) / β
+        -     h = [0.1, 0.4, -0.2]
+        -     M = thermal_gradient(F, h)
+        -     @test M ≈ tanh.(β .* h) atol = 1e-10
+        -     # component-wise agreement with the forward-mode per-component thermal_derivative
+        -     for i in eachindex(h)
+        -         @test M[i] ≈ thermal_derivative(Magnetization(:z), _slice(F, h, i), h[i]) atol =
+        -             1e-10
+        -     end
+        -     # a scalar field reduces to the scalar −F′ (matches the order-1 thermal_derivative)
+        1     g(x) = x^3
+        -     @test thermal_gradient(g, 2.0) ≈ -12.0 atol = 1e-12
+        -     # an unsupported input type (neither a field vector nor a scalar) falls through
+        -     # to the generic stub and errors informatively — exercises the fallback path
+        -     err = try
+        -         thermal_gradient(g, (1, 2))
+        -         nothing
+        -     catch e
+        -         e
+        -     end
+        -     @test err isa ErrorException && occursin("reverse-mode", err.msg)
+        - end
+        - 
+        - @testset "reverse-mode ⇄ forward-mode agree on a coupled (non-separable) free energy" begin
+        -     # a genuinely coupled F so the gradient components are not independent
+        5     F(v) = 0.5 * (v[1]^2 + 2v[2]^2) + 0.3 * v[1] * v[2] + sin(v[3])
+        -     v = [0.7, -0.4, 1.1]
+        -     g_rev = thermal_gradient(F, v)                          # −∇F in one reverse pass
+        -     for i in eachindex(v)
+        -         @test g_rev[i] ≈ thermal_derivative(Magnetization(:z), _slice(F, v, i), v[i]) atol =
+        -             1e-10
+        -     end
+        - end

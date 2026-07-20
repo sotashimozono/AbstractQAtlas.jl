@@ -58,3 +58,35 @@ function thermal_derivative(quantity::AbstractQuantity, potential, x)
     )
 end
 export thermal_derivative
+
+"""
+    thermal_gradient(F, x) -> −∇F(x)
+
+The full **first-order** response conjugate to a field VECTOR `x`, in a single
+REVERSE-mode pass: `M_α = −∂F/∂h_α` for every direction at once from a free
+energy `F(h⃗)` (magnetization for a magnetic-field vector, particle numbers for a
+chemical-potential vector, …).  The reverse-mode companion of
+[`thermal_derivative`](@ref), which takes one component at a time by forward
+mode — for a high-dimensional field vector, reverse mode gets every component in
+one pass instead of one pass per component.
+
+Returns `−∇F` (the `−` is the extensive-response convention `M = −∂F/∂h`); a
+scalar `x` gives the scalar `−F'(x)`, agreeing with the order-1
+`thermal_derivative`.
+
+Requires a reverse-mode AD backend; the method is provided by the `Zygote`
+package extension.  Without it, this throws an informative error.
+
+```julia
+using Zygote
+F(h⃗) = -sum(log(2cosh(β*hᵢ)) for hᵢ in h⃗) / β   # independent spins
+thermal_gradient(F, [0.1, 0.4, -0.2])            # [tanh(β·0.1), tanh(β·0.4), tanh(-β·0.2)]
+```
+"""
+function thermal_gradient(F, x)
+    return error(
+        "thermal_gradient: no reverse-mode method for x::$(typeof(x)) — load a " *
+        "reverse-mode AD backend (`using Zygote`) and pass a field vector or scalar.",
+    )
+end
+export thermal_gradient
