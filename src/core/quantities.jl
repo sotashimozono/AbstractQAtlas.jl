@@ -995,6 +995,27 @@ index_spaces(::Type{DynamicalStructureFactor}) = (SpinAxis(), SpinAxis())
 frequency_arguments(::Type{DynamicalStructureFactor}) = 1
 
 """
+    DynamicalSpinStructureFactor{A,B}() <: AbstractStructureFactor
+    DynamicalSpinStructureFactor(a::Symbol, b::Symbol)
+
+The **axis-resolved** dynamical spin structure factor `S^{AB}(q, ω)` — the
+space-time Fourier transform of the [`SpinCorrelation`](@ref) `⟨S^A_i S^B_j⟩`,
+a rank-2 tensor in [`SpinAxis`](@ref) space (`DynamicalSpinStructureFactor(:z, :z)`
+= `S^{zz}(q, ω)`).  The component-resolved companion of the axis-agnostic
+[`DynamicalStructureFactor`](@ref); its frequency integral gives the static
+[`SpinStructureFactor`](@ref) `{A,B}`.
+"""
+struct DynamicalSpinStructureFactor{A,B} <: AbstractStructureFactor
+    DynamicalSpinStructureFactor{A,B}() where {A,B} = (_axis(A); _axis(B); new{A,B}())
+end
+DynamicalSpinStructureFactor(a::Symbol, b::Symbol) = DynamicalSpinStructureFactor{a,b}()
+tensor_rank(::Type{<:DynamicalSpinStructureFactor}) = 2
+index_spaces(::Type{<:DynamicalSpinStructureFactor}) = (SpinAxis(), SpinAxis())
+indices(::Type{DynamicalSpinStructureFactor{A,B}}) where {A,B} = (A, B)
+frequency_arguments(::Type{<:DynamicalSpinStructureFactor}) = 1
+export DynamicalSpinStructureFactor
+
+"""
     StaticStructureFactor() <: AbstractStructureFactor
 
 The static (equal-time) structure factor `S(q)` — the frequency integral
