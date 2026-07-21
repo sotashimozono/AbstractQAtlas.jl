@@ -78,7 +78,8 @@ commuting observable):
 [`SusceptibilityFDT`](@ref) is this relation with `O = M` and a `1/N`
 normalization.
 """
-@relation :thermodynamic LinearResponseFDT(dO_dλ, var_O, β) = dO_dλ - β * var_O
+@relation :thermodynamic LinearResponseFDT(dO_dλ, var_O, β::InverseTemperature) =
+    dO_dλ - β * var_O
 
 """
     SpecificHeatFromEntropy <: AbstractRelation

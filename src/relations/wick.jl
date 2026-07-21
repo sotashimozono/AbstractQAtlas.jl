@@ -147,7 +147,8 @@ the mode occupation that seeds the thermal Wick determinant/Pfaffian,
 
 Variables: `n`, `ε`, `β` (or `T`).
 """
-@relation :wick FermiDiracContraction(n, ε, β) = n - 1 / (exp(β * ε) + 1)
+@relation :wick FermiDiracContraction(n, ε, β::InverseTemperature) =
+    n - 1 / (exp(β * ε) + 1)
 
 """
     BoseEinsteinContraction <: AbstractRelation
@@ -159,4 +160,5 @@ occupation seeding the thermal Wick **permanent**,
 
 Variables: `n`, `ε`, `β` (or `T`).
 """
-@relation :wick BoseEinsteinContraction(n, ε, β) = n - 1 / (exp(β * ε) - 1)
+@relation :wick BoseEinsteinContraction(n, ε, β::InverseTemperature) =
+    n - 1 / (exp(β * ε) - 1)
