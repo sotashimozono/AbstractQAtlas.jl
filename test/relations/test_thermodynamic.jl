@@ -66,6 +66,17 @@ end
         @test solve(LinearResponseFDT(), Val(:dO_dλ); var_O=varO(β, λ), β=β) ≈ dO rtol =
             1e-6
     end
+    # β::InverseTemperature is typed ⇒ LinearResponseFDT is now VISIBLE to the type-keyed
+    # bag door (with a bare β it had empty variable_types and could never fire from a bag)
+    β = 1.0
+    dO = (meanO(β, 0.3 + 1e-5) - meanO(β, 0.3 - 1e-5)) / 2e-5
+    @test check(
+        LinearResponseFDT(),
+        bag(InverseTemperature => β);
+        dO_dλ=dO,
+        var_O=varO(β, 0.3),
+        atol=1e-7,
+    )
 end
 
 @testset "SpecificHeatFromEntropy: c = T ∂s/∂T vs the closed-form ∂s/∂T" begin
@@ -194,15 +205,13 @@ end
         ThermalExpansionCoefficient,
         IsothermalCompressibility,
     ))                                                              # gains α, κT (now typed)
-    # generic / pure-derivative relations correctly stay symbol-keyed
+    # the 4 Maxwell relations stay fully symbol-keyed (generic / pure-derivative)
     @test all(
         r -> isempty(variable_types(r)),
-        (
-            LinearResponseFDT(),
-            MaxwellHelmholtz(),
-            MaxwellGibbs(),
-            MaxwellInternal(),
-            MaxwellEnthalpy(),
-        ),
+        (MaxwellHelmholtz(), MaxwellGibbs(), MaxwellInternal(), MaxwellEnthalpy()),
     )
+    # LinearResponseFDT now types β::InverseTemperature (bag-visible, like Jarzynski/Crooks)
+    # but still has NO quantity subject (β is a field, not a quantity)
+    @test !isempty(variable_types(LinearResponseFDT()))
+    @test isempty(quantities(LinearResponseFDT()))
 end

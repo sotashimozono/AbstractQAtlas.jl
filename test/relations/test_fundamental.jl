@@ -99,10 +99,12 @@ end
 end
 
 @testset "type-keyed: fundamental response web" begin
-    # quantities() preserved exactly — the F-derivative edges are kept via
-    # also_constrains (EntropyResponse/GibbsHelmholtz reach FreeEnergy through dF/dT, dβF/dβ)
-    @test quantities(MagnetizationResponse()) == (Magnetization,)
-    @test quantities(SusceptibilityResponse()) == (Susceptibility,)
+    # quantities() = typed subject ∪ the potential reached through the supplied derivative
+    # (also_constrains) — so every field-derivative response keeps its edge to the potential:
+    # M/χ reach FreeEnergy/Magnetization through dF_dh/dM_dh, exactly as EntropyResponse/
+    # GibbsHelmholtz reach FreeEnergy through dF_dT/dβF_dβ.
+    @test Set(quantities(MagnetizationResponse())) == Set((Magnetization, FreeEnergy))
+    @test Set(quantities(SusceptibilityResponse())) == Set((Susceptibility, Magnetization))
     @test Set(quantities(EntropyResponse())) == Set((ThermalEntropy, FreeEnergy))
     @test Set(quantities(GibbsHelmholtz())) == Set((Energy, FreeEnergy))
     @test Set(quantities(FreeEnergyFromZ())) == Set((FreeEnergy, PartitionFunction))
@@ -163,4 +165,16 @@ end
         μ=μ,
         atol=1e-12,
     )
+end
+
+@testset "also_constrains: the field-derivative responses complete the quantity graph" begin
+    # each response reaches a potential through a SUPPLIED derivative slot (dF_dh, dM_dh,
+    # dΩ_dμ), invisible to auto-derivation — `also_constrains` restores the graph edge, so
+    # `relations_constraining` finds them (parallel to EntropyResponse/GibbsHelmholtz).
+    @test FreeEnergy in quantities(MagnetizationResponse())
+    @test Magnetization in quantities(SusceptibilityResponse())
+    @test GrandPotential in quantities(ParticleNumberResponse())
+    @test MagnetizationResponse() in relations_constraining(FreeEnergy)
+    @test SusceptibilityResponse() in relations_constraining(Magnetization)
+    @test ParticleNumberResponse() in relations_constraining(GrandPotential)
 end

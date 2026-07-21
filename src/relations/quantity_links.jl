@@ -21,9 +21,13 @@ also_constrains(::MottFormula) = (Conductivity,)   # transport: dlnσ/dε → Co
 also_constrains(::MicrocanonicalTemperature) = (ThermalEntropy, Energy)  # β = ∂S/∂E
 also_constrains(::EntropyResponse) = (FreeEnergy,)     # fundamental: S = −∂F/∂T
 also_constrains(::GibbsHelmholtz) = (FreeEnergy,)      # fundamental: U = ∂(βF)/∂β
+also_constrains(::MagnetizationResponse) = (FreeEnergy,)     # fundamental: M = −∂F/∂h
+also_constrains(::SusceptibilityResponse) = (Magnetization,)  # fundamental: χ = ∂M/∂h
+also_constrains(::ParticleNumberResponse) = (GrandPotential,)  # grand-canonical: N = −∂Ω/∂μ
 # HeatCapacityDifference GAINS ThermalExpansionCoefficient + IsothermalCompressibility
-# (α, κT are now typed subjects → auto). LinearResponseFDT + the 4 Maxwell relations
-# stay symbol-keyed (generic / pure-derivative — no named quantity subject).
+# (α, κT are now typed subjects → auto).  LinearResponseFDT now types `β::InverseTemperature`
+# (bag-visible, like Jarzynski/Crooks) but has no quantity subject; the 4 Maxwell relations
+# stay fully symbol-keyed (generic / pure-derivative — no named quantity subject).
 
 # ── Correlations / Green's functions ──
 # NB: Dyson, SpectralFromGreens and the whole Keldysh block below are now
@@ -37,7 +41,9 @@ quantities(::DynamicalFDT) = (DynamicalStructureFactor, DynamicalSusceptibility)
 quantities(::ResponseRealityReal) = (DynamicalSusceptibility,)   # reality: Re χ even under ω→−ω
 quantities(::ResponseRealityImag) = (DynamicalSusceptibility,)   # reality: Im χ odd under ω→−ω
 quantities(::CorrelationLengthGap) = (CorrelationLength, MassGap)
-quantities(::NMRExponent) = (NMRSpinRelaxationRate,)
+# NMRExponent is now type-keyed (spectral.jl: θ_NMR::NMRRelaxationExponent, Δ_op::ScalingDimension),
+# so `quantities` is auto-derived correctly — the old hand-link named NMRSpinRelaxationRate,
+# which is NOT a variable of the relation (its variables are the exponent and the scaling dim).
 # FiniteSizeGap is type-keyed (cft.jl), `quantities` auto-derived (MassGap, ScalingDimension).
 function quantities(::StaticFromDynamicalStructureFactor)
     return (StaticStructureFactor, DynamicalStructureFactor)

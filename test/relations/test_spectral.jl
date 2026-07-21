@@ -52,6 +52,11 @@ end
     @test solve(NMRExponent(), Val(:Δ_op); θ_NMR=-3 // 4) == 1 // 8
     @test solve(NMRExponent(), Val(:θ_NMR); Δ_op=1 // 8) isa Rational   # exactness
     @test !check(NMRExponent(); θ_NMR=0 // 1, Δ_op=1 // 8)
+    # type-keyed ⇒ quantities auto-derive to the exponent + scaling dimension, replacing
+    # the old hand-link that named NMRSpinRelaxationRate (not even a variable of the relation)
+    @test Set(quantities(NMRExponent())) == Set([NMRRelaxationExponent, ScalingDimension])
+    @test NMRExponent() in relations_constraining(ScalingDimension)
+    @test !(NMRExponent() in relations_constraining(NMRSpinRelaxationRate))
 end
 
 @testset "structure-factor sum rule: S(q) = ∫ S(q,ω) dω/(2π)" begin

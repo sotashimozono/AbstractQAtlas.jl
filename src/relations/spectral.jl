@@ -101,7 +101,8 @@ point,
 Exact-arithmetic: `Δ_op = 1//8` (1D TFIM QCP) gives `θ_NMR = −3//4`
 exactly.
 """
-@relation :spectral NMRExponent(θ_NMR, Δ_op) = θ_NMR - (2 * Δ_op - 1)
+@relation :spectral NMRExponent(θ_NMR::NMRRelaxationExponent, Δ_op::ScalingDimension) =
+    θ_NMR - (2 * Δ_op - 1)
 
 """
     StaticFromDynamicalStructureFactor <: AbstractRelation
