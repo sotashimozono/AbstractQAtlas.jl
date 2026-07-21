@@ -61,6 +61,8 @@ end
 derivative_edge(::Type{ThermalEntropy}) = DerivativeEdge(FreeEnergy, Temperature)
 derivative_edge(::Type{<:Energy}) = DerivativeEdge(FreeEnergy, InverseTemperature)
 derivative_edge(::Type{SpecificHeat}) = DerivativeEdge(Energy, Temperature)
+# grand-canonical branch: N = −∂Ω/∂μ roots at the GrandPotential (the second root)
+derivative_edge(::Type{ParticleNumber}) = DerivativeEdge(GrandPotential, ChemicalPotential)
 export derivative_edge, DerivativeEdge
 
 """

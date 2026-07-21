@@ -105,3 +105,14 @@ end
     @test err isa ErrorException
     @test occursin("not a response function", err.msg)
 end
+
+@testset "grand-canonical: N = −∂Ω/∂μ by the generic genealogy path (second root)" begin
+    # ParticleNumber roots at the GrandPotential, not FreeEnergy — the SAME generic
+    # method handles it (single-field, order 1, −1 sign) once the guard admits the
+    # second root; no bespoke method needed (the pillar-4 win, into a new sector).
+    β, ε = 1.2, 0.7
+    Ω(μ) = -log(1 + exp(-β * (ε - μ))) / β
+    μ = 0.3
+    N = thermal_derivative(ParticleNumber(), Ω, μ)
+    @test N ≈ 1 / (exp(β * (ε - μ)) + 1) atol = 1e-10       # Fermi function = −∂Ω/∂μ
+end

@@ -133,6 +133,18 @@ struct FreeEnergy <: AbstractThermalPotential end
 export FreeEnergy
 
 """
+    GrandPotential() <: AbstractThermalPotential
+
+The grand potential `Ω = −β⁻¹ log Ξ = F − μN` — the generating potential of the
+grand-canonical ensemble, the Legendre transform of the [`FreeEnergy`](@ref) that
+trades the particle number `N` for the chemical potential `μ`.  It is the
+**second root** of the response genealogy: the particle number is its
+`μ`-derivative, `N = −∂Ω/∂μ` (the grand-canonical analogue of `M = −∂F/∂h`).
+"""
+struct GrandPotential <: AbstractThermalPotential end
+export GrandPotential
+
+"""
     SpecificHeat() <: AbstractThermalPotential
 
 Specific heat (per site) at constant volume, `c_v(β) = β² (⟨H²⟩ − ⟨H⟩²) / N`.
